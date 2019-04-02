@@ -37,6 +37,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         Vector4[]                   thicknessRemaps;
         Vector4[]                   shapeParams;
         Vector4[]                   transmissionTintsAndFresnel0;
+//forest-begin: Tweakable transmission
+        Vector4[]                   transmissionDirectAndIndirectScales;
+//forest-end:
         Vector4[]                   disabledTransmissionTintsAndFresnel0;
         Vector4[]                   worldScales;
         Vector4[]                   filterKernels;
@@ -93,6 +96,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             thicknessRemaps = new Vector4[DiffusionProfileConstants.DIFFUSION_PROFILE_COUNT];
             shapeParams = new Vector4[DiffusionProfileConstants.DIFFUSION_PROFILE_COUNT];
             transmissionTintsAndFresnel0 = new Vector4[DiffusionProfileConstants.DIFFUSION_PROFILE_COUNT];
+//forest-begin: Tweakable transmission
+            transmissionDirectAndIndirectScales = new Vector4[DiffusionProfileConstants.DIFFUSION_PROFILE_COUNT];
+//forest-end:
             disabledTransmissionTintsAndFresnel0 = new Vector4[DiffusionProfileConstants.DIFFUSION_PROFILE_COUNT];
             worldScales = new Vector4[DiffusionProfileConstants.DIFFUSION_PROFILE_COUNT];
             filterKernels = new Vector4[DiffusionProfileConstants.DIFFUSION_PROFILE_COUNT * DiffusionProfileConstants.SSS_N_SAMPLES_NEAR_FIELD];
@@ -194,6 +200,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             thicknessRemaps[index] = settings.thicknessRemaps;
             shapeParams[index] = settings.shapeParams;
             transmissionTintsAndFresnel0[index] = settings.transmissionTintsAndFresnel0;
+//forest-begin: Tweakable transmission
+            transmissionDirectAndIndirectScales[index] = settings.transmissionDirectAndIndirectScales;
+//forest-end:
             disabledTransmissionTintsAndFresnel0[index] = settings.disabledTransmissionTintsAndFresnel0;
             worldScales[index] = settings.worldScales;
             for (int j = 0, n = DiffusionProfileConstants.SSS_N_SAMPLES_NEAR_FIELD; j < n; j++)
@@ -245,6 +254,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             cmd.SetGlobalVectorArray(HDShaderIDs._ShapeParams, shapeParams);
             // To disable transmission, we simply nullify the transmissionTint
             cmd.SetGlobalVectorArray(HDShaderIDs._TransmissionTintsAndFresnel0, hdCamera.frameSettings.IsEnabled(FrameSettingsField.Transmission) ? transmissionTintsAndFresnel0 : disabledTransmissionTintsAndFresnel0);
+//forest-begin: Tweakable transmission
+            cmd.SetGlobalVectorArray(HDShaderIDs._TransmissionDirectAndIndirectScales, transmissionDirectAndIndirectScales);
+//forest-end:
             cmd.SetGlobalVectorArray(HDShaderIDs._WorldScales, worldScales);
             cmd.SetGlobalFloatArray(HDShaderIDs._DiffusionProfileHashTable, diffusionProfileHashes);
         }

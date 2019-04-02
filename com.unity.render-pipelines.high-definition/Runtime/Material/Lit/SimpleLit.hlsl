@@ -405,7 +405,12 @@ float3 EvaluateTransmission(BSDFData bsdfData, float3 transmittance, float NdotL
 #else
     attenuation *= DisneyDiffuse(NdotV, max(0, -NdotL), LdotV, bsdfData.perceptualRoughness);
 #endif
-
+//forest-begin: Tweakable transmission
+//forest-begin: Specular occlusion on transmission (custom shader parity)
+#if !defined(UNITY_MATERIAL_STACKLIT)
+    intensity *= _TransmissionDirectAndIndirectScales[bsdfData.diffusionProfile].r * bsdfData.specularOcclusion;
+//forest-end:
+//forest-end:
     float intensity = attenuation * wrappedNdotL;
     return intensity * transmittance;
 }
