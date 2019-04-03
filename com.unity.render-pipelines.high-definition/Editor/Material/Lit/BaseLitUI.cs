@@ -163,6 +163,11 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         protected MaterialProperty windShiverDirectionality = null;
         protected const string kWindShiverDirectionality = "_ShiverDirectionality";
 
+//forest-begin: Wind flutter map
+        protected MaterialProperty  windFlutterMap          = null;
+        protected const string      kWindFlutterMap         = "_WindFlutterMap";
+//forest-end:
+
         // tessellation params
         protected MaterialProperty tessellationMode = null;
         protected const string kTessellationMode = "_TessellationMode";
@@ -233,6 +238,10 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             windDrag = FindProperty(kWindDrag, props, false);
             windShiverDrag = FindProperty(kWindShiverDrag, props, false);
             windShiverDirectionality = FindProperty(kWindShiverDirectionality, props, false);
+
+//forest-begin: Wind flutter map
+            windFlutterMap          = FindProperty(kWindFlutterMap, props, false);
+//forest-end:
 
             // Decal
             supportDecals = FindProperty(kSupportDecals, props, false);
@@ -461,6 +470,10 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                             EditorGUI.indentLevel--;
                         }
                         */
+//forest-begin: Wind flutter map
+                        if(windFlutterMap != null)
+                            m_MaterialEditor.TexturePropertySingleLine(new GUIContent(windFlutterMap.displayName), windFlutterMap);
+//forest-end:
                     }
 
                     if (enableMotionVectorForVertexAnimation != null)
