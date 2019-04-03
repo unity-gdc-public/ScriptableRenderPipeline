@@ -103,6 +103,10 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
             public readonly GUIContent materialReferencesText = EditorGUIUtility.TrTextContent("Material To Copy");
 
+//forest-begin:
+            public readonly GUIContent enableTerrainModeText = new GUIContent("Enable Terrain Mode");
+//forest-end:
+
             public readonly string materialImporterNotAvailable = "Can't display material layer options because the material is not an asset";
 
             public StylesLayer()
@@ -179,6 +183,11 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         MaterialProperty heightTransition = null;
         const string kHeightTransition = "_HeightTransition";
 
+//forest-begin:
+        MaterialProperty enableTerrainMode = null;
+        const string kEnableTerrainMode = "_EnableTerrainMode";
+//forest-end:
+
         bool m_UseHeightBasedBlend;
 
         protected override void FindMaterialProperties(MaterialProperty[] props)
@@ -212,7 +221,11 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                     inheritBaseColor[i - 1] = FindProperty(string.Format("{0}{1}", kInheritBaseColor, i), props);
                 }
             }
-            
+
+//forest-begin:
+			enableTerrainMode = FindProperty(kEnableTerrainMode, props, false);
+//forest-end:
+
             UpdateEditorExpended((int)layerCount.floatValue);
         }
 
@@ -863,6 +876,10 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                     // NB RenderQueue editor is not shown on purpose: we want to override it based on blend mode
                     m_MaterialEditor.EnableInstancingField();
                     m_MaterialEditor.ShaderProperty(enableSpecularOcclusion, Styles.enableSpecularOcclusionText);
+//forest-begin:
+                    if(enableTerrainMode != null)
+                        m_MaterialEditor.ShaderProperty(enableTerrainMode, styles.enableTerrainModeText);
+//forest-end:
                 }
             }
 
