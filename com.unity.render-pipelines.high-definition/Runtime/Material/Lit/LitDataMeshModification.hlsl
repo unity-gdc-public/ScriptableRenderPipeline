@@ -53,6 +53,14 @@ void ApplyVertexModification(AttributesMesh input, float3 normalWS, inout float3
     ApplyWindDisplacement(absolutePositionWS, normalWS, rootWP, _Stiffness, _Drag, _ShiverDrag, _ShiverDirectionality, _InitialBend, input.color.a, time);
     positionRWS = GetCameraRelativePositionWS(absolutePositionWS);
 #endif
+
+//forest-begin: Added vertex animation
+#if USE_VEGETATION_ANIM
+	float3 positionWS = GetAbsolutePositionWS(positionRWS);
+	APPLY_VEGETATION_ANIM_TIMENUDGE(positionWS, normalWS, input.uv3/*pivotData*/, input.color.rgb/*pivotColor*/, GetObjectAbsolutePositionWS(), time.x);
+	positionRWS = GetCameraRelativePositionWS(positionWS);
+#endif
+//forest-end:
 }
 
 #ifdef TESSELLATION_ON
