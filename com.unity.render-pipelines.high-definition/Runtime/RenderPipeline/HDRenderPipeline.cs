@@ -121,6 +121,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         RTHandleSystem.RTHandle m_CameraColorMSAABuffer;
         RTHandleSystem.RTHandle m_CameraSssDiffuseLightingMSAABuffer;
 
+//forest-begin: G-Buffer motion vectors
+		RenderTargetIdentifier[][] m_GBuffersWithVelocity = {new RenderTargetIdentifier[1], new RenderTargetIdentifier[2], new RenderTargetIdentifier[3], new RenderTargetIdentifier[4], new RenderTargetIdentifier[5], new RenderTargetIdentifier[6], new RenderTargetIdentifier[7], new RenderTargetIdentifier[8]};
+//forest-end:
+
         // The current MSAA count
         MSAASamples m_MSAASamples;
 
@@ -907,6 +911,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             // Raise or remove the depth msaa flag based on the frame setting
             CoreUtils.SetKeyword(cmd, "WRITE_MSAA_DEPTH", hdCamera.frameSettings.IsEnabled(FrameSettingsField.MSAA));
+
+//forest-begin: G-Buffer motion vectors
+			CoreUtils.SetKeyword(cmd, "GBUFFER_MOTION_VECTORS", hdCamera.frameSettings.IsEnabled(FrameSettingsField.GBufferMotionVectors));
+//forest-end:
         }
 
         struct RenderRequest
@@ -2589,8 +2597,23 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             using (new ProfilingSample(cmd, m_CurrentDebugDisplaySettings.IsDebugDisplayEnabled() ? "GBuffer Debug" : "GBuffer", CustomSamplerId.GBuffer.GetSampler()))
             {
-                // setup GBuffer for rendering
-                HDUtils.SetRenderTarget(cmd, hdCamera, m_GbufferManager.GetBuffersRTI(hdCamera.frameSettings), m_SharedRTManager.GetDepthStencilBuffer());
+                // setup GBuffer for rendering+
+                
+//forest-begin: G-Buffer motion vectors
+                var gBuffers = m_GbufferManager.GetBuffersRTI(hdCamera.frameSettings);
+				if(hdCamera.frameSettings.IsEnabled(FrameSettingsField.GBufferMotionVectors))
+                {
+                    // GBuffer count can be varied so append extra velocity buffer at the end
+                    var newGBuffers = m_GBuffersWithVelocity[gBuffers.Length];
+                    for(var i = 0; i < gBuffers.Length; i++ )
+                    {
+                        newGBuffers[i] = gBuffers[i];
+                    }
+                    newGBuffers[gBuffers.Length] = m_SharedRTManager.GetMotionVectorsBuffer();
+                    gBuffers = newGBuffers;
+				}
+                HDUtils.SetRenderTarget(cmd, hdCamera, gBuffers, m_SharedRTManager.GetDepthStencilBuffer());
+//forest-end:
                 RenderOpaqueRenderList(cull, hdCamera, renderContext, cmd, HDShaderPassNames.s_GBufferName, m_currentRendererConfigurationBakedLighting, HDRenderQueue.k_RenderQueue_AllOpaque);
 
                 m_GbufferManager.BindBufferAsTextures(cmd);
@@ -3013,7 +3036,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 // If the flag hasn't been set yet on this camera, motion vectors will skip a frame.
                 hdCamera.camera.depthTextureMode |= DepthTextureMode.MotionVectors | DepthTextureMode.Depth;
 
-                HDUtils.DrawFullScreen(cmd, hdCamera, m_CameraMotionVectorsMaterial, m_SharedRTManager.GetMotionVectorsBuffer(), m_SharedRTManager.GetDepthStencilBuffer(), null, 0);
+//forest-begin: G-Buffer motion vectors
+				HDUtils.DrawFullScreen(cmd, hdCamera, m_CameraMotionVectorsMaterial, m_SharedRTManager.GetMotionVectorsBuffer(), m_SharedRTManager.GetDepthStencilBuffer(), null, hdCamera.frameSettings.IsEnabled(FrameSettingsField.GBufferMotionVectors) ? 0 : 1);
+//forest-end:
                 PushFullScreenDebugTexture(hdCamera, cmd, m_SharedRTManager.GetMotionVectorsBuffer(), FullScreenDebugMode.MotionVectors);
 
 #if UNITY_EDITOR
