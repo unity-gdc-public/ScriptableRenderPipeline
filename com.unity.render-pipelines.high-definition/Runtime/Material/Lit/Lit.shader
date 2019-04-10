@@ -207,6 +207,19 @@ Shader "HDRP/Lit"
         _TexWorldScaleEmissive("Scale to apply on world coordinate", Float) = 1.0
         [HideInInspector] _UVMappingMaskEmissive("_UVMappingMaskEmissive", Color) = (1, 0, 0, 0)
 
+//forest-begin: Tree occlusion
+		_UseTreeOcclusion("Use Tree Occlusion", Float) = 0.0
+		_TreeAO("Tree AO Scale", Range(0, 10)) = 1
+		_TreeAOBias("Tree AO Bias", Range(-1, 1)) = 0.1
+		_TreeAO2("Tree AO Scale 2", Range(0, 10)) = 2.4
+		_TreeAOBias2("Tree AO Bias 2", Range(-1, 1)) = 0.35
+		_TreeDO("Tree DO Scale", Range(0, 20)) = 7.5
+		_TreeDOBias("Tree DO Bias", Range(-1, 1)) = 0.0
+		_TreeDO2("Tree DO Scale 2", Range(0, 20)) = 5
+		_TreeDOBias2("Tree DO Bias 2", Range(-1, 1)) = 0.0
+		_Tree12Width("Tree 12 Width", Range(0, 100)) = 10
+//forest-end:
+
         // Wind
 //forest-begin: Added vertex animation
 		[Enum(None, 0, Single Pivot Color, 3, Hierarchy Pivot, 4, Procedural Animation, 6)]
