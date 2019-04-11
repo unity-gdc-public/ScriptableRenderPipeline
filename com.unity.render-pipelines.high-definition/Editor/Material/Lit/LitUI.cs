@@ -49,6 +49,9 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             public static string detailText = "Detail Inputs";
             public static GUIContent UVDetailMappingText = new GUIContent("Detail UV mapping", "");
             public static GUIContent detailMapNormalText = new GUIContent("Detail Map", "Specifies the Detail Map albedo (R) Normal map y-axis (G) Smoothness (B) Normal map x-axis (A) - Neutral value is (0.5, 0.5, 0.5, 0.5)");
+//forest-begin: Procedural bark peel
+            public static GUIContent detailMaskText = new GUIContent("Peel Mask (RG)", "Mask for peel detail map");
+//forest-end:
             public static GUIContent detailAlbedoScaleText = new GUIContent("Detail Albedo Scale", "Controls the scale factor for the Detail Map's Albedo.");
             public static GUIContent detailNormalScaleText = new GUIContent("Detail Normal Scale", "Controls the scale factor for the Detail Map's Normal map.");
             public static GUIContent detailSmoothnessScaleText = new GUIContent("Detail Smoothness Scale", "Controls the scale factor for the Detail Map's Smoothness.");
@@ -237,6 +240,18 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         protected const string kSpecularColor = "_SpecularColor";
         protected MaterialProperty specularColorMap = null;
         protected const string kSpecularColorMap = "_SpecularColorMap";
+//forest-begin: Procedural bark peel
+        protected MaterialProperty detailMode = null;
+        protected const string kDetailMode = "_DetailMode";
+        protected MaterialProperty detailMask = null;
+        protected const string kDetailMask = "_DetailMask";
+        protected MaterialProperty peeledBarkColor = null;
+        protected const string kPeeledBarkColor = "_PeeledBarkColor";
+        protected MaterialProperty peeledBarkColorAlt = null;
+        protected const string kPeeledBarkColorAlt = "_PeeledBarkColorAlt";
+        protected MaterialProperty peeledBarkUVRangeScale = null;
+        protected const string kPeeledBarkUVRangeScale = "_PeeledBarkUVRangeScale";
+//forest-end:
 
         protected MaterialProperty tangentMap = null;
         protected const string kTangentMap = "_TangentMap";
@@ -414,6 +429,13 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             anisotropy = FindProperty(kAnisotropy, props);
             anisotropyMap = FindProperty(kAnisotropyMap, props);
 
+//forest-begin: Procedural bark peel
+            detailMode = FindProperty(kDetailMode, props, false);
+            detailMask = FindProperty(kDetailMask, props, false);
+            peeledBarkColor = FindProperty(kPeeledBarkColor, props, false);
+            peeledBarkColorAlt = FindProperty(kPeeledBarkColorAlt, props, false);
+            peeledBarkUVRangeScale = FindProperty(kPeeledBarkUVRangeScale, props, false);
+//forest-end:
             // Iridescence
             iridescenceMask = FindProperty(kIridescenceMask, props);
             iridescenceMaskMap = FindProperty(kIridescenceMaskMap, props);
@@ -776,6 +798,18 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             {
                 if (header.expanded)
                 {
+//forest-begin: Procedural bark peel
+                    if(detailMode != null) {
+                        m_MaterialEditor.ShaderProperty(detailMode, detailMode.displayName);
+
+                        if(Mathf.Approximately(detailMode.floatValue, 4f)) {
+                        m_MaterialEditor.TexturePropertySingleLine(Styles.detailMaskText, detailMask);
+                            m_MaterialEditor.ShaderProperty(peeledBarkColor, peeledBarkColor.displayName);
+                            m_MaterialEditor.ShaderProperty(peeledBarkColorAlt, peeledBarkColorAlt.displayName);
+                            m_MaterialEditor.ShaderProperty(peeledBarkUVRangeScale, peeledBarkUVRangeScale.displayName);
+                        }
+                    }
+//forest-end:
                     m_MaterialEditor.TexturePropertySingleLine(Styles.detailMapNormalText, detailMap[layerIndex]);
 
                     if (material.GetTexture(isLayeredLit ? kDetailMap + layerIndex : kDetailMap))
