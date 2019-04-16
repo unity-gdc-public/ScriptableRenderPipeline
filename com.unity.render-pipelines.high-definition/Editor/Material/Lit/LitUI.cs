@@ -164,6 +164,10 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         protected const string kSmoothnessRemapMin = "_SmoothnessRemapMin";
         protected MaterialProperty[] smoothnessRemapMax = new MaterialProperty[kMaxLayerCount];
         protected const string kSmoothnessRemapMax = "_SmoothnessRemapMax";
+//forest-begin: View angle dependent smoothness tweak
+        protected MaterialProperty smoothnessViewAngleOffset = null;
+        protected const string kSmoothnessViewAngleOffset = "_SmoothnessViewAngleOffset";
+//forest-end:
         protected MaterialProperty[] aoRemapMin = new MaterialProperty[kMaxLayerCount];
         protected const string kAORemapMin = "_AORemapMin";
         protected MaterialProperty[] aoRemapMax = new MaterialProperty[kMaxLayerCount];
@@ -416,6 +420,9 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             FindMaterialLayerProperties(props);
             FindMaterialEmissiveProperties(props);
 
+//forest-begin: View angle dependent smoothness tweak
+            smoothnessViewAngleOffset = FindProperty(kSmoothnessViewAngleOffset, props, false);
+//forest-end:
             // The next properties are only supported for regular Lit shader (not layered ones) because it's complicated to blend those parameters if they are different on a per layer basis.
 
             // Specular Color
@@ -656,6 +663,11 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                             aoRemapMax[layerIndex].floatValue = aoMax;
                         }
                     }
+
+//forest-begin: View angle dependent smoothness tweak
+            if(smoothnessViewAngleOffset != null)
+                m_MaterialEditor.ShaderProperty(smoothnessViewAngleOffset, smoothnessViewAngleOffset.displayName);
+//forest-end:
 
                     m_MaterialEditor.TexturePropertySingleLine(((MaterialId)materialID.floatValue == MaterialId.LitSpecular) ? Styles.maskMapSpecularText : Styles.maskMapSText, maskMap[layerIndex]);
 
