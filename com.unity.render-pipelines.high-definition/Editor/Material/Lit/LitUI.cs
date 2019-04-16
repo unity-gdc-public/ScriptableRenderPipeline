@@ -1052,7 +1052,16 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             CoreUtils.SetKeyword(material, "_ENABLESPECULAROCCLUSION", material.GetFloat(kEnableSpecularOcclusion) > 0.0f);
             CoreUtils.SetKeyword(material, "_HEIGHTMAP", material.GetTexture(kHeightMap));
             CoreUtils.SetKeyword(material, "_ANISOTROPYMAP", material.GetTexture(kAnisotropyMap));
-            CoreUtils.SetKeyword(material, "_DETAIL_MAP", material.GetTexture(kDetailMap));
+//forest-begin: Procedural bark peel
+			var detailMode = material.HasProperty(kDetailMode) ? Mathf.RoundToInt(material.GetFloat(kDetailMode)) : 0;
+			if(detailMode == 4) {
+				CoreUtils.SetKeyword(material, "_DETAIL_MAP", false);
+				CoreUtils.SetKeyword(material, "_DETAIL_MAP_PEEL", material.GetTexture(kDetailMap));
+			} else {
+				CoreUtils.SetKeyword(material, "_DETAIL_MAP_PEEL", false);
+				CoreUtils.SetKeyword(material, "_DETAIL_MAP", material.GetTexture(kDetailMap));
+			}
+//forest-end:
             CoreUtils.SetKeyword(material, "_SUBSURFACE_MASK_MAP", material.GetTexture(kSubsurfaceMaskMap));
             CoreUtils.SetKeyword(material, "_THICKNESSMAP", material.GetTexture(kThicknessMap));
             CoreUtils.SetKeyword(material, "_IRIDESCENCE_THICKNESSMAP", material.GetTexture(kIridescenceThicknessMap));
