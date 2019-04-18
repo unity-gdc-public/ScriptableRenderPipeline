@@ -18,6 +18,9 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 #if FRAMESETTINGS_LOD_BIAS
             OtherSettings = 1 << 5,
 #endif
+ //forest-begin: customizable sorting flags
+ 			SectionSortingFlags = 1 << 6,
+ //forest-end:
         }
 
         readonly static ExpandedState<Expandable, FrameSettings> k_ExpandedState = new ExpandedState<Expandable, FrameSettings>(~(-1), "HDRP");
@@ -51,6 +54,11 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                         CED.Group(190, (serialized, owner) => Drawer_SectionOtherSettings(serialized, owner, withOverride))
                     )
 #endif
+//forest-begin: customizable sorting flags
+					, CED.FoldoutGroup("Sorting Flags", Expandable.SectionSortingFlags, k_ExpandedState, FoldoutOption.Indent | FoldoutOption.Boxed,
+                    CED.Group(190, (serialized, owner) => Drawer_SectionSortingFlags(serialized, owner, withOverride))
+                    )
+//forest-end:
                 );
 
         static HDRenderPipelineAsset GetHDRPAssetFor(Editor owner)
@@ -184,6 +192,17 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             var area = GetFrameSettingSectionContent(3, serialized, owner);
             area.Draw(withOverride);
         }
+
+//forest-begin: customizable sorting flags
+		static void Drawer_SectionSortingFlags(SerializedFrameSettings serialized, Editor owner, bool withOverride) {
+			
+            EditorGUILayout.PropertyField(serialized.sortFlagsDepthPrepass, sortFlagsDepthPrepassContent);
+			EditorGUILayout.PropertyField(serialized.sortFlagsGBuffer, sortFlagsGBufferContent);
+			EditorGUILayout.PropertyField(serialized.sortFlagsForward, sortFlagsForwardContent);
+		    EditorGUILayout.PropertyField(serialized.sortFlagsObjectMotionVectors, sortFlagsObjectMotionVectorsContent);
+            
+		}
+//forest-end:
 
 #if FRAMESETTINGS_LOD_BIAS
         static void Drawer_SectionOtherSettings(SerializedFrameSettings serialized, Editor owner, bool withOverride)

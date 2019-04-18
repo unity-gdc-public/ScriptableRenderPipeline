@@ -2311,12 +2311,17 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             CommandBuffer cmd,
             ShaderTagId passName,
             PerObjectData rendererConfiguration = 0,
+//forest-begin: customizable sorting flags
+			SortingCriteria sortFlags = SortingCriteria.CommonOpaque,
+//forest-end:
             RenderQueueRange? inRenderQueueRange = null,
             RenderStateBlock? stateBlock = null,
             Material overrideMaterial = null)
         {
             m_SinglePassName[0] = passName;
-            RenderOpaqueRenderList(cull, hdCamera, renderContext, cmd, m_SinglePassName, rendererConfiguration, inRenderQueueRange, stateBlock, overrideMaterial);
+//forest-begin: customizable sorting flags
+            RenderOpaqueRenderList(cull, hdCamera, renderContext, cmd, m_SinglePassName, rendererConfiguration, sortFlags, inRenderQueueRange, stateBlock, overrideMaterial);
+//forest-end:
         }
 
         void RenderOpaqueRenderList(CullingResults cull,
@@ -2325,6 +2330,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             CommandBuffer cmd,
             ShaderTagId[] passNames,
             PerObjectData rendererConfiguration = 0,
+//forest-begin: customizable sorting flags
+			SortingCriteria sortFlags = SortingCriteria.CommonOpaque,
+//forest-end:
             RenderQueueRange? inRenderQueueRange = null,
             RenderStateBlock? stateBlock = null,
             Material overrideMaterial = null,
@@ -2340,7 +2348,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             var sortingSettings = new SortingSettings(hdCamera.camera)
             {
-                criteria = SortingCriteria.CommonOpaque
+//forest-begin: customizable sorting flags
+                criteria = sortFlags
+//forest-end:
             };
 
             var drawSettings = new DrawingSettings(HDShaderPassNames.s_EmptyName, sortingSettings)
@@ -2379,6 +2389,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             CommandBuffer cmd,
             ShaderTagId passName,
             PerObjectData rendererConfiguration = 0,
+//forest-begin: customizable sorting flags
+			SortingCriteria sortFlags = SortingCriteria.CommonTransparent,
+//forest-end:
             RenderQueueRange? inRenderQueueRange = null,
             RenderStateBlock? stateBlock = null,
             Material overrideMaterial = null,
@@ -2387,7 +2400,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         {
             m_SinglePassName[0] = passName;
             RenderTransparentRenderList(cull, hdCamera, renderContext, cmd, m_SinglePassName,
-                rendererConfiguration, inRenderQueueRange, stateBlock, overrideMaterial);
+//forest-begin: customizable sorting flags
+                rendererConfiguration, sortFlags, inRenderQueueRange, stateBlock, overrideMaterial);
+//forest-end:
         }
 
         void RenderTransparentRenderList(CullingResults cull,
@@ -2396,6 +2411,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             CommandBuffer cmd,
             ShaderTagId[] passNames,
             PerObjectData rendererConfiguration = 0,
+//forest-begin: customizable sorting flags
+			SortingCriteria sortFlags = SortingCriteria.CommonTransparent,
+//forest-end:
             RenderQueueRange? inRenderQueueRange = null,
             RenderStateBlock? stateBlock = null,
             Material overrideMaterial = null,
@@ -2411,7 +2429,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             var sortingSettings = new SortingSettings(hdCamera.camera)
             {
-                criteria = SortingCriteria.CommonTransparent | SortingCriteria.RendererPriority
+//forest-begin: customizable sorting flags
+                criteria = sortFlags | SortingCriteria.RendererPriority
+//forest-end:
             };
 
             var drawSettings = new DrawingSettings(HDShaderPassNames.s_EmptyName, sortingSettings)
@@ -2524,7 +2544,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
                         // Full forward: Output normal buffer for both forward and forwardOnly
                         // Exclude object that render motion vectors (if motion vector are enabled)
-                        RenderOpaqueRenderList(cull, hdCamera, renderContext, cmd, m_DepthOnlyAndDepthForwardOnlyPassNames, 0, HDRenderQueue.k_RenderQueue_AllOpaque, excludeMotionVector: excludeMotion);
+//forest-begin: customizable sorting flags
+                        RenderOpaqueRenderList(cull, hdCamera, renderContext, cmd, m_DepthOnlyAndDepthForwardOnlyPassNames, 0, hdCamera.frameSettings.sortFlagsDepthPrepass, HDRenderQueue.k_RenderQueue_AllOpaque, excludeMotionVector: excludeMotion);
+//forest-end:
                     }
                     break;
                 case LitShaderMode.Deferred:
@@ -2539,12 +2561,16 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                             //XRUtils.DrawOcclusionMesh(cmd, hdCamera.camera, hdCamera.camera.stereoEnabled);
 
                             // First deferred material
-                            RenderOpaqueRenderList(cull, hdCamera, renderContext, cmd, m_DepthOnlyPassNames, 0, HDRenderQueue.k_RenderQueue_AllOpaque, excludeMotionVector: excludeMotion);
+//forest-begin: customizable sorting flags
+                            RenderOpaqueRenderList(cull, hdCamera, renderContext, cmd, m_DepthOnlyPassNames, 0, hdCamera.frameSettings.sortFlagsDepthPrepass, HDRenderQueue.k_RenderQueue_AllOpaque, excludeMotionVector: excludeMotion);
+//forest-end:
 
                             HDUtils.SetRenderTarget(cmd, hdCamera, m_SharedRTManager.GetPrepassBuffersRTI(hdCamera.frameSettings), m_SharedRTManager.GetDepthStencilBuffer());
 
                             // Then forward only material that output normal buffer
-                            RenderOpaqueRenderList(cull, hdCamera, renderContext, cmd, m_DepthForwardOnlyPassNames, 0, HDRenderQueue.k_RenderQueue_AllOpaque, excludeMotionVector: excludeMotion);
+//forest-begin: customizable sorting flags
+                            RenderOpaqueRenderList(cull, hdCamera, renderContext, cmd, m_DepthForwardOnlyPassNames, 0, hdCamera.frameSettings.sortFlagsDepthPrepass, HDRenderQueue.k_RenderQueue_AllOpaque, excludeMotionVector: excludeMotion);
+//forest-end:
                         }
                     }
                     else // Deferred with partial depth prepass
@@ -2558,12 +2584,16 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
                             // First deferred alpha tested materials. Alpha tested object have always a prepass even if enableDepthPrepassWithDeferredRendering is disabled
                             var renderQueueRange = new RenderQueueRange { lowerBound = (int)RenderQueue.AlphaTest, upperBound = (int)RenderQueue.GeometryLast - 1 };
-                            RenderOpaqueRenderList(cull, hdCamera, renderContext, cmd, m_DepthOnlyPassNames, 0, renderQueueRange);
+//forest-begin: customizable sorting flags
+                            RenderOpaqueRenderList(cull, hdCamera, renderContext, cmd, m_DepthOnlyPassNames, 0, hdCamera.frameSettings.sortFlagsDepthPrepass, renderQueueRange);
+//forest-end:
 
                             HDUtils.SetRenderTarget(cmd, hdCamera, m_SharedRTManager.GetPrepassBuffersRTI(hdCamera.frameSettings), m_SharedRTManager.GetDepthStencilBuffer());
 
                             // Then forward only material that output normal buffer
-                            RenderOpaqueRenderList(cull, hdCamera, renderContext, cmd, m_DepthForwardOnlyPassNames, 0, HDRenderQueue.k_RenderQueue_AllOpaque);
+//forest-begin: customizable sorting flags
+                            RenderOpaqueRenderList(cull, hdCamera, renderContext, cmd, m_DepthForwardOnlyPassNames, 0, hdCamera.frameSettings.sortFlagsDepthPrepass, HDRenderQueue.k_RenderQueue_AllOpaque);
+//forest-end:
                         }
 
                         shouldRenderMotionVectorAfterGBuffer = true;
@@ -2614,7 +2644,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 				}
                 HDUtils.SetRenderTarget(cmd, hdCamera, gBuffers, m_SharedRTManager.GetDepthStencilBuffer());
 //forest-end:
-                RenderOpaqueRenderList(cull, hdCamera, renderContext, cmd, HDShaderPassNames.s_GBufferName, m_currentRendererConfigurationBakedLighting, HDRenderQueue.k_RenderQueue_AllOpaque);
+//forest-begin: customizable sorting flags
+                RenderOpaqueRenderList(cull, hdCamera, renderContext, cmd, HDShaderPassNames.s_GBufferName, m_currentRendererConfigurationBakedLighting, hdCamera.frameSettings.sortFlagsGBuffer, HDRenderQueue.k_RenderQueue_AllOpaque);
+//forest-end:
 
                 m_GbufferManager.BindBufferAsTextures(cmd);
             }
@@ -2756,6 +2788,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
                     HDUtils.SetRenderTarget(cmd, hdCamera, m_CameraColorBuffer, m_SharedRTManager.GetDepthStencilBuffer(), ClearFlag.All, Color.clear);
                     // Render Opaque forward
+
                     RenderOpaqueRenderList(cull, hdCamera, renderContext, cmd, m_AllForwardOpaquePassNames, m_currentRendererConfigurationBakedLighting, stateBlock: m_DepthStateOpaque);
 
                     // Render forward transparent
@@ -2894,7 +2927,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                         var passNames = hdCamera.frameSettings.litShaderMode == LitShaderMode.Forward
                             ? m_ForwardAndForwardOnlyPassNames
                             : m_ForwardOnlyPassNames;
-                        RenderOpaqueRenderList(cullResults, hdCamera, renderContext, cmd, passNames, m_currentRendererConfigurationBakedLighting);
+//forest-begin: customizable sorting flags
+                        RenderOpaqueRenderList(cullResults, hdCamera, renderContext, cmd, passNames, m_currentRendererConfigurationBakedLighting, hdCamera.frameSettings.sortFlagsForward);
+//forest-end:
                     }
                     else
                     {
@@ -2942,8 +2977,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                         {
                             m_currentRendererConfigurationBakedLighting |= PerObjectData.MotionVectors;
                         }
-
-                        RenderTransparentRenderList(cullResults, hdCamera, renderContext, cmd,  m_Asset.currentPlatformRenderPipelineSettings.supportTransparentBackface ? m_AllTransparentPassNames : m_TransparentNoBackfaceNames, m_currentRendererConfigurationBakedLighting, transparentRange);
+//forest-begin: customizable sorting flags
+                        RenderTransparentRenderList(cullResults, hdCamera, renderContext, cmd,  m_Asset.currentPlatformRenderPipelineSettings.supportTransparentBackface ? m_AllTransparentPassNames : m_TransparentNoBackfaceNames, m_currentRendererConfigurationBakedLighting, SortingCriteria.CommonTransparent, transparentRange);
+//forest-end:
 					}
                 }
             }
@@ -2956,7 +2992,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             using (new ProfilingSample(cmd, "Forward Error", CustomSamplerId.RenderForwardError.GetSampler()))
             {
                 HDUtils.SetRenderTarget(cmd, hdCamera, m_CameraColorBuffer, m_SharedRTManager.GetDepthStencilBuffer());
-                RenderOpaqueRenderList(cullResults, hdCamera, renderContext, cmd, m_ForwardErrorPassNames, 0, RenderQueueRange.all, null, m_ErrorMaterial);
+//forest-begin: customizable sorting flags
+                RenderOpaqueRenderList(cullResults, hdCamera, renderContext, cmd, m_ForwardErrorPassNames, 0, SortingCriteria.None, RenderQueueRange.all, null, m_ErrorMaterial);
+//forest-end:
             }
         }
 
@@ -3003,7 +3041,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 cmd.SetGlobalInt(HDShaderIDs._OffScreenDownsampleFactor, 2);
                 HDUtils.SetRenderTarget(cmd, hdCamera, m_LowResTransparentBuffer, m_SharedRTManager.GetLowResDepthBuffer(), clearFlag: ClearFlag.Color, Color.black);
                 RenderQueueRange transparentRange = HDRenderQueue.k_RenderQueue_LowTransparent;
-                RenderTransparentRenderList(cullResults, hdCamera, renderContext, cmd, m_Asset.currentPlatformRenderPipelineSettings.supportTransparentBackface ? m_AllTransparentPassNames : m_TransparentNoBackfaceNames, m_currentRendererConfigurationBakedLighting, HDRenderQueue.k_RenderQueue_LowTransparent);
+//forest-begin: customizable sorting flags
+                RenderTransparentRenderList(cullResults, hdCamera, renderContext, cmd, m_Asset.currentPlatformRenderPipelineSettings.supportTransparentBackface ? m_AllTransparentPassNames : m_TransparentNoBackfaceNames, m_currentRendererConfigurationBakedLighting, hdCamera.frameSettings.sortFlagsForward, HDRenderQueue.k_RenderQueue_LowTransparent);
+//forest-end:
                 cmd.SetGlobalInt(HDShaderIDs._OffScreenRendering, 0);
                 cmd.SetGlobalInt(HDShaderIDs._OffScreenDownsampleFactor, 1);
             }
@@ -3021,7 +3061,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 hdCamera.camera.depthTextureMode |= DepthTextureMode.MotionVectors | DepthTextureMode.Depth;
 
                 HDUtils.SetRenderTarget(cmd, hdCamera, m_SharedRTManager.GetMotionVectorsPassBuffersRTI(hdCamera.frameSettings), m_SharedRTManager.GetDepthStencilBuffer(hdCamera.frameSettings.IsEnabled(FrameSettingsField.MSAA)));
-                RenderOpaqueRenderList(cullResults, hdCamera, renderContext, cmd, HDShaderPassNames.s_MotionVectorsName, PerObjectData.MotionVectors);
+//forest-begin: customizable sorting flags
+                RenderOpaqueRenderList(cullResults, hdCamera, renderContext, cmd, HDShaderPassNames.s_MotionVectorsName, PerObjectData.MotionVectors, hdCamera.frameSettings.sortFlagsObjectMotionVectors);
+//forest-end:
             }
         }
 
@@ -3589,9 +3631,13 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     HDUtils.SetRenderTarget(cmd, hdCamera, GetAfterPostProcessOffScreenBuffer(), m_SharedRTManager.GetDepthStencilBuffer(), clearFlag: ClearFlag.Color, clearColor: Color.black);
 
                 cmd.SetGlobalInt(HDShaderIDs._OffScreenRendering, 1);
-                RenderOpaqueRenderList(cullResults, hdCamera, renderContext, cmd, HDShaderPassNames.s_ForwardOnlyName, 0, HDRenderQueue.k_RenderQueue_AfterPostProcessOpaque);
+//forest-begin: customizable sorting flags
+                RenderOpaqueRenderList(cullResults, hdCamera, renderContext, cmd, HDShaderPassNames.s_ForwardOnlyName, 0, SortingCriteria.CommonOpaque, HDRenderQueue.k_RenderQueue_AfterPostProcessOpaque);
+//forest-end:
                 // Setup off-screen transparency here
-                RenderTransparentRenderList(cullResults, hdCamera, renderContext, cmd, HDShaderPassNames.s_ForwardOnlyName, 0, HDRenderQueue.k_RenderQueue_AfterPostProcessTransparent);
+//forest-begin: customizable sorting flags
+                RenderTransparentRenderList(cullResults, hdCamera, renderContext, cmd, HDShaderPassNames.s_ForwardOnlyName, 0, SortingCriteria.CommonTransparent, HDRenderQueue.k_RenderQueue_AfterPostProcessTransparent);
+//forest-end:
                 cmd.SetGlobalInt(HDShaderIDs._OffScreenRendering, 0);
             }
         }
