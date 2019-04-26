@@ -136,6 +136,7 @@ namespace UnityEditor.VFX
         }
 
         public virtual void FillDescs(
+            VFXCompilationStatus status,
             List<VFXGPUBufferDesc> outBufferDescs,
             List<VFXTemporaryGPUBufferDesc> outTemporaryBufferDescs,
             List<VFXEditorSystemDesc> outSystemDescs,

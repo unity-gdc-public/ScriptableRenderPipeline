@@ -13,6 +13,18 @@ using UnityObject = UnityEngine.Object;
 
 namespace UnityEditor.VFX
 {
+
+    struct VFXCompilationLog
+    {
+        public VFXModel model;
+        public string error;
+    }
+
+    class VFXCompilationStatus
+    {
+        public List<VFXCompilationLog> errors = new List<VFXCompilationLog>();
+    }
+
     public class VFXCacheManager : EditorWindow
     {
         private static List<VisualEffectAsset> GetAllVisualEffectAssets()
@@ -474,6 +486,27 @@ namespace UnityEditor.VFX
             m_DependentDirty = true;
         }
 
+        struct Error
+        {
+            VFXModel model;
+            string error;
+        }
+
+        class CompilationStatus
+        {
+            List<Error> errors = new List<Error>();
+        }
+
+        VFXCompilationStatus m_CompilationStatus;
+
+        public VFXCompilationStatus compilationStatus
+        {
+            get
+            {
+                return m_CompilationStatus;
+            }
+        }
+
         public void BuildSubgraphDependencies()
         {
             if (m_SubgraphDependencies == null)
@@ -619,7 +652,8 @@ namespace UnityEditor.VFX
 
                     ComputeDataIndices();
 
-                    compiledData.Compile(m_CompilationMode, m_ForceShaderValidation);
+                    m_CompilationStatus = new VFXCompilationStatus();
+                    compiledData.Compile(m_CompilationStatus, m_CompilationMode, m_ForceShaderValidation);
 
                 }
                 else if (m_ExpressionValuesDirty && !m_ExpressionGraphDirty)

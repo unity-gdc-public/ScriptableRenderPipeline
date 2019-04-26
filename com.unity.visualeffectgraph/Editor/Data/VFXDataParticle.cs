@@ -519,6 +519,7 @@ namespace UnityEditor.VFX
         }
 
         public override void FillDescs(
+            VFXCompilationStatus status,
             List<VFXGPUBufferDesc> outBufferDescs,
             List<VFXTemporaryGPUBufferDesc> outTemporaryBufferDescs,
             List<VFXEditorSystemDesc> outSystemDescs,
@@ -746,6 +747,7 @@ namespace UnityEditor.VFX
                 {
                     if (mapping.index < 0)
                     {
+                        status.errors.Add(new VFXCompilationLog() { model = context.inputSlots.FirstOrDefault(t => t.name == mapping.name), error = "Unable to compute CPU expression" });
                         throw new InvalidOperationException("Unable to compute CPU expression for mapping : " + mapping.name);
                     }
                 }

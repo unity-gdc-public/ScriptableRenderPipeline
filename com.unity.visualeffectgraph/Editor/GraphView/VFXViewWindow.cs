@@ -229,7 +229,12 @@ namespace  UnityEditor.VFX.UI
                         }
 
 
+                        var status = graph.compilationStatus;
                         graph.RecompileIfNeeded(!autoCompile,!autoCompileDependent);
+                        if( graph.compilationStatus != status)
+                        {
+                            graphView.UpdateStatus(graph.compilationStatus);
+                        }
                         controller.RecompileExpressionGraphIfNeeded();
                     }
                 }
