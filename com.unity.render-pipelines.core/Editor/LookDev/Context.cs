@@ -29,6 +29,13 @@ namespace UnityEditor.Rendering.LookDev
     [System.Serializable]
     public class Context : ScriptableObject
     {
+        [SerializeField]
+        string environmentLibraryGUID = ""; //Empty GUID
+
+        /// <summary>The currently used Environment</summary>
+        public EnvironmentLibrary environmentLibrary { get; private set; }
+
+        /// <summary>The currently used layout</summary>
         [field: SerializeField]
         public LayoutContext layout { get; private set; } = new LayoutContext();
 
@@ -39,37 +46,45 @@ namespace UnityEditor.Rendering.LookDev
             new ViewContext()
         };
 
-        [SerializeField]
-        CameraState[] m_Cameras = new CameraState[2]
-        {
-            new CameraState(),
-            new CameraState()
-        };
-
         public ViewContext GetViewContent(ViewIndex index)
             => m_Views[(int)index];
 
-        public CameraState GetCameraState(ViewIndex index)
-            => m_Cameras[(int)index];
-
-        internal void Validate()
+        internal void Init()
         {
-            if (m_Views == null || m_Views.Length != 2)
-            {
-                m_Views = new ViewContext[2]
-                {
-                    new ViewContext(),
-                    new ViewContext()
-                };
-            }
-            if (m_Cameras == null || m_Cameras.Length != 2)
-            {
-                m_Cameras = new CameraState[2]
-                {
-                    new CameraState(),
-                    new CameraState()
-                };
-            }
+            LoadEnvironmentLibraryFromGUID();
+
+            //recompute non serialized computes states
+            layout.gizmoState.Init();
+        }
+
+        /// <summary>Update the environment used.</summary>
+        /// <param name="environmentOrCubemapAsset">
+        /// The new <see cref="Environment"/> to use.
+        /// Or the <see cref="Cubemap"/> to use to build a new one.
+        /// Other types will raise an ArgumentException.
+        /// </param>
+        public void UpdateEnvironmentLibrary(EnvironmentLibrary library)
+        {
+            environmentLibraryGUID = "";
+            environmentLibrary = null;
+            if (library == null || library.Equals(null))
+                return;
+
+            environmentLibraryGUID = AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(library));
+            environmentLibrary = library;
+        }
+
+        void LoadEnvironmentLibraryFromGUID()
+        {
+            environmentLibrary = null;
+
+            GUID storedGUID;
+            GUID.TryParse(environmentLibraryGUID, out storedGUID);
+            if (storedGUID.Empty())
+                return;
+
+            string path = AssetDatabase.GUIDToAssetPath(environmentLibraryGUID);
+            environmentLibrary = AssetDatabase.LoadAssetAtPath<EnvironmentLibrary>(path);
         }
     }
     
@@ -90,6 +105,9 @@ namespace UnityEditor.Rendering.LookDev
     [System.Serializable]
     public class ViewContext
     {
+        [field: SerializeField]
+        public CameraState camera { get; private set; } = new CameraState();
+
         //Environment asset, sub-asset (under a library) or cubemap
         [SerializeField]
         string environmentGUID = ""; //Empty GUID
@@ -211,7 +229,6 @@ namespace UnityEditor.Rendering.LookDev
             => viewedObjecHierarchytInstanceID = 0;
 
         //[TODO: add object position]
-        //[TODO: add camera frustum]
         //[TODO: manage shadow and lights]
     }
 }
