@@ -52,25 +52,17 @@ namespace UnityEditor.Rendering.LookDev
         static Context LoadConfigInternal(string path = lastRenderingDataSavePath)
         {
             var objs = InternalEditorUtility.LoadSerializedFileAndForget(path);
-            var last = (objs.Length > 0 ? objs[0] : null) as Context;
-            if (last != null && !last.Equals(null))
-            {
-                Context context = (Context)last;
-                //recompute non serialized computes states
-                context.layout.gizmoState.Init(); 
-                return context;
-            }
-            return null;
+            Context context = (objs.Length > 0 ? objs[0] : null) as Context;
+            if (context != null && !context.Equals(null))
+                context.Init();
+            return context;
         }
 
         public static void LoadConfig(string path = lastRenderingDataSavePath)
         {
             var last = LoadConfigInternal(path);
             if (last != null)
-            {
-                last.Validate();
                 currentContext = last;
-            }
         }
         
         public static void SaveConfig(string path = lastRenderingDataSavePath)
@@ -107,7 +99,11 @@ namespace UnityEditor.Rendering.LookDev
         static void WaitingSRPReloadForConfiguringRenderer(int maxAttempt, bool reloadWithTemporaryID, int attemptNumber = 0)
         {
             if (supported)
+            {
                 ConfigureRenderer(reloadWithTemporaryID);
+                LinkDisplayer();
+                ReloadStage(reloadWithTemporaryID);
+            }
             else if (attemptNumber < maxAttempt)
                 EditorApplication.delayCall +=
                     () => WaitingSRPReloadForConfiguringRenderer(maxAttempt, reloadWithTemporaryID, ++attemptNumber);
@@ -126,6 +122,10 @@ namespace UnityEditor.Rendering.LookDev
             s_Stages = new StageCache(dataProvider, currentContext);
             s_Comparator = new ComparisonGizmo(currentContext.layout.gizmoState, s_Displayer);
             s_Compositor = new Compositer(s_Displayer, currentContext, dataProvider, s_Stages);
+        }
+
+        static void LinkDisplayer()
+        {
             s_Displayer.OnClosed += () =>
             {
                 s_Compositor?.Dispose();
@@ -171,7 +171,6 @@ namespace UnityEditor.Rendering.LookDev
             };
             s_Displayer.OnChangingEnvironmentInView += (obj, index, localPos) =>
             {
-
                 switch (index)
                 {
                     case ViewCompositionIndex.First:
@@ -186,11 +185,9 @@ namespace UnityEditor.Rendering.LookDev
                         break;
                 }
             };
-            
-            StageReloader(reloadWithTemporaryID);
         }
 
-        static void StageReloader(bool reloadWithTemporaryID)
+        static void ReloadStage(bool reloadWithTemporaryID)
         {
             currentContext.GetViewContent(ViewIndex.First).LoadAll(reloadWithTemporaryID);
             ApplyContextChange(ViewIndex.First);
