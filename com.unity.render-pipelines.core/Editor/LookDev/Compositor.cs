@@ -1,14 +1,7 @@
 //#define TEMPORARY_RENDERDOC_INTEGRATION //require specific c++
 
 using System;
-using System.Linq.Expressions;
-using System.Reflection;
-using UnityEditor.SceneManagement;
-using UnityEditorInternal;
 using UnityEngine;
-using UnityEngine.Rendering;
-using UnityEngine.Rendering.LookDev;
-using UnityEngine.SceneManagement;
 using IDataProvider = UnityEngine.Rendering.LookDev.IDataProvider;
 
 namespace UnityEditor.Rendering.LookDev
@@ -25,9 +18,8 @@ namespace UnityEditor.Rendering.LookDev
 
         public static RenderTexture UpdateSize(RenderTexture renderTexture, Rect rect, bool pixelPerfect, Camera renderingCamera)
         {
-            float scaleFactor = GetScaleFactor(rect.width, rect.height, pixelPerfect);
-            int width = (int)(rect.width * scaleFactor);
-            int height = (int)(rect.height * scaleFactor);
+            int width = (int)rect.width;
+            int height = (int)rect.height;
             if (renderTexture == null
                 || width != renderTexture.width
                 || height != renderTexture.height)
@@ -57,16 +49,6 @@ namespace UnityEditor.Rendering.LookDev
 
         public void UpdateSize(Rect rect, ViewCompositionIndex index, bool pixelPerfect, Camera renderingCamera)
             => this[index] = UpdateSize(this[index], rect, pixelPerfect, renderingCamera);
-
-        static float GetScaleFactor(float width, float height, bool pixelPerfect)
-        {
-            float scaleFacX = Mathf.Max(Mathf.Min(width * 2, 1024), width) / width;
-            float scaleFacY = Mathf.Max(Mathf.Min(height * 2, 1024), height) / height;
-            float result = Mathf.Min(scaleFacX, scaleFacY) * EditorGUIUtility.pixelsPerPoint;
-            if (pixelPerfect)
-                result = Mathf.Max(Mathf.Round(result), 1f);
-            return result;
-        }
     }
 
     class Compositer : IDisposable
@@ -203,12 +185,12 @@ namespace UnityEditor.Rendering.LookDev
             }
             renderingData = m_RenderDataCache[1];
             renderingData.viewPort = rect;
+            m_Renderer.Acquire(renderingData);
             if (renderingData.resized)
             {
                 m_RenderTextures[ViewCompositionIndex.Second] = renderingData.output;
                 renderingData.resized = false;
             }
-            m_Renderer.Acquire(renderingData);
 
             Compositing(rect);
             m_Displayer.SetTexture(ViewCompositionIndex.Composite, m_RenderTextures[ViewCompositionIndex.Composite]);
@@ -309,8 +291,7 @@ namespace UnityEditor.Rendering.LookDev
             RenderTexture.active = oldActive;
             //GUI.DrawTexture(rect, m_RenderTextures[ViewCompositionIndex.Composite], ScaleMode.StretchToFill, false);
         }
-
-
+        
         public ViewIndex GetViewFromComposition(Vector2 localCoordinate)
         {
             Rect compositionRect = m_Displayer.GetRect(ViewCompositionIndex.Composite);
