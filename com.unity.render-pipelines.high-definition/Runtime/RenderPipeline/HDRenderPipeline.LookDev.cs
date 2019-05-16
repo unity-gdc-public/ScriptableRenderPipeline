@@ -23,6 +23,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             additionalData.clearDepth = true;
             additionalData.backgroundColorHDR = camera.backgroundColor;
             additionalData.volumeAnchorOverride = camera.transform;
+            additionalData.volumeLayerMask = 1 << 31; //31 is the culling layer used in LookDev
 
             GameObject volumeGO = SRI.AddGameObject(persistent: true);
             volumeGO.name = "SkyManagementVolume";
