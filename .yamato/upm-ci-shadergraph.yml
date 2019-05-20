@@ -97,6 +97,10 @@ projects:
    - cd TestProjects\{{ project.folder }} && utr\utr --suite=playmode --platform={{ mobile.name | downcase }} --testproject=. --editor-location=WindowsEditor --artifacts_path=upm-ci~\test-results
    #- start /WAIT %CD%\TestProjects\{{ project.folder }}\WindowsEditor\Unity -cleanTestPrefs -batchmode -automated -upmNoDefaultPackages -enableAllModules -runTests -buildTarget Android -projectPath .\Time -logFile %CD%\TestArtifacts\Editor_EditorLog.txt -testResults %CD%\TestArtifacts\Android_TestResults.xml -testPlatform Android
    - start %ANDROID_SDK_ROOT%\platform-tools\adb.exe kill-server
+  artifacts:
+    logs:
+      paths:
+        - "**/upm-ci~/test-results/**/*"
 {% endfor %}
 {% endfor %}
 {% endfor %}
