@@ -16,6 +16,11 @@ testplatforms:
     args: --suite=playmode
   - name: editmode
     args: --suite=editor --platform=editmode
+mobiles:
+  - name: Android
+    type: Unity::mobile::android
+    image: mobile/android-execution:latest
+    flavor: b1.large
 projects:
   - name: ShaderGraph
     folder: ShaderGraph
@@ -73,6 +78,27 @@ projects:
       paths:
       - "**/upm-ci~/test-results/**/*"
       - "**/upm-ci~/packages/**/*.tgz"
+{% endfor %}
+
+{% for mobile in mobiles %}
+{% for project in projects %}
+{% for editor in editors %}
+{{ project.name }}_{{ mobile.name }}_{{ editor.version }}:
+  name: Build and Test {{ project.name }} on {{ mobile.name }} on version {{ editor.version }}
+  agent:
+    type: {{ mobile.type }}
+    image: {{ mobile.image }}
+    flavor: {{ mobile.flavor }}
+  commands:
+   - pip install unity-downloader-cli --extra-index-url https://artifactory.eu-cph-1.unityops.net/api/pypi/common-python/simple
+   - git clone -b staging git@github.cds.internal.unity3d.com:unity/utr.git TestProjects/{{ project.folder }}/utr
+   - cd TestProjects\{{ project.folder }} && unity-downloader-cli -b {{ editor.version }} -p WindowsEditor -c editor -c {{ mobile.name }} --wait --published
+   - start %ANDROID_SDK_ROOT%\platform-tools\adb.exe connect %BOKKEN_DEVICE_IP%
+   - cd TestProjects\{{ project.folder }} && utr\utr --suite=playmode --platform={{ mobile.name | downcase }} --testproject=. --editor-location=WindowsEditor --artifacts_path=upm-ci~\test-results
+   #- start /WAIT %CD%\TestProjects\{{ project.folder }}\WindowsEditor\Unity -cleanTestPrefs -batchmode -automated -upmNoDefaultPackages -enableAllModules -runTests -buildTarget Android -projectPath .\Time -logFile %CD%\TestArtifacts\Editor_EditorLog.txt -testResults %CD%\TestArtifacts\Android_TestResults.xml -testPlatform Android
+   - start %ANDROID_SDK_ROOT%\platform-tools\adb.exe kill-server
+{% endfor %}
+{% endfor %}
 {% endfor %}
 
 All_{{ project.name }}:
