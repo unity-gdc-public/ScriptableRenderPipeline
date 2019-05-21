@@ -1,3 +1,4 @@
+using System;
 using UnityEngine.Rendering;
 
 namespace UnityEngine.Experimental.Rendering
@@ -16,6 +17,11 @@ namespace UnityEngine.Experimental.Rendering
 
         public static RendererList Create(in RendererListDesc desc)
         {
+            if (!desc.IsValid())
+            {
+                throw new ArgumentException("Trying to create a RendererList with an invalid descriptor.");
+            }
+
             RendererList newRenderList = new RendererList();
 
             var sortingSettings = new SortingSettings(desc.camera)
@@ -93,6 +99,14 @@ namespace UnityEngine.Experimental.Rendering
             this.passName = ShaderTagId.none;
             this.cullingResult = cullingResult;
             this.camera = camera;
+        }
+
+        public bool IsValid()
+        {
+            if (camera == null || (passName == ShaderTagId.none && (passNames == null || passNames.Length == 0)))
+                return false;
+
+            return true;
         }
     }
 }
