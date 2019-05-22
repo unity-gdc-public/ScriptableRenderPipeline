@@ -1701,14 +1701,15 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 // We only request the light cluster if we are gonna use it for debug mode
                 if (FullScreenDebugMode.LightCluster == m_CurrentDebugDisplaySettings.data.fullScreenDebugMode)
                 {
-                    var settings = VolumeManager.instance.stack.GetComponent<ScreenSpaceReflection>();
+                    var rSettings = VolumeManager.instance.stack.GetComponent<ScreenSpaceReflection>();
+                    var rrSettings = VolumeManager.instance.stack.GetComponent<RecursiveRendering>();
                     HDRaytracingEnvironment rtEnv = m_RayTracingManager.CurrentEnvironment();
-                    if(settings.enableRaytracing.value && rtEnv != null)
+                    if (rSettings.enableRaytracing.value && rtEnv != null)
                     {
                         HDRaytracingLightCluster lightCluster = m_RayTracingManager.RequestLightCluster(rtEnv.reflLayerMask);
                         PushFullScreenDebugTexture(hdCamera, cmd, lightCluster.m_DebugLightClusterTexture, FullScreenDebugMode.LightCluster);
                     }
-                    else if(rtEnv != null && rtEnv.raytracedObjects)
+                    else if (rrSettings.enable.value && rtEnv != null)
                     {
                         HDRaytracingLightCluster lightCluster = m_RayTracingManager.RequestLightCluster(rtEnv.raytracedLayerMask);
                         PushFullScreenDebugTexture(hdCamera, cmd, lightCluster.m_DebugLightClusterTexture, FullScreenDebugMode.LightCluster);
@@ -1804,7 +1805,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     {
                         BuildGPULightLists(hdCamera, cmd, m_SharedRTManager.GetDepthStencilBuffer(hdCamera.frameSettings.IsEnabled(FrameSettingsField.MSAA)), m_SharedRTManager.GetStencilBufferCopy(), m_SkyManager.IsLightingSkyValid());
                     }
-
+                    
                     DispatchContactShadows();
                 }
 
@@ -2564,7 +2565,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 #if ENABLE_RAYTRACING
             HDRaytracingEnvironment currentEnv = m_RayTracingManager.CurrentEnvironment();
             if (currentEnv != null && currentEnv.raytracedObjects)
-            {
+                    {
                 result.rayTracingOpaqueRLDesc = CreateOpaqueRendererListDesc(cull, hdCamera.camera, m_DepthOnlyAndDepthForwardOnlyPassNames, renderQueueRange: HDRenderQueue.k_RenderQueue_AllOpaqueRaytracing);
                 result.rayTracingTransparentRLDesc = CreateOpaqueRendererListDesc(cull, hdCamera.camera, m_DepthOnlyAndDepthForwardOnlyPassNames, renderQueueRange: HDRenderQueue.k_RenderQueue_AllTransparentRaytracing);
             }
@@ -2589,13 +2590,13 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                                         )
         {
             HDUtils.SetRenderTarget(cmd, depthBuffer);
-            // XRTODO: wait for XR SDK integration and implement custom version in HDUtils with dynamic resolution support
-            //XRUtils.DrawOcclusionMesh(cmd, hdCamera.camera, hdCamera.camera.stereoEnabled);
+                        // XRTODO: wait for XR SDK integration and implement custom version in HDUtils with dynamic resolution support
+                        //XRUtils.DrawOcclusionMesh(cmd, hdCamera.camera, hdCamera.camera.stereoEnabled);
 
             if (hasDepthOnlyPass)
             {
                 DrawOpaqueRendererList(renderContext, cmd, frameSettings, depthOnlyRendererList);
-            }
+                    }
 
             HDUtils.SetRenderTarget(cmd, mrt, depthBuffer);
             DrawOpaqueRendererList(renderContext, cmd, frameSettings, mrtRendererList);
@@ -2603,8 +2604,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 #if ENABLE_RAYTRACING
             // If there is a ray-tracing environment and the feature is enabled we want to push these objects to the prepass
             HDRaytracingEnvironment currentEnv = rayTracingManager.CurrentEnvironment();
+            var rrSettings = VolumeManager.instance.stack.GetComponent<RecursiveRendering>();
             // We want the opaque objects to be in the prepass so that we avoid rendering uselessly the pixels before raytracing them
-            if (currentEnv != null && currentEnv.raytracedObjects)
+            if (currentEnv != null && rrSettings.enable.value)
             {
                 HDUtils.DrawRendererList(renderContext, cmd, rayTracingOpaqueRL);
                 HDUtils.DrawRendererList(renderContext, cmd, rayTracingTransparentRL);
@@ -2642,7 +2644,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                                     rayTracingTransparentRendererList
 #endif
                                     );
-            }
+        }
 
             return depthPrepassParameters.shouldRenderMotionVectorAfterGBuffer;
         }
@@ -3040,7 +3042,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 #if ENABLE_RAYTRACING
                 // If there is a ray-tracing environment and the feature is enabled we want to push these objects to the transparent postpass (they are not rendered in the first call because they are not in the generic transparent render queue)
                 HDRaytracingEnvironment currentEnv = m_RayTracingManager.CurrentEnvironment();
-                if (currentEnv != null && currentEnv.raytracedObjects)
+                var rrSettings = VolumeManager.instance.stack.GetComponent<RecursiveRendering>();
+                if (currentEnv != null && rrSettings.enable.value)
                 {
                     var rendererListRT = RendererList.Create(CreateTransparentRendererListDesc(cullResults, hdCamera.camera, m_TransparentDepthPostpassNames, renderQueueRange: HDRenderQueue.k_RenderQueue_AllTransparentRaytracing));
                     DrawTransparentRendererList(renderContext, cmd, hdCamera.frameSettings, rendererListRT);
