@@ -2565,8 +2565,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             HDRaytracingEnvironment currentEnv = m_RayTracingManager.CurrentEnvironment();
             if (currentEnv != null && currentEnv.raytracedObjects)
             {
-                result.rayTracingOpaqueRLDesc = CreateOpaqueRendererList(cull, hdCamera.camera, m_DepthOnlyAndDepthForwardOnlyPassNames, renderQueueRange: HDRenderQueue.k_RenderQueue_AllOpaqueRaytracing);
-                result.rayTracingTransparentRLDesc = CreateOpaqueRendererList(cull, hdCamera.camera, m_DepthOnlyAndDepthForwardOnlyPassNames, renderQueueRange: HDRenderQueue.k_RenderQueue_AllTransparentRaytracing);
+                result.rayTracingOpaqueRLDesc = CreateOpaqueRendererListDesc(cull, hdCamera.camera, m_DepthOnlyAndDepthForwardOnlyPassNames, renderQueueRange: HDRenderQueue.k_RenderQueue_AllOpaqueRaytracing);
+                result.rayTracingTransparentRLDesc = CreateOpaqueRendererListDesc(cull, hdCamera.camera, m_DepthOnlyAndDepthForwardOnlyPassNames, renderQueueRange: HDRenderQueue.k_RenderQueue_AllTransparentRaytracing);
             }
 #endif
 
@@ -2602,7 +2602,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
 #if ENABLE_RAYTRACING
             // If there is a ray-tracing environment and the feature is enabled we want to push these objects to the prepass
-            HDRaytracingEnvironment currentEnv = m_RayTracingManager.CurrentEnvironment();
+            HDRaytracingEnvironment currentEnv = rayTracingManager.CurrentEnvironment();
             // We want the opaque objects to be in the prepass so that we avoid rendering uselessly the pixels before raytracing them
             if (currentEnv != null && currentEnv.raytracedObjects)
             {
@@ -3042,7 +3042,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 HDRaytracingEnvironment currentEnv = m_RayTracingManager.CurrentEnvironment();
                 if (currentEnv != null && currentEnv.raytracedObjects)
                 {
-                    var rendererListRT = CreateTransparentRendererList(cullResults, hdCamera.camera, m_TransparentDepthPostpassNames, renderQueueRange: HDRenderQueue.k_RenderQueue_AllTransparentRaytracing);
+                    var rendererListRT = RendererList.Create(CreateTransparentRendererListDesc(cullResults, hdCamera.camera, m_TransparentDepthPostpassNames, renderQueueRange: HDRenderQueue.k_RenderQueue_AllTransparentRaytracing));
                     DrawTransparentRendererList(renderContext, cmd, hdCamera.frameSettings, rendererListRT);
                 }
 #endif
