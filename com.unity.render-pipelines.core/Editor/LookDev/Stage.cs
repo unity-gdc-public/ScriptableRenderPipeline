@@ -58,13 +58,6 @@ namespace UnityEditor.Rendering.LookDev
             m_Camera.useOcclusionCulling = false;
             m_Camera.scene = m_PreviewScene;
         }
-        
-        ~Stage()
-        {
-            if (SRI != null)
-                SRI.SRPData = null;
-            SRI = null;
-        }
 
         /// <summary>
         /// Move a GameObject into the stage's scene at origin.
@@ -156,6 +149,9 @@ namespace UnityEditor.Rendering.LookDev
         /// <summary>Clear and close the stage's scene.</summary>
         public void Dispose()
         {
+            if (SRI != null)
+                SRI.SRPData = null;
+            SRI = null;
             Clear(persistent: true);
             EditorSceneManager.ClosePreviewScene(m_PreviewScene);
         }

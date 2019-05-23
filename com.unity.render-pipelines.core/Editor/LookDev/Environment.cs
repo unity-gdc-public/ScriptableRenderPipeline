@@ -75,7 +75,7 @@ namespace UnityEditor.Rendering.LookDev
 
     interface IBendable<T>
     {
-        void Assign(T data);
+        void Bind(T data);
     }
     public class EnvironmentElement : VisualElement, IBendable<Environment>
     {
@@ -106,7 +106,7 @@ namespace UnityEditor.Rendering.LookDev
         public EnvironmentElement(Environment environment)
         {
             Create();
-            Assign(environment);
+            Bind(environment);
         }
 
         void Create()
@@ -203,7 +203,7 @@ namespace UnityEditor.Rendering.LookDev
             Add(environmentParams);
         }
 
-        public void Assign(Environment environment)
+        public void Bind(Environment environment)
         {
             this.environment = environment;
             if (environment == null || environment.Equals(null))

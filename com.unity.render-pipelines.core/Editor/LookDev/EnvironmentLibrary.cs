@@ -105,7 +105,7 @@ namespace UnityEditor.Rendering.LookDev
                         RemoveFromClassList(k_SelectedClass);
                 }
 
-                public void Bind(K data) => m_Content.Assign(data);
+                public void Bind(K data) => m_Content.Bind(data);
             }
 
             VisualElement m_List;

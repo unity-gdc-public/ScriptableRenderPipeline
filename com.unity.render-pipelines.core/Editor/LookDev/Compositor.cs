@@ -55,7 +55,16 @@ namespace UnityEditor.Rendering.LookDev
     {
         public static readonly Color firstViewGizmoColor = new Color32(0, 154, 154, 255);
         public static readonly Color secondViewGizmoColor = new Color32(255, 37, 4, 255);
-        static Material s_MaterialCompositer = new Material(Shader.Find("Hidden/LookDev/Compositor"));
+        static Material s_Material;
+        static Material material
+        {
+            get
+            {
+                if (s_Material == null || s_Material.Equals(null))
+                    s_Material = new Material(Shader.Find("Hidden/LookDev/Compositor"));
+                return s_Material;
+            }
+        }
 
         IViewDisplayer m_Displayer;
         Context m_Contexts;
@@ -259,32 +268,32 @@ namespace UnityEditor.Rendering.LookDev
 
             RenderTexture oldActive = RenderTexture.active;
             RenderTexture.active = m_RenderTextures[ViewCompositionIndex.Composite];
-            s_MaterialCompositer.SetTexture("_Tex0Normal", texWithSun0);
-            s_MaterialCompositer.SetTexture("_Tex0WithoutSun", texWithoutSun0);
-            s_MaterialCompositer.SetTexture("_Tex0Shadows", texShadowsMask0);
-            s_MaterialCompositer.SetColor("_ShadowColor0", shadowColor0);
-            s_MaterialCompositer.SetTexture("_Tex1Normal", texWithSun1);
-            s_MaterialCompositer.SetTexture("_Tex1WithoutSun", texWithoutSun1);
-            s_MaterialCompositer.SetTexture("_Tex1Shadows", texShadowsMask1);
-            s_MaterialCompositer.SetColor("_ShadowColor1", shadowColor1);
-            s_MaterialCompositer.SetVector("_CompositingParams", compositingParams);
-            s_MaterialCompositer.SetVector("_CompositingParams2", compositingParams2);
-            s_MaterialCompositer.SetColor("_FirstViewColor", firstViewGizmoColor);
-            s_MaterialCompositer.SetColor("_SecondViewColor", secondViewGizmoColor);
-            s_MaterialCompositer.SetVector("_GizmoPosition", gizmoPosition);
-            s_MaterialCompositer.SetVector("_GizmoZoneCenter", gizmoZoneCenter);
-            s_MaterialCompositer.SetVector("_GizmoSplitPlane", gizmo.plane);
-            s_MaterialCompositer.SetVector("_GizmoSplitPlaneOrtho", gizmo.planeOrtho);
-            s_MaterialCompositer.SetFloat("_GizmoLength", gizmo.length);
-            s_MaterialCompositer.SetVector("_GizmoThickness", gizmoThickness);
-            s_MaterialCompositer.SetVector("_GizmoCircleRadius", gizmoCircleRadius);
-            s_MaterialCompositer.SetFloat("_BlendFactorCircleRadius", ComparisonGizmoState.blendFactorCircleRadius);
-            s_MaterialCompositer.SetFloat("_GetBlendFactorMaxGizmoDistance", gizmo.blendFactorMaxGizmoDistance);
-            s_MaterialCompositer.SetFloat("_GizmoRenderMode", k_GizmoRenderMode);
-            s_MaterialCompositer.SetVector("_ScreenRatio", screenRatio);
-            s_MaterialCompositer.SetVector("_ToneMapCoeffs1", tonemapCoeff1);
-            s_MaterialCompositer.SetVector("_ToneMapCoeffs2", tonemapCoeff2);
-            s_MaterialCompositer.SetPass((int)m_Contexts.layout.viewLayout); //missing horizontal pass
+            material.SetTexture("_Tex0Normal", texWithSun0);
+            material.SetTexture("_Tex0WithoutSun", texWithoutSun0);
+            material.SetTexture("_Tex0Shadows", texShadowsMask0);
+            material.SetColor("_ShadowColor0", shadowColor0);
+            material.SetTexture("_Tex1Normal", texWithSun1);
+            material.SetTexture("_Tex1WithoutSun", texWithoutSun1);
+            material.SetTexture("_Tex1Shadows", texShadowsMask1);
+            material.SetColor("_ShadowColor1", shadowColor1);
+            material.SetVector("_CompositingParams", compositingParams);
+            material.SetVector("_CompositingParams2", compositingParams2);
+            material.SetColor("_FirstViewColor", firstViewGizmoColor);
+            material.SetColor("_SecondViewColor", secondViewGizmoColor);
+            material.SetVector("_GizmoPosition", gizmoPosition);
+            material.SetVector("_GizmoZoneCenter", gizmoZoneCenter);
+            material.SetVector("_GizmoSplitPlane", gizmo.plane);
+            material.SetVector("_GizmoSplitPlaneOrtho", gizmo.planeOrtho);
+            material.SetFloat("_GizmoLength", gizmo.length);
+            material.SetVector("_GizmoThickness", gizmoThickness);
+            material.SetVector("_GizmoCircleRadius", gizmoCircleRadius);
+            material.SetFloat("_BlendFactorCircleRadius", ComparisonGizmoState.blendFactorCircleRadius);
+            material.SetFloat("_GetBlendFactorMaxGizmoDistance", gizmo.blendFactorMaxGizmoDistance);
+            material.SetFloat("_GizmoRenderMode", k_GizmoRenderMode);
+            material.SetVector("_ScreenRatio", screenRatio);
+            material.SetVector("_ToneMapCoeffs1", tonemapCoeff1);
+            material.SetVector("_ToneMapCoeffs2", tonemapCoeff2);
+            material.SetPass((int)m_Contexts.layout.viewLayout); //missing horizontal pass
 
             Renderer.DrawFullScreenQuad(new Rect(0, 0, rect.width, rect.height));
 

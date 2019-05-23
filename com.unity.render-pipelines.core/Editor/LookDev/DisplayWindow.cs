@@ -1,3 +1,5 @@
+//#define TEMPORARY_RENDERDOC_INTEGRATION //require specific c++
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
