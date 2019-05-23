@@ -51,19 +51,23 @@
 #define MAX_CT_LOBE_COUNT 3
 #define CARPAINT2_LOBE_COUNT max(_CarPaint2_LobeCount,MAX_CT_LOBE_COUNT)
 
+//-----------------------------------------------------------------------------
+// Helper functions/variable specific to this material
+//-----------------------------------------------------------------------------
+
 float3 GetNormalForShadowBias(BSDFData bsdfData)
 {
     return bsdfData.geomNormalWS;
 }
 
+float GetAmbientOcclusionForMicroShadowing(BSDFData bsdfData)
+{
+    return 1; // TODO
+}
+
 void ClampRoughness(inout BSDFData bsdfData, float minRoughness)
 {
     // TODO
-}
-
-float ComputeMicroShadowing(BSDFData bsdfData, float NdotL)
-{
-    return 1; // TODO
 }
 
 //-----------------------------------------------------------------------------

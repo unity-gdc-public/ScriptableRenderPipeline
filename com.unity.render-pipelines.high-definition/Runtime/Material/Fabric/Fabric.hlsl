@@ -28,12 +28,9 @@ float3 GetNormalForShadowBias(BSDFData bsdfData)
     return bsdfData.geomNormalWS;
 }
 
-// Assume bsdfData.normalWS is init
-void FillMaterialAnisotropy(float anisotropy, float3 tangentWS, float3 bitangentWS, inout BSDFData bsdfData)
+float GetAmbientOcclusionForMicroShadowing(BSDFData bsdfData)
 {
-    bsdfData.anisotropy = anisotropy;
-    bsdfData.tangentWS = tangentWS;
-    bsdfData.bitangentWS = bitangentWS;
+    return bsdfData.ambientOcclusion;
 }
 
 void ClampRoughness(inout BSDFData bsdfData, float minRoughness)
@@ -42,9 +39,12 @@ void ClampRoughness(inout BSDFData bsdfData, float minRoughness)
     bsdfData.roughnessB = max(minRoughness, bsdfData.roughnessB);
 }
 
-float ComputeMicroShadowing(BSDFData bsdfData, float NdotL)
+// Assume bsdfData.normalWS is init
+void FillMaterialAnisotropy(float anisotropy, float3 tangentWS, float3 bitangentWS, inout BSDFData bsdfData)
 {
-    return ComputeMicroShadowing(bsdfData.ambientOcclusion, NdotL, _MicroShadowOpacity);
+    bsdfData.anisotropy = anisotropy;
+    bsdfData.tangentWS = tangentWS;
+    bsdfData.bitangentWS = bitangentWS;
 }
 
 // This function is use to help with debugging and must be implemented by any lit material
@@ -375,7 +375,7 @@ CBSDF EvaluateBSDF(float3 V, float3 L, PreLightData preLightData, BSDFData bsdfD
     float NdotV = preLightData.NdotV;
     float NdotL = dot(N, L);
     float clampedNdotV = ClampNdotV(NdotV);
-    float clampedNdotL = max(NdotL, 0);
+    float clampedNdotL = saturate(NdotL);
     float flippedNdotL = ComputeWrappedDiffuseLighting(-NdotL, TRANSMISSION_WRAP_LIGHT);
 
     float LdotV, NdotH, LdotH, invLenLV;
@@ -442,12 +442,9 @@ CBSDF EvaluateBSDF(float3 V, float3 L, PreLightData preLightData, BSDFData bsdfD
 // Surface shading (all light types) below
 //-----------------------------------------------------------------------------
 
-// Here we need to make sure
-#define USE_DIFFUSE_LAMBERT_BRDF
 #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Lighting/LightEvaluation.hlsl"
 #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/MaterialEvaluation.hlsl"
 #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Lighting/SurfaceShading.hlsl"
-#undef USE_DIFFUSE_LAMBERT_BRDF
 
 //-----------------------------------------------------------------------------
 // EvaluateBSDF_Directional

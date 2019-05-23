@@ -198,7 +198,7 @@ void ModifyDistancesForFillLighting(inout float4 distances, float lightSqRadius)
 }
 
 // Returns the normalized light vector L and the distances = {d, d^2, 1/d, d_proj}.
-void GetPunctualLightVectors(float3 positionWS, LightData light, out float3 L, out float3 lightToSample, out float4 distances)
+void GetPunctualLightVectors(float3 positionWS, LightData light, out float3 L, out float4 distances)
 {
     float3 lightToSample = positionWS - light.positionRWS;
 

@@ -22,7 +22,7 @@
 
 float3 GetNormalForShadowBias(BSDFData bsdfData)
 {
-#if (_USE_LIGHT_FACING_NORMAL)
+#if _USE_LIGHT_FACING_NORMAL
     // TODO: should probably bias towards the light for splines...
     return bsdfData.geomNormalWS;
 #else
@@ -30,15 +30,16 @@ float3 GetNormalForShadowBias(BSDFData bsdfData)
 #endif
 }
 
-void ClampRoughness(inout BSDFData bsdfData, float minRoughness)
+float GetAmbientOcclusionForMicroShadowing(BSDFData bsdfData)
 {
-    bsdfData.roughnessT = max(minRoughness, bsdfData.roughnessT);
-    bsdfData.roughnessB = max(minRoughness, bsdfData.roughnessB);
+    // Don't do micro shadow for hair, don't really make sense
+    return 1.0;
 }
 
-float ComputeMicroShadowing(BSDFData bsdfData, float NdotL)
+void ClampRoughness(inout BSDFData bsdfData, float minRoughness)
 {
-    return ComputeMicroShadowing(bsdfData.ambientOcclusion, NdotL, _MicroShadowOpacity);
+    bsdfData.perceptualRoughness = max(RoughnessToPerceptualRoughness(minRoughness), bsdfData.perceptualRoughness);
+    bsdfData.secondaryPerceptualRoughness = max(RoughnessToPerceptualRoughness(minRoughness), bsdfData.secondaryPerceptualRoughness);
 }
 
 // This function is use to help with debugging and must be implemented by any lit material
@@ -240,7 +241,7 @@ PreLightData GetPreLightData(float3 V, PositionInputs posInput, inout BSDFData b
     PreLightData preLightData;
     // Don't init to zero to allow to track warning about uninitialized data
 
-#if (_USE_LIGHT_FACING_NORMAL)
+#if _USE_LIGHT_FACING_NORMAL
     float3 N = ComputeViewFacingNormal(V, bsdfData.hairStrandDirectionWS);
 #else
     float3 N = bsdfData.normalWS;
@@ -340,7 +341,7 @@ CBSDF EvaluateBSDF(float3 V, float3 L, float NdotL, PreLightData preLightData, B
     float3 T = bsdfData.hairStrandDirectionWS;
     float3 N = bsdfData.normalWS;
 
-#if (_USE_LIGHT_FACING_NORMAL)
+#if _USE_LIGHT_FACING_NORMAL
     // The Kajiya-Kay model has a "built-in" transmission, and the 'NdotL' is always positive.
     float cosTL = dot(T, L);
     float sinTL = sqrt(saturate(1.0 - cosTL * cosTL));
@@ -352,7 +353,7 @@ CBSDF EvaluateBSDF(float3 V, float3 L, float NdotL, PreLightData preLightData, B
 
     float NdotV = preLightData.NdotV;
     float clampedNdotV = ClampNdotV(NdotV);
-    float clampedNdotL = max(NdotL, 0);
+    float clampedNdotL = saturate(NdotL);
 
     float LdotV, NdotH, LdotH, invLenLV;
     GetBSDFAngle(V, L, NdotL, NdotV, LdotV, NdotH, LdotH, invLenLV);
@@ -370,7 +371,7 @@ CBSDF EvaluateBSDF(float3 V, float3 L, float NdotL, PreLightData preLightData, B
 
         float3 F = F_Schlick(bsdfData.fresnel0, LdotH);
 
-    #if (_USE_LIGHT_FACING_NORMAL)
+    #if _USE_LIGHT_FACING_NORMAL
         // See "Analytic Tangent Irradiance Environment Maps for Anisotropic Surfaces".
         cbsdf.diffR = rcp(PI * PI) * clampedNdotL;
         // Transmission is built into the model, and it's not exactly clear how to split it.
@@ -403,11 +404,9 @@ CBSDF EvaluateBSDF(float3 V, float3 L, float NdotL, PreLightData preLightData, B
 // Surface shading (all light types) below
 //-----------------------------------------------------------------------------
 
-#define USE_DIFFUSE_LAMBERT_BRDF
 #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Lighting/LightEvaluation.hlsl"
 #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/MaterialEvaluation.hlsl"
 #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Lighting/SurfaceShading.hlsl"
-#undef USE_DIFFUSE_LAMBERT_BRDF
 
 //-----------------------------------------------------------------------------
 // EvaluateBSDF_Directional

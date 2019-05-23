@@ -215,6 +215,22 @@ void GetAmbientOcclusionFactor(float3 indirectAmbientOcclusion, float3 indirectS
 //-----------------------------------------------------------------------------
 // Helper functions/variable specific to this material
 //-----------------------------------------------------------------------------
+
+float3 GetNormalForShadowBias(BSDFData bsdfData)
+{
+    return bsdfData.geomNormalWS;
+}
+
+void ClampRoughness(inout BSDFData bsdfData, float minRoughness)
+{
+    // TODO
+}
+
+float GetAmbientOcclusionForMicroShadowing(BSDFData bsdfData)
+{
+    return bsdfData.ambientOcclusion;
+}
+
 // SSReflection
 #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Lighting/LightDefinition.cs.hlsl"
 #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Lighting/Reflection/VolumeProjection.hlsl"
@@ -329,21 +345,6 @@ float GetCoatEta(in BSDFData bsdfData)
     float eta = bsdfData.coatIor / 1.0;
     //ieta = 1.0 / eta;
     return eta;
-}
-
-float3 GetNormalForShadowBias(BSDFData bsdfData)
-{
-    return bsdfData.geomNormalWS;
-}
-
-void ClampRoughness(inout BSDFData bsdfData, float minRoughness)
-{
-    // TODO
-}
-
-float ComputeMicroShadowing(BSDFData bsdfData, float NdotL)
-{
-    return 1; // TODO
 }
 
 bool MaterialSupportsTransmission(BSDFData bsdfData)

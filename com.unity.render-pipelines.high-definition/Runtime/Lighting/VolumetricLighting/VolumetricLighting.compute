@@ -244,6 +244,7 @@ VoxelLighting EvaluateVoxelLightingDirectional(LightLoopContext context, uint fe
             // Note: the 'weight' accounts for transmittance from 't0' to 't'.
             lighting.radianceNoPhase += (weight * lightColor.rgb);
             lighting.radianceComplete += (weight * lightColor.rgb) * phase;
+        }
     }
 
     return lighting;

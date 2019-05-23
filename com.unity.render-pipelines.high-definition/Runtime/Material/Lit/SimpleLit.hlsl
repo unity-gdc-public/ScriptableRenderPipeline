@@ -14,34 +14,29 @@
 #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/NormalBuffer.hlsl"
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/VolumeRendering.hlsl"
 
-#define USE_DIFFUSE_LAMBERT_BRDF
+//-----------------------------------------------------------------------------
+// Helper functions/variable specific to this material
+//-----------------------------------------------------------------------------
+
+float3 GetNormalForShadowBias(BSDFData bsdfData)
+{
+    // In forward we can used geometric normal for shadow bias which improve quality
+#if (SHADERPASS == SHADERPASS_FORWARD)
+    return bsdfData.geomNormalWS;
+#else
+    return bsdfData.normalWS;
+#endif    
+}
+
+float GetAmbientOcclusionForMicroShadowing(BSDFData bsdfData)
+{
+    return 1.0; // Don't do microshadowing for simpleLit
+}
 
 void ClampRoughness(inout BSDFData bsdfData, float minRoughness)
 {
     bsdfData.roughnessT    = max(minRoughness, bsdfData.roughnessT);
     bsdfData.roughnessB    = max(minRoughness, bsdfData.roughnessB);
-    bsdfData.coatRoughness = max(minRoughness, bsdfData.coatRoughness);
-}
-
-float ComputeMicroShadowing(BSDFData bsdfData, float NdotL)
-{
-    float sourceAO;
-#if (SHADERPASS == SHADERPASS_DEFERRED_LIGHTING)
-    // Note: In deferred pass we don't have space in GBuffer to store ambientOcclusion unless LIGHT_LAYERS is enabled
-    // so we use specularOcclusion instead
-    // The define LIGHT_LAYERS only exist for the GBuffer and the Forward pass. To avoid to add another
-    // variant to deferred.compute, we use dynamic branching instead with _EnableLightLayers.
-    sourceAO = _EnableLightLayers ? bsdfData.ambientOcclusion : bsdfData.specularOcclusion;
-#else
-    sourceAO = bsdfData.ambientOcclusion;
-#endif
-
-    return ComputeMicroShadowing(sourceAO, NdotL, _MicroShadowOpacity);
-}
-
-float3 GetNormalForShadowBias(BSDFData bsdfData)
-{
-    return bsdfData.normalWS;
 }
 
 // This function is similar to ApplyDebugToSurfaceData but for BSDFData
@@ -237,44 +232,58 @@ PreLightData GetPreLightData(float3 V, PositionInputs posInput, inout BSDFData b
 
 #ifdef HAS_LIGHTLOOP
 
-// This function apply BSDF. Assumes that NdotL is positive.
-void BSDF(  float3 V, float3 L, float NdotL, float3 positionWS, PreLightData preLightData, BSDFData bsdfData,
-            out float3 diffuseLighting,
-            out float3 specularLighting)
+bool IsNonZeroBSDF(float3 V, float3 L, PreLightData preLightData, BSDFData bsdfData)
 {
-    // We don't multiply by 'bsdfData.diffuseColor' here. It's done only once in PostEvaluateBSDF().
-    diffuseLighting = Lambert();
-    specularLighting = 0;
+    float NdotL = dot(bsdfData.normalWS, L);
+
+#if HDRP_MATERIAL_TYPE_SIMPLELIT_TRANSLUCENT
+    return HasFlag(bsdfData.materialFeatures, MATERIALFEATUREFLAGS_LIT_TRANSMISSION) || (NdotL > 0.0);
+#else
+    return  NdotL > 0.0;
+#endif
+}
+
+// This function apply BSDF. Assumes that NdotL is positive.
+CBSDF EvaluateBSDF(float3 V, float3 L, PreLightData preLightData, BSDFData bsdfData)
+{
+    CBxDF cbsdf;
+    ZERO_INITIALIZE(CBSDF, cbsdf);
+
+    float3 N = bsdfData.normalWS;
+
+    float NdotV = preLightData.NdotV;
+    float NdotL = dot(N, L);
+    float clampedNdotV = ClampNdotV(NdotV);
+    float clampedNdotL = saturate(NdotL);
+    float flippedNdotL = ComputeWrappedDiffuseLighting(-NdotL, TRANSMISSION_WRAP_LIGHT);
 
 #if HDRP_ENABLE_SPECULAR
     float LdotV, NdotH, LdotH, NdotV, invLenLV;
-    GetBSDFAngle(V, L, NdotL, preLightData.NdotV, LdotV, NdotH, LdotH, NdotV, invLenLV);
+    GetBSDFAngle(V, L, NdotL, NdotV, LdotV, NdotH, LdotH, invLenLV);
 
     float3 F = F_Schlick(bsdfData.fresnel0, LdotH);
 
-    float DV = DV_SmithJointGGX(NdotH, NdotL, NdotV, bsdfData.roughnessT, preLightData.partLambdaV);
-    specularLighting = F * DV;
+    float DV = DV_SmithJointGGX(NdotH, clampedNdotL, clampedNdotV, bsdfData.roughnessT, preLightData.partLambdaV);
+    float3 specTerm = F * DV;
+
+    // Probably worth branching here for perf reasons.
+    // This branch will be optimized away if there's no transmission.
+    if (NdotL > 0)
+    {
+        cbxdf.specR = specTerm * clampedNdotL;
+    }
+}
 #endif // HDRP_ENABLE_SPECULAR
+
+    float  diffTerm = Lambert();
+    cbxdf.diffR = diffTerm * clampedNdotL;
+    cbxdf.diffT = diffTerm * flippedNdotL;
+
+    // We don't multiply by 'bsdfData.diffuseColor' here. It's done only once in PostEvaluateBSDF().
+    return cbsdf;
 }
 
-float3 EvaluateCookie_Directional(LightLoopContext lightLoopContext, DirectionalLightData lightData,
-                                  float3 lightToSample)
-{
 
-    // Translate and rotate 'positionWS' into the light space.
-    // 'lightData.right' and 'lightData.up' are pre-scaled on CPU.
-    float3x3 lightToWorld  = float3x3(lightData.right, lightData.up, lightData.forward);
-    float3   positionLS    = mul(lightToSample, transpose(lightToWorld));
-
-    // Perform orthographic projection.
-    float2 positionCS    = positionLS.xy;
-
-    // Remap the texture coordinates from [-1, 1]^2 to [0, 1]^2.
-    float2 positionNDC = positionCS * 0.5 + 0.5;
-
-    // We let the sampler handle clamping to border.
-    return SampleCookie2D(lightLoopContext, positionNDC, lightData.cookieIndex, lightData.tileCookie);
-}
 
 float4 EvaluateCookie_Punctual(LightLoopContext lightLoopContext, LightData lightData,
                                float3 lightToSample)
@@ -342,7 +351,6 @@ void EvaluateLight_EnvIntersection(float3 positionWS, float3 normalWS, EnvLightD
     weight *= lightData.weight;
 }
 
-#define OVERRIDE_EVALUATE_COOKIE_DIRECTIONAL
 #define OVERRIDE_EVALUATE_COOKIE_PUNCTUAL
 #define OVERRIDE_EVALUATE_ENV_INTERSECTION
 
@@ -387,24 +395,6 @@ void EvaluateLight_Directional(LightLoopContext lightLoopContext, PositionInputs
 
     attenuation *= shadow;
 }
-
-float3 EvaluateTransmission(BSDFData bsdfData, float3 transmittance, float NdotL, float NdotV, float LdotV, float attenuation)
-{
-    // Apply wrapped lighting to better handle thin objects at grazing angles.
-    float wrappedNdotL = ComputeWrappedDiffuseLighting(-NdotL, TRANSMISSION_WRAP_LIGHT);
-
-    // Apply BSDF-specific diffuse transmission to attenuation. See also: [SSS-NOTE-TRSM]
-    // We don't multiply by 'bsdfData.diffuseColor' here. It's done only once in PostEvaluateBSDF().
-#ifdef USE_DIFFUSE_LAMBERT_BRDF
-    attenuation *= Lambert();
-#else
-    attenuation *= DisneyDiffuse(NdotV, max(0, -NdotL), LdotV, bsdfData.perceptualRoughness);
-#endif
-
-    float intensity = attenuation * wrappedNdotL;
-    return intensity * transmittance;
-}
-
 
 DirectLighting EvaluateBSDF_Directional(LightLoopContext lightLoopContext,
                                         float3 V, PositionInputs posInput, PreLightData preLightData,
