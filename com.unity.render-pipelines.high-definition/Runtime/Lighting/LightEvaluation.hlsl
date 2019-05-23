@@ -1,4 +1,8 @@
 // This files include various function uses to evaluate lights
+// use #define LIGHT_EVALUATION_NO_HEIGHT_FOG to disable Height fog attenuation evaluation
+// use #define LIGHT_EVALUATION_NO_COOKIE to disable cookie evaluation
+// use #define LIGHT_EVALUATION_NO_CONTACT_SHADOWS to disable contact shadow evaluation
+// use #define LIGHT_EVALUATION_NO_SHADOWS to disable evaluation of shadow including contact shadow (but not micro shadow)
 
 // Samples the area light's associated cookie
 //  cookieIndex, the index of the cookie texture in the Texture2DArray
@@ -78,7 +82,6 @@ float3 SampleAreaLightCookie(int cookieIndex, float4x3 L, float3 F)
 // Directional Light evaluation helper
 //-----------------------------------------------------------------------------
 
-#ifndef OVERRIDE_EVALUATE_COOKIE_DIRECTIONAL
 float3 EvaluateCookie_Directional(LightLoopContext lightLoopContext, DirectionalLightData light,
                                   float3 lightToSample)
 {
@@ -97,7 +100,6 @@ float3 EvaluateCookie_Directional(LightLoopContext lightLoopContext, Directional
     // We let the sampler handle clamping to border.
     return SampleCookie2D(lightLoopContext, positionNDC, light.cookieIndex, light.tileCookie);
 }
-#endif
 
 // Returns unassociated (non-premultiplied) color with alpha (attenuation).
 // The calling code must perform alpha-compositing.
@@ -106,15 +108,18 @@ float4 EvaluateLight_Directional(LightLoopContext lightLoopContext, PositionInpu
 {
     float4 color = float4(light.color, 1.0);
 
+#ifndef LIGHT_EVALUATION_NO_HEIGHT_FOG
     // Height fog attenuation.
     // TODO: add an if()?
     {
         float cosZenithAngle = -light.forward.y;
         float fragmentHeight = posInput.positionWS.y;
         color.a *= TransmittanceHeightFog(_HeightFogBaseExtinction, _HeightFogBaseHeight,
-            _HeightFogExponents, cosZenithAngle, fragmentHeight);
+                                          _HeightFogExponents, cosZenithAngle, fragmentHeight);
     }
+#endif
 
+#ifndef LIGHT_EVALUATION_NO_COOKIE
     if (light.cookieIndex >= 0)
     {
         float3 lightToSample = posInput.positionWS - light.positionRWS;
@@ -122,6 +127,7 @@ float4 EvaluateLight_Directional(LightLoopContext lightLoopContext, PositionInpu
 
         color.rgb *= cookie;
     }
+#endif
 
     return color;
 }
@@ -129,6 +135,7 @@ float4 EvaluateLight_Directional(LightLoopContext lightLoopContext, PositionInpu
 float EvaluateShadow_Directional(LightLoopContext lightLoopContext, PositionInputs posInput,
                                  DirectionalLightData light, BuiltinData builtinData, float3 N)
 {
+#ifndef LIGHT_EVALUATION_NO_SHADOWS
     float shadow     = 1.0;
     float shadowMask = 1.0;
 
@@ -170,7 +177,7 @@ float EvaluateShadow_Directional(LightLoopContext lightLoopContext, PositionInpu
     }
 
     // Transparents have no contact shadow information
-#ifndef _SURFACE_TYPE_TRANSPARENT
+#if !defined(_SURFACE_TYPE_TRANSPARENT) && !defined(LIGHT_EVALUATION_NO_CONTACT_SHADOWS)
     shadow = min(shadow, GetContactShadow(lightLoopContext, light.contactShadowMask));
 #endif
 
@@ -180,6 +187,9 @@ float EvaluateShadow_Directional(LightLoopContext lightLoopContext, PositionInpu
 #endif
 
     return shadow;
+#else // LIGHT_EVALUATION_NO_SHADOWS
+    return 1.0;
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -223,7 +233,6 @@ void GetPunctualLightVectors(float3 positionWS, LightData light, out float3 L, o
     }
 }
 
-#ifndef OVERRIDE_EVALUATE_COOKIE_PUNCTUAL
 float4 EvaluateCookie_Punctual(LightLoopContext lightLoopContext, LightData light,
                                float3 lightToSample)
 {
@@ -258,7 +267,6 @@ float4 EvaluateCookie_Punctual(LightLoopContext lightLoopContext, LightData ligh
 
     return cookie;
 }
-#endif
 
 // Returns unassociated (non-premultiplied) color with alpha (attenuation).
 // The calling code must perform alpha-compositing.
@@ -271,6 +279,7 @@ float4 EvaluateLight_Punctual(LightLoopContext lightLoopContext, PositionInputs 
     color.a *= PunctualLightAttenuation(distances, light.rangeAttenuationScale, light.rangeAttenuationBias,
                                         light.angleScale, light.angleOffset);
 
+#ifndef LIGHT_EVALUATION_NO_HEIGHT_FOG
     // Height fog attenuation.
     // TODO: add an if()?
     {
@@ -278,10 +287,12 @@ float4 EvaluateLight_Punctual(LightLoopContext lightLoopContext, PositionInputs 
         float distToLight = (light.lightType == GPULIGHTTYPE_PROJECTOR_BOX) ? distances.w : distances.x;
         float fragmentHeight = posInput.positionWS.y;
         color.a *= TransmittanceHeightFog(_HeightFogBaseExtinction, _HeightFogBaseHeight,
-            _HeightFogExponents, cosZenithAngle,
-            fragmentHeight, distToLight);
+                                          _HeightFogExponents, cosZenithAngle,
+                                          fragmentHeight, distToLight);
     }
+#endif
 
+#ifndef LIGHT_EVALUATION_NO_COOKIE
     // Projector lights always have cookies, so we can perform clipping inside the if().
     if (light.cookieIndex >= 0)
     {
@@ -290,6 +301,7 @@ float4 EvaluateLight_Punctual(LightLoopContext lightLoopContext, PositionInputs 
 
         color *= cookie;
     }
+#endif
 
     return color;
 }
@@ -298,6 +310,7 @@ float4 EvaluateLight_Punctual(LightLoopContext lightLoopContext, PositionInputs 
 float EvaluateShadow_Punctual(LightLoopContext lightLoopContext, PositionInputs posInput,
                               LightData light, BuiltinData builtinData, float3 N, float3 L, float4 distances)
 {
+#ifndef LIGHT_EVALUATION_NO_SHADOWS
     float shadow     = 1.0;
     float shadowMask = 1.0;
 
@@ -326,7 +339,7 @@ float EvaluateShadow_Punctual(LightLoopContext lightLoopContext, PositionInputs 
     }
 
     // Transparents have no contact shadow information
-#ifndef _SURFACE_TYPE_TRANSPARENT
+#if !defined(_SURFACE_TYPE_TRANSPARENT) && !defined(LIGHT_EVALUATION_NO_CONTACT_SHADOWS)
     shadow = min(shadow, GetContactShadow(lightLoopContext, light.contactShadowMask));
 #endif
 
@@ -334,8 +347,10 @@ float EvaluateShadow_Punctual(LightLoopContext lightLoopContext, PositionInputs 
     if (_DebugShadowMapMode == SHADOWMAPDEBUGMODE_SINGLE_SHADOW && light.shadowIndex == _DebugSingleShadowIndex)
         debugShadowAttenuation = shadow;
 #endif
-
     return shadow;
+#else // LIGHT_EVALUATION_NO_SHADOWS
+    return 1.0;
+#endif
 }
 
 //-----------------------------------------------------------------------------

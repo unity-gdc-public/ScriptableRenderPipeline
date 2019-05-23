@@ -27,11 +27,6 @@
 // #define LIT_DISPLAY_REFERENCE_IBL
 #endif
 
-// In forward we can chose between reading the normal from the normalBufferTexture or computing it again
-// This is tradeoff between performance and quality. As we store the normal conpressed, recomputing again is higher quality.
-// Uncomment this to get speed (to measure), let it comment to get quality
-// #define FORWARD_MATERIAL_READ_FROM_WRITTEN_NORMAL_BUFFER
-
 #ifndef SKIP_RASTERIZED_SHADOWS
 #define RASTERIZED_AREA_LIGHT_SHADOWS 1
 #else
@@ -420,13 +415,6 @@ BSDFData ConvertSurfaceDataToBSDFData(uint2 positionSS, SurfaceData surfaceData)
     bsdfData.normalWS            = surfaceData.normalWS;
     bsdfData.geomNormalWS        = surfaceData.geomNormalWS;
     bsdfData.perceptualRoughness = PerceptualSmoothnessToPerceptualRoughness(surfaceData.perceptualSmoothness);
-
-    // Check if we read value of normal and roughness from buffer. This is a tradeoff
-#ifdef FORWARD_MATERIAL_READ_FROM_WRITTEN_NORMAL_BUFFER
-#if (SHADERPASS == SHADERPASS_FORWARD) && !defined(_SURFACE_TYPE_TRANSPARENT)
-    UpdateSurfaceDataFromNormalData(positionSS, bsdfData);
-#endif
-#endif
 
     // There is no metallic with SSS and specular color mode
     float metallic = HasFlag(surfaceData.materialFeatures, MATERIALFEATUREFLAGS_LIT_SPECULAR_COLOR | MATERIALFEATUREFLAGS_LIT_SUBSURFACE_SCATTERING | MATERIALFEATUREFLAGS_LIT_TRANSMISSION) ? 0.0 : surfaceData.metallic;
