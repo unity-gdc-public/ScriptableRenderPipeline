@@ -23,15 +23,25 @@ namespace UnityEditor.Rendering.LookDev
         event Action<IMouseEvent> OnMouseEventInView;
 
         event Action<GameObject, ViewCompositionIndex, Vector2> OnChangingObjectInView;
+        event Action<Material, ViewCompositionIndex, Vector2> OnChangingMaterialInView;
         event Action<UnityEngine.Object, ViewCompositionIndex, Vector2> OnChangingEnvironmentInView;
         
         event Action OnClosed;
     }
+    
+    public interface IEnvironmentDisplayer
+    {
+        void Repaint();
 
+        event Action<UnityEngine.Object> OnAddingEnvironment;
+        event Action<int> OnRemovingEnvironment;
+        event Action<EnvironmentLibrary> OnChangingEnvironmentLibrary;
+    }
+    
     /// <summary>
     /// Displayer and User Interaction 
     /// </summary>
-    internal class DisplayWindow : EditorWindow, IViewDisplayer
+    internal class DisplayWindow : EditorWindow, IViewDisplayer, IEnvironmentDisplayer
     {
         static class Style
         {
@@ -61,6 +71,9 @@ namespace UnityEditor.Rendering.LookDev
         VisualElement m_MainContainer;
         VisualElement m_ViewContainer;
         VisualElement m_EnvironmentContainer;
+        ListView m_EnvironmentList;
+        EnvironmentElement m_EnvironmentInspector;
+        Image m_CurrenttlyEditedEnvironmentPreview;
 
         Image[] m_Views = new Image[2];
         
@@ -119,6 +132,13 @@ namespace UnityEditor.Rendering.LookDev
             remove => OnChangingObjectInViewInternal -= value;
         }
 
+        event Action<Material, ViewCompositionIndex, Vector2> OnChangingMaterialInViewInternal;
+        event Action<Material, ViewCompositionIndex, Vector2> IViewDisplayer.OnChangingMaterialInView
+        {
+            add => OnChangingMaterialInViewInternal += value;
+            remove => OnChangingMaterialInViewInternal -= value;
+        }
+
         event Action<UnityEngine.Object, ViewCompositionIndex, Vector2> OnChangingEnvironmentInViewInternal;
         event Action<UnityEngine.Object, ViewCompositionIndex, Vector2> IViewDisplayer.OnChangingEnvironmentInView
         {
@@ -133,6 +153,26 @@ namespace UnityEditor.Rendering.LookDev
             remove => OnClosedInternal -= value;
         }
 
+        event Action<UnityEngine.Object> OnAddingEnvironmentInternal;
+        event Action<UnityEngine.Object> IEnvironmentDisplayer.OnAddingEnvironment
+        {
+            add => OnAddingEnvironmentInternal += value;
+            remove => OnAddingEnvironmentInternal -= value;
+        }
+
+        event Action<int> OnRemovingEnvironmentInternal;
+        event Action<int> IEnvironmentDisplayer.OnRemovingEnvironment
+        {
+            add => OnRemovingEnvironmentInternal += value;
+            remove => OnRemovingEnvironmentInternal -= value;
+        }
+
+        event Action<EnvironmentLibrary> OnChangingEnvironmentLibraryInternal;
+        event Action<EnvironmentLibrary> IEnvironmentDisplayer.OnChangingEnvironmentLibrary
+        {
+            add => OnChangingEnvironmentLibraryInternal += value;
+            remove => OnChangingEnvironmentLibraryInternal -= value;
+        }
 
         void OnEnable()
         {
@@ -146,7 +186,14 @@ namespace UnityEditor.Rendering.LookDev
 
             rootVisualElement.styleSheets.Add(
                 AssetDatabase.LoadAssetAtPath<StyleSheet>(Style.k_uss));
-            
+
+            var RDbar = new VisualElement() { name = "RDbar" };
+            Image test = new Image();
+            RDbar.Add(test);
+            rootVisualElement.Add(RDbar);
+            test.RegisterCallback<MouseDownEvent>(evt
+                => Debug.Log("click"));
+
             CreateToolbar();
             
             m_MainContainer = new VisualElement() { name = k_MainContainerName };
@@ -246,6 +293,17 @@ namespace UnityEditor.Rendering.LookDev
             new DropArea(new[] { typeof(GameObject) }, m_Views[(int)ViewIndex.Second], (obj, localPos)
                 => OnChangingObjectInViewInternal?.Invoke(obj as GameObject, ViewCompositionIndex.Second, localPos));
 
+            // Material in view
+            new DropArea(new[] { typeof(GameObject) }, m_Views[(int)ViewIndex.First], (obj, localPos) =>
+            {
+                if (layout == Layout.CustomSplit || layout == Layout.CustomCircular)
+                    OnChangingMaterialInViewInternal?.Invoke(obj as Material, ViewCompositionIndex.Composite, localPos);
+                else
+                    OnChangingMaterialInViewInternal?.Invoke(obj as Material, ViewCompositionIndex.First, localPos);
+            });
+            new DropArea(new[] { typeof(Material) }, m_Views[(int)ViewIndex.Second], (obj, localPos)
+                => OnChangingMaterialInViewInternal?.Invoke(obj as Material, ViewCompositionIndex.Second, localPos));
+
             // Environment in view
             new DropArea(new[] { typeof(Environment), typeof(Cubemap) }, m_Views[(int)ViewIndex.First], (obj, localPos) =>
             {
@@ -256,8 +314,20 @@ namespace UnityEditor.Rendering.LookDev
             });
             new DropArea(new[] { typeof(Environment), typeof(Cubemap) }, m_Views[(int)ViewIndex.Second], (obj, localPos)
                 => OnChangingEnvironmentInViewInternal?.Invoke(obj, ViewCompositionIndex.Second, localPos));
-        }
 
+            // Environment in library
+            new DropArea(new[] { typeof(Environment), typeof(Cubemap) }, m_EnvironmentContainer, (obj, localPos) =>
+            {
+                //[TODO: check if this come from outside of library]
+                OnAddingEnvironmentInternal?.Invoke(obj);
+            });
+            new DropArea(new[] { typeof(EnvironmentLibrary) }, m_EnvironmentContainer, (obj, localPos) =>
+            {
+                OnChangingEnvironmentLibraryInternal?.Invoke(obj as EnvironmentLibrary);
+                RefreshLibraryDisplay();
+            });
+        }
+        
         void CreateEnvironment()
         {
             if (m_MainContainer == null || m_MainContainer.Equals(null))
@@ -267,8 +337,185 @@ namespace UnityEditor.Rendering.LookDev
             m_MainContainer.Add(m_EnvironmentContainer);
             if (showEnvironmentPanel)
                 m_MainContainer.AddToClassList(k_ShowEnvironmentPanelClass);
+            
+            m_EnvironmentInspector = new EnvironmentElement(withPreview: false);
+            m_EnvironmentList = new ListView();
+            m_EnvironmentList.selectionType = SelectionType.Single;
+            m_EnvironmentList.itemHeight = EnvironmentElement.k_SkyThumbnailHeight;
+            m_EnvironmentList.makeItem = () =>
+            {
+                var preview = new Image();
+                preview.AddManipulator(new EnvironmentPreviewDragger(this, m_ViewContainer));
+                return preview;
+            };
+            m_EnvironmentList.bindItem = (e, i) =>
+            {
+                (e as Image).image = EnvironmentElement.GetLatLongThumbnailTexture(
+                    LookDev.currentContext.environmentLibrary[i],
+                    EnvironmentElement.k_SkyThumbnailWidth);
+            };
+            m_EnvironmentList.onSelectionChanged += objects =>
+            {
+                if (objects.Count == 0 || (LookDev.currentContext.environmentLibrary?.Count ?? 0) == 0)
+                    m_EnvironmentInspector.style.visibility = Visibility.Hidden;
+                else
+                {
+                    m_EnvironmentInspector.style.visibility = Visibility.Visible;
+                    m_EnvironmentInspector.Bind(
+                        LookDev.currentContext.environmentLibrary[m_EnvironmentList.selectedIndex],
+                        m_EnvironmentList.selectedItem as Image);
+                }
+            };
+            m_EnvironmentList.onItemChosen += obj =>
+                EditorGUIUtility.PingObject(LookDev.currentContext.environmentLibrary[(int)obj]);
+            m_EnvironmentContainer.Add(m_EnvironmentInspector);
+            m_EnvironmentContainer.Add(m_EnvironmentList);
 
-            //to complete
+            RefreshLibraryDisplay();
+        }
+
+        void RefreshLibraryDisplay()
+        {
+            int itemMax = LookDev.currentContext.environmentLibrary?.Count ?? 0;
+            var items = new List<int>(itemMax);
+            for (int i = 0; i < itemMax; i++)
+                items.Add(i);
+            m_EnvironmentList.itemsSource = items;
+            m_EnvironmentInspector.style.visibility = itemMax == 0
+                ? Visibility.Hidden
+                : Visibility.Visible;
+            m_EnvironmentList
+                .Q(className: "unity-scroll-view__vertical-scroller")
+                .Q("unity-dragger")
+                .style.visibility = itemMax == 0
+                    ? Visibility.Hidden
+                    : Visibility.Visible;
+        }
+
+        DraggingContext StartDragging(VisualElement item, Vector2 worldPosition)
+            => new DraggingContext(
+                rootVisualElement,
+                item as Image,
+                //note: this even can come before the selection event of the
+                //ListView. Reconstruct index by looking at target of the event.
+                (int)item.layout.y / m_EnvironmentList.itemHeight,
+                worldPosition);
+        
+        void EndDragging(DraggingContext context, Vector2 mouseWorldPosition)
+        {
+            Environment environment = LookDev.currentContext.environmentLibrary[context.draggedIndex];
+            if (m_Views[(int)ViewIndex.First].ContainsPoint(mouseWorldPosition))
+            {
+                if (layout == Layout.CustomSplit || layout == Layout.CustomCircular)
+                    OnChangingEnvironmentInViewInternal?.Invoke(environment, ViewCompositionIndex.Composite, mouseWorldPosition);
+                else
+                    OnChangingEnvironmentInViewInternal?.Invoke(environment, ViewCompositionIndex.First, mouseWorldPosition);
+            }
+            else
+                OnChangingEnvironmentInViewInternal?.Invoke(environment, ViewCompositionIndex.Second, mouseWorldPosition);
+        }
+
+        class DraggingContext : IDisposable
+        {
+            const string k_CursorFollowerName = "cursorFollower";
+            public readonly int draggedIndex;
+            readonly Image cursorFollower;
+            readonly Vector2 cursorOffset;
+            readonly VisualElement windowContent;
+
+            public DraggingContext(VisualElement windowContent, Image draggedElement, int draggedIndex, Vector2 worldPosition)
+            {
+                this.windowContent = windowContent;
+                this.draggedIndex = draggedIndex;
+                cursorFollower = new Image()
+                {
+                    name = k_CursorFollowerName,
+                    image = draggedElement.image
+                };
+                cursorFollower.tintColor = new Color(1f, 1f, 1f, .5f);
+                windowContent.Add(cursorFollower);
+                cursorOffset = draggedElement.WorldToLocal(worldPosition);
+
+                cursorFollower.style.position = Position.Absolute;
+                UpdateCursorFollower(worldPosition);
+            }
+
+            public void UpdateCursorFollower(Vector2 mouseWorldPosition)
+            {
+                Vector2 windowLocalPosition = windowContent.WorldToLocal(mouseWorldPosition);
+                cursorFollower.style.left = windowLocalPosition.x - cursorOffset.x;
+                cursorFollower.style.top = windowLocalPosition.y - cursorOffset.y;
+            }
+
+            public void Dispose()
+            {
+                if (windowContent.Contains(cursorFollower))
+                    windowContent.Remove(cursorFollower);
+            }
+        }
+
+        class EnvironmentPreviewDragger : Manipulator
+        {
+            VisualElement m_DropArea;
+            DisplayWindow m_Window;
+
+            //Note: static as only one drag'n'drop at a time
+            static DraggingContext s_Context;
+
+            public EnvironmentPreviewDragger(DisplayWindow window, VisualElement dropArea)
+            {
+                m_Window = window;
+                m_DropArea = dropArea;
+            }
+
+            protected override void RegisterCallbacksOnTarget()
+            {
+                target.RegisterCallback<MouseDownEvent>(OnMouseDown);
+                target.RegisterCallback<MouseUpEvent>(OnMouseUp);
+            }
+
+            protected override void UnregisterCallbacksFromTarget()
+            {
+                target.UnregisterCallback<MouseDownEvent>(OnMouseDown);
+                target.UnregisterCallback<MouseUpEvent>(OnMouseUp);
+            }
+
+            void Release()
+            {
+                target.UnregisterCallback<MouseMoveEvent>(OnMouseMove);
+                s_Context.Dispose();
+                target.ReleaseMouse();
+                s_Context = null;
+            }
+
+            void OnMouseDown(MouseDownEvent evt)
+            {
+                if (evt.button == 0)
+                {
+                    target.CaptureMouse();
+                    target.RegisterCallback<MouseMoveEvent>(OnMouseMove);
+                    s_Context = m_Window.StartDragging(target, evt.mousePosition);
+                    //do not stop event as we still need to propagate it to the ListView for selection
+                }
+            }
+
+            void OnMouseUp(MouseUpEvent evt)
+            {
+                if (evt.button != 0)
+                    return;
+                if (m_DropArea.ContainsPoint(m_DropArea.WorldToLocal(Event.current.mousePosition)))
+                {
+                    m_Window.EndDragging(s_Context, evt.mousePosition);
+                    evt.StopPropagation();
+                }
+                Release();
+            }
+
+            void OnMouseMove(MouseMoveEvent evt)
+            {
+                evt.StopPropagation();
+                s_Context.UpdateCursorFollower(evt.mousePosition);
+            }
         }
 
         Rect IViewDisplayer.GetRect(ViewCompositionIndex index)
@@ -304,6 +551,12 @@ namespace UnityEditor.Rendering.LookDev
         }
 
         void IViewDisplayer.Repaint() => Repaint();
+
+        //[TODO]
+        void IEnvironmentDisplayer.Repaint()
+        {
+            throw new NotImplementedException();
+        }
 
         void ApplyLayout(Layout value)
         {

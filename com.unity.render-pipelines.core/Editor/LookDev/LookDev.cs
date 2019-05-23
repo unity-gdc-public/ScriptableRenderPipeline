@@ -16,6 +16,7 @@ namespace UnityEditor.Rendering.LookDev
 
         //TODO: ensure only one displayer at time for the moment
         static IViewDisplayer s_ViewDisplayer;
+        static IEnvironmentDisplayer s_EnvironmentDisplayer;
         static Compositer s_Compositor;
         static StageCache s_Stages;
         static ComparisonGizmo s_Comparator;
@@ -71,10 +72,11 @@ namespace UnityEditor.Rendering.LookDev
                 InternalEditorUtility.SaveToSerializedFileAndForget(new[] { currentContext }, path, true);
         }
 
-        //[MenuItem("Window/Experimental/Look Dev", false, -1)]
+        [MenuItem("Window/Experimental/Look Dev", false, -1)]
         public static void Open()
         {
             s_ViewDisplayer = EditorWindow.GetWindow<DisplayWindow>();
+            s_EnvironmentDisplayer = EditorWindow.GetWindow<DisplayWindow>();
             ConfigureLookDev(reloadWithTemporaryID: false);
         }
 
@@ -83,8 +85,8 @@ namespace UnityEditor.Rendering.LookDev
         static void OnEditorReload()
         {
             var windows = Resources.FindObjectsOfTypeAll<DisplayWindow>();
-            open = s_Displayer != null;
             s_ViewDisplayer = windows.Length > 0 ? windows[0] : null;
+            s_EnvironmentDisplayer = windows.Length > 0 ? windows[0] : null;
             open = s_ViewDisplayer != null;
             if (open)
                 ConfigureLookDev(reloadWithTemporaryID: true);
@@ -103,6 +105,7 @@ namespace UnityEditor.Rendering.LookDev
             {
                 ConfigureRenderer(reloadWithTemporaryID);
                 LinkViewDisplayer();
+                LinkEnvironmentDisplayer();
                 ReloadStage(reloadWithTemporaryID);
             }
             else if (attemptNumber < maxAttempt)
@@ -186,6 +189,11 @@ namespace UnityEditor.Rendering.LookDev
             };
         }
 
+        static void LinkEnvironmentDisplayer()
+        {
+            s_EnvironmentDisplayer.OnChangingEnvironmentLibrary += currentContext.UpdateEnvironmentLibrary;
+        }
+        
         static void ReloadStage(bool reloadWithTemporaryID)
         {
             currentContext.GetViewContent(ViewIndex.First).LoadAll(reloadWithTemporaryID);
