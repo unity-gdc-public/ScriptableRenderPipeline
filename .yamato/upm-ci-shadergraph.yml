@@ -1,5 +1,5 @@
 editors:
-  - version: trunk
+  - version: android/sdk-tools/fix-path-guessing
 platforms:
   - name: Windows64
     type: Unity::VM::GPU
