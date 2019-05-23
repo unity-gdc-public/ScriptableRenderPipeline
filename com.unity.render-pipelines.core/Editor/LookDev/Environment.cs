@@ -79,8 +79,8 @@ namespace UnityEditor.Rendering.LookDev
     }
     public class EnvironmentElement : VisualElement, IBendable<Environment>
     {
-        const int k_SkyThumbnailWidth = 200;
-        const int k_SkyThumbnailHeight = 100;
+        internal const int k_SkyThumbnailWidth = 200;
+        internal const int k_SkyThumbnailHeight = 100;
         const int k_SkadowThumbnailWidth = 60;
         const int k_SkadowThumbnailHeight = 30;
         const int k_SkadowThumbnailXPosition = 130;
@@ -101,105 +101,28 @@ namespace UnityEditor.Rendering.LookDev
         FloatField shadowIntensity;
         ColorField shadowColor;
 
-        public EnvironmentElement() => Create();
+        public Environment target => environment;
+
+        public EnvironmentElement() => Create(withPreview: true);
+        public EnvironmentElement(bool withPreview) => Create(withPreview);
 
         public EnvironmentElement(Environment environment)
         {
-            Create();
+            Create(withPreview: true);
             Bind(environment);
         }
 
-        void Create()
+        void Create(bool withPreview)
         {
-            environmentParams = new VisualElement();
+            if (withPreview)
+            {
+                latlong = new Image();
+                latlong.style.width = k_SkyThumbnailWidth;
+                latlong.style.height = k_SkyThumbnailHeight;
+                Add(latlong);
+            }
 
-            latlong = new Image();
-            latlong.style.width = k_SkyThumbnailWidth;
-            latlong.style.height = k_SkyThumbnailHeight;
-            Add(latlong);
-
-            Foldout skyFoldout = new Foldout()
-            {
-                text = "Sky"
-            };
-            skyCubemapField = new ObjectField("Cubemap");
-            skyCubemapField.allowSceneObjects = false;
-            skyCubemapField.objectType = typeof(Cubemap);
-            skyCubemapField.RegisterValueChangedCallback(evt =>
-            {
-                environment.sky.cubemap = evt.newValue as Cubemap;
-                latlong.image = GetLatLongThumbnailTexture();
-                EditorUtility.SetDirty(environment);
-            });
-            skyFoldout.Add(skyCubemapField);
-
-            skyRotationOffset = new Slider("Angle Offset", 0f, 360f);
-            skyRotationOffset.RegisterValueChangedCallback(evt =>
-            {
-                environment.sky.angleOffset = evt.newValue;
-                latlong.image = GetLatLongThumbnailTexture();
-                EditorUtility.SetDirty(environment);
-            });
-            skyFoldout.Add(skyRotationOffset);
-            var style = skyFoldout.Q<Toggle>().style;
-            style.marginLeft = 3;
-            style.unityFontStyleAndWeight = FontStyle.Bold;
-            environmentParams.Add(skyFoldout);
-
-            Foldout shadowFoldout = new Foldout()
-            {
-                text = "Shadow"
-            };
-            shadowCubemapField = new ObjectField("Cubemap");
-            shadowCubemapField.allowSceneObjects = false;
-            shadowCubemapField.objectType = typeof(Cubemap);
-            shadowCubemapField.RegisterValueChangedCallback(evt =>
-            {
-                environment.shadow.cubemap = evt.newValue as Cubemap;
-                latlong.image = GetLatLongThumbnailTexture();
-                EditorUtility.SetDirty(environment);
-            });
-            shadowFoldout.Add(shadowCubemapField);
-
-            shadowLatitude = new FloatField("Latitude");
-            shadowLatitude.RegisterValueChangedCallback(evt =>
-            {
-                environment.shadow.latitude = evt.newValue;
-                //clamping code occurred. Reassign clamped value
-                shadowLatitude.SetValueWithoutNotify(environment.shadow.latitude);
-                EditorUtility.SetDirty(environment); //
-            });
-            shadowFoldout.Add(shadowLatitude);
-
-            shadowLongitude = new FloatField("Longitude");
-            shadowLongitude.RegisterValueChangedCallback(evt =>
-            {
-                environment.shadow.longitude = evt.newValue;
-                //clamping code occurred. Reassign clamped value
-                shadowLongitude.SetValueWithoutNotify(environment.shadow.longitude);
-                EditorUtility.SetDirty(environment);
-            });
-            shadowFoldout.Add(shadowLongitude);
-
-            shadowIntensity = new FloatField("Intensity");
-            shadowIntensity.RegisterValueChangedCallback(evt =>
-            {
-                environment.shadow.intensity = evt.newValue;
-                EditorUtility.SetDirty(environment);
-            });
-            shadowFoldout.Add(shadowIntensity);
-
-            shadowColor = new ColorField("Color");
-            shadowColor.RegisterValueChangedCallback(evt =>
-            {
-                environment.shadow.color = evt.newValue;
-                EditorUtility.SetDirty(environment);
-            });
-            shadowFoldout.Add(shadowColor);
-            style = shadowFoldout.Q<Toggle>().style;
-            style.marginLeft = 3;
-            style.unityFontStyleAndWeight = FontStyle.Bold;
-            environmentParams.Add(shadowFoldout);
+            environmentParams = GetDefaultInspector();
             Add(environmentParams);
         }
 
@@ -209,7 +132,8 @@ namespace UnityEditor.Rendering.LookDev
             if (environment == null || environment.Equals(null))
                 return;
 
-            latlong.image = GetLatLongThumbnailTexture();
+            if (latlong != null && !latlong.Equals(null))
+                latlong.image = GetLatLongThumbnailTexture();
             skyCubemapField.SetValueWithoutNotify(environment.sky.cubemap);
             skyRotationOffset.SetValueWithoutNotify(environment.sky.angleOffset);
             shadowCubemapField.SetValueWithoutNotify(environment.shadow.cubemap);
@@ -217,6 +141,12 @@ namespace UnityEditor.Rendering.LookDev
             shadowLongitude.SetValueWithoutNotify(environment.shadow.longitude);
             shadowIntensity.SetValueWithoutNotify(environment.shadow.intensity);
             shadowColor.SetValueWithoutNotify(environment.shadow.color);
+        }
+
+        public void Bind(Environment environment, Image deportedLatlong)
+        {
+            latlong = deportedLatlong;
+            Bind(environment);
         }
 
         public Texture2D GetLatLongThumbnailTexture()
@@ -280,6 +210,112 @@ namespace UnityEditor.Rendering.LookDev
             RenderTexture.active = oldActive;
             UnityEngine.Object.DestroyImmediate(temporaryRT);
             return result;
+        }
+        
+        public VisualElement GetDefaultInspector()
+        {
+            VisualElement inspector = new VisualElement() { name = "Inspector" };
+            Foldout skyFoldout = new Foldout()
+            {
+                text = "Sky"
+            };
+            skyCubemapField = new ObjectField("Cubemap");
+            skyCubemapField.allowSceneObjects = false;
+            skyCubemapField.objectType = typeof(Cubemap);
+            skyCubemapField.RegisterValueChangedCallback(evt =>
+            {
+                if (environment == null || environment.Equals(null))
+                    return;
+                environment.sky.cubemap = evt.newValue as Cubemap;
+                if (latlong != null && !latlong.Equals(null))
+                    latlong.image = GetLatLongThumbnailTexture(environment, k_SkyThumbnailWidth);
+                EditorUtility.SetDirty(environment);
+            });
+            skyFoldout.Add(skyCubemapField);
+
+            skyRotationOffset = new Slider("Angle Offset", 0f, 360f);
+            skyRotationOffset.RegisterValueChangedCallback(evt =>
+            {
+                if (environment == null || environment.Equals(null))
+                    return;
+                environment.sky.angleOffset = evt.newValue;
+                if (latlong != null && !latlong.Equals(null))
+                    latlong.image = GetLatLongThumbnailTexture(environment, k_SkyThumbnailWidth);
+                EditorUtility.SetDirty(environment);
+            });
+            skyFoldout.Add(skyRotationOffset);
+            var style = skyFoldout.Q<Toggle>().style;
+            style.marginLeft = 3;
+            style.unityFontStyleAndWeight = FontStyle.Bold;
+            inspector.Add(skyFoldout);
+
+            Foldout shadowFoldout = new Foldout()
+            {
+                text = "Shadow"
+            };
+            shadowCubemapField = new ObjectField("Cubemap");
+            shadowCubemapField.allowSceneObjects = false;
+            shadowCubemapField.objectType = typeof(Cubemap);
+            shadowCubemapField.RegisterValueChangedCallback(evt =>
+            {
+                if (environment == null || environment.Equals(null))
+                    return;
+                environment.shadow.cubemap = evt.newValue as Cubemap;
+                if (latlong != null && !latlong.Equals(null))
+                    latlong.image = GetLatLongThumbnailTexture(environment, k_SkyThumbnailWidth);
+                EditorUtility.SetDirty(environment);
+            });
+            shadowFoldout.Add(shadowCubemapField);
+
+            shadowLatitude = new FloatField("Latitude");
+            shadowLatitude.RegisterValueChangedCallback(evt =>
+            {
+                if (environment == null || environment.Equals(null))
+                    return;
+                environment.shadow.latitude = evt.newValue;
+                //clamping code occurred. Reassign clamped value
+                shadowLatitude.SetValueWithoutNotify(environment.shadow.latitude);
+                EditorUtility.SetDirty(environment); //
+            });
+            shadowFoldout.Add(shadowLatitude);
+
+            shadowLongitude = new FloatField("Longitude");
+            shadowLongitude.RegisterValueChangedCallback(evt =>
+            {
+                if (environment == null || environment.Equals(null))
+                    return;
+                environment.shadow.longitude = evt.newValue;
+                //clamping code occurred. Reassign clamped value
+                shadowLongitude.SetValueWithoutNotify(environment.shadow.longitude);
+                EditorUtility.SetDirty(environment);
+            });
+            shadowFoldout.Add(shadowLongitude);
+
+            shadowIntensity = new FloatField("Intensity");
+            shadowIntensity.RegisterValueChangedCallback(evt =>
+            {
+                if (environment == null || environment.Equals(null))
+                    return;
+                environment.shadow.intensity = evt.newValue;
+                EditorUtility.SetDirty(environment);
+            });
+            shadowFoldout.Add(shadowIntensity);
+
+            shadowColor = new ColorField("Color");
+            shadowColor.RegisterValueChangedCallback(evt =>
+            {
+                if (environment == null || environment.Equals(null))
+                    return;
+                environment.shadow.color = evt.newValue;
+                EditorUtility.SetDirty(environment);
+            });
+            shadowFoldout.Add(shadowColor);
+            style = shadowFoldout.Q<Toggle>().style;
+            style.marginLeft = 3;
+            style.unityFontStyleAndWeight = FontStyle.Bold;
+            inspector.Add(shadowFoldout);
+
+            return inspector;
         }
     }
 }
