@@ -133,7 +133,7 @@ void LightLoop( float3 V, PositionInputs posInput, PreLightData preLightData, BS
 
             // Is it worth sampling the shadow map?
             if ((light.lightDimmer > 0) && (light.shadowDimmer > 0) && // Note: Volumetric can have different dimmer, thus why we test it here
-                IsNonZeroCBSDF(V, L, preLightData, bsdfData) &&
+                IsNonZeroBSDF(V, L, preLightData, bsdfData) &&
                 !ShouldEvaluateThickObjectTransmission(V, L, preLightData, bsdfData, light.shadowIndex))
             {
                 // TODO: the shadow code should do it for us. That would be far more efficient.

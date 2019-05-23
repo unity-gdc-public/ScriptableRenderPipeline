@@ -7,6 +7,7 @@
 bool ShouldEvaluateThickObjectTransmission(float3 V, float3 L, PreLightData preLightData,
                                            BSDFData bsdfData, int shadowIndex)
 {
+#ifdef MATERIAL_INCLUDE_TRANSMISSION
     // Currently, we don't consider (NdotV < 0) as transmission.
     // TODO: ignore normal map? What about double sided-surfaces with one-sided normals?
     float NdotL = dot(bsdfData.normalWS, L);
@@ -17,19 +18,22 @@ bool ShouldEvaluateThickObjectTransmission(float3 V, float3 L, PreLightData preL
     // the preprocessor.
     return HasFlag(bsdfData.materialFeatures, MATERIALFEATUREFLAGS_TRANSMISSION_MODE_THICK_OBJECT) &&
            (shadowIndex >= 0.0) && (NdotL < 0.0);
+#else
+    return false;
+#endif
 }
 
 DirectLighting ShadeSurface_Infinitesimal(PreLightData preLightData, BSDFData bsdfData,
-                                          float3 V, float3 L, float3 incomingRadiance,
+                                          float3 V, float3 L, float3 lightColor,
                                           float diffuseDimmer, float specularDimmer)
 {
     DirectLighting lighting;
     ZERO_INITIALIZE(DirectLighting, lighting);
 
 #ifndef DEBUG_DISPLAY
-    if (Max3(incomingRadiance.r, incomingRadiance.g, incomingRadiance.b) > 0)
+    if (Max3(lightColor.r, lightColor.g, lightColor.b) > 0)
     {
-        CBSDF cbsdf = EvaluateCBSDF(V, L, preLightData, bsdfData);
+        CBSDF cbsdf = EvaluateBSDF(V, L, preLightData, bsdfData);
 
 #ifdef MATERIAL_INCLUDE_TRANSMISSION
         float3 transmittance = bsdfData.transmittance;

@@ -39,11 +39,6 @@ float ComputeMicroShadowing(BSDFData bsdfData, float NdotL)
     return ComputeMicroShadowing(sourceAO, NdotL, _MicroShadowOpacity);
 }
 
-bool MaterialSupportsTransmission(BSDFData bsdfData)
-{
-    return HasFlag(bsdfData.materialFeatures, MATERIALFEATUREFLAGS_LIT_TRANSMISSION);
-}
-
 float3 GetNormalForShadowBias(BSDFData bsdfData)
 {
     return bsdfData.normalWS;
