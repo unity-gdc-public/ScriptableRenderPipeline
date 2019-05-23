@@ -123,8 +123,8 @@ namespace UnityEditor.Rendering.LookDev
         {
 #if TEMPORARY_RENDERDOC_INTEGRATION
             //TODO: make integration EditorWindow agnostic!
-            if (RenderDoc.IsLoaded() && RenderDoc.IsSupported() && m_RenderDocAcquisitionRequested)
-                RenderDoc.BeginCaptureRenderDoc(m_Displayer as EditorWindow);
+            if (UnityEditorInternal.RenderDoc.IsLoaded() && UnityEditorInternal.RenderDoc.IsSupported() && m_RenderDocAcquisitionRequested)
+                UnityEditorInternal.RenderDoc.BeginCaptureRenderDoc(m_Displayer as EditorWindow);
 #endif
 
             switch (m_Contexts.layout.viewLayout)
@@ -148,8 +148,8 @@ namespace UnityEditor.Rendering.LookDev
 
 #if TEMPORARY_RENDERDOC_INTEGRATION
             //TODO: make integration EditorWindow agnostic!
-            if (RenderDoc.IsLoaded() && RenderDoc.IsSupported() && m_RenderDocAcquisitionRequested)
-                RenderDoc.EndCaptureRenderDoc(m_Displayer as EditorWindow);
+            if (UnityEditorInternal.RenderDoc.IsLoaded() && UnityEditorInternal.RenderDoc.IsSupported() && m_RenderDocAcquisitionRequested)
+                UnityEditorInternal.RenderDoc.EndCaptureRenderDoc(m_Displayer as EditorWindow);
 
             //stating that RenderDoc do not need to acquire anymore should
             //allows to gather both view and composition in render doc at once

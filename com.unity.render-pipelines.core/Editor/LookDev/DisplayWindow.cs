@@ -198,11 +198,16 @@ namespace UnityEditor.Rendering.LookDev
             toolbar.Add(new ToolbarSpacer() { flex = true });
 
             //TODO: better RenderDoc integration
-            toolbar.Add(new ToolbarButton(() => OnRenderDocAcquisitionTriggeredInternal?.Invoke())
+#if TEMPORARY_RENDERDOC_INTEGRATION
+            if (UnityEditorInternal.RenderDoc.IsInstalled() && UnityEditorInternal.RenderDoc.IsLoaded())
             {
-                text = "RenderDoc Content"
-            });
-            
+                toolbar.Add(new ToolbarButton(() => OnRenderDocAcquisitionTriggeredInternal?.Invoke())
+                {
+                    text = "RenderDoc Content"
+                });
+            }
+#endif
+
             toolbar.Add(toolbarEnvironment);
             rootVisualElement.Add(toolbar);
         }
