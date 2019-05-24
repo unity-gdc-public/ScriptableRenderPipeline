@@ -305,7 +305,7 @@ real ComputeMicroShadowing(real AO, real NdotL, real opacity)
 
 real3 ComputeShadowColor(real shadow, real3 shadowTint)
 {
-    return float3(1.0, 1.0, 1.0) - ((float3(1.0, 1.0, 1.0) - shadow.xxx) * (float3(1.0, 1.0, 1.0) - shadowTint));
+    return float3(1.0, 1.0, 1.0) - ((1.0 - shadow) * (float3(1.0, 1.0, 1.0) - shadowTint));
 }
 //-----------------------------------------------------------------------------
 // Helper functions
