@@ -1,9 +1,10 @@
 // Continuation of LightEvaluation.hlsl.
-
+// use #define OVERRIDE_SHOULD_EVALUATE_THICK_OBJECT_TRANSMISSION to provide a new version of ShouldEvaluateThickObjectTransmission
 //-----------------------------------------------------------------------------
 // Directional and punctual lights (infinitesimal solid angle)
 //-----------------------------------------------------------------------------
 
+#ifndef OVERRIDE_SHOULD_EVALUATE_THICK_OBJECT_TRANSMISSION
 bool ShouldEvaluateThickObjectTransmission(float3 V, float3 L, PreLightData preLightData,
                                            BSDFData bsdfData, int shadowIndex)
 {
@@ -22,6 +23,7 @@ bool ShouldEvaluateThickObjectTransmission(float3 V, float3 L, PreLightData preL
     return false;
 #endif
 }
+#endif
 
 DirectLighting ShadeSurface_Infinitesimal(PreLightData preLightData, BSDFData bsdfData,
                                           float3 V, float3 L, float3 lightColor,

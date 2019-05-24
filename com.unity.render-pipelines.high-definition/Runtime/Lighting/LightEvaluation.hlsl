@@ -3,6 +3,7 @@
 // use #define LIGHT_EVALUATION_NO_COOKIE to disable cookie evaluation
 // use #define LIGHT_EVALUATION_NO_CONTACT_SHADOWS to disable contact shadow evaluation
 // use #define LIGHT_EVALUATION_NO_SHADOWS to disable evaluation of shadow including contact shadow (but not micro shadow)
+// use #define OVERRIDE_EVALUATE_ENV_INTERSECTION to provide a new version of EvaluateLight_EnvIntersection
 
 // Samples the area light's associated cookie
 //  cookieIndex, the index of the cookie texture in the Texture2DArray
