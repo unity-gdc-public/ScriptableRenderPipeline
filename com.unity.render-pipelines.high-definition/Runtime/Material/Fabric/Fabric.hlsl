@@ -431,7 +431,7 @@ CBSDF EvaluateBSDF(float3 V, float3 L, PreLightData preLightData, BSDFData bsdfD
     // And we hope the compile will move specTerm in the branch in case of transmission (TODO: verify as we fabric this may not be true as we already have branch above...)
     if (NdotL > 0)
     {
-        cbxdf.specR = specTerm * clampedNdotL;
+        cbsdf.specR = specTerm * clampedNdotL;
     }
 
     // We don't multiply by 'bsdfData.diffuseColor' here. It's done only once in PostEvaluateBSDF().

@@ -239,7 +239,7 @@ bool IsNonZeroBSDF(float3 V, float3 L, PreLightData preLightData, BSDFData bsdfD
 // This function apply BSDF. Assumes that NdotL is positive.
 CBSDF EvaluateBSDF(float3 V, float3 L, PreLightData preLightData, BSDFData bsdfData)
 {
-    CBxDF cbsdf;
+    CBSDF cbsdf;
     ZERO_INITIALIZE(CBSDF, cbsdf);
 
     float3 N = bsdfData.normalWS;
@@ -263,14 +263,14 @@ CBSDF EvaluateBSDF(float3 V, float3 L, PreLightData preLightData, BSDFData bsdfD
     // This branch will be optimized away if there's no transmission.
     if (NdotL > 0.0)
     {
-        cbxdf.specR = specTerm * clampedNdotL;
+        cbsdf.specR = specTerm * clampedNdotL;
     }
 }
 #endif // HDRP_ENABLE_SPECULAR
 
     float  diffTerm = Lambert();
-    cbxdf.diffR = diffTerm * clampedNdotL;
-    cbxdf.diffT = diffTerm * flippedNdotL;
+    cbsdf.diffR = diffTerm * clampedNdotL;
+    cbsdf.diffT = diffTerm * flippedNdotL;
 
     // We don't multiply by 'bsdfData.diffuseColor' here. It's done only once in PostEvaluateBSDF().
     return cbsdf;

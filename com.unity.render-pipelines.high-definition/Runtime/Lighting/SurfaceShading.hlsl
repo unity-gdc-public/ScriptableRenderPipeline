@@ -42,7 +42,7 @@ DirectLighting ShadeSurface_Infinitesimal(PreLightData preLightData, BSDFData bs
 #else
         float3 transmittance = float3(0.0, 0.0, 0.0);
 #endif
-        // If transmittance or the CBxDF's transmission components are known to be 0,
+        // If transmittance or the CBSDF's transmission components are known to be 0,
         // the optimization pass of the compiler will remove all of the associated code.
         // However, this will take a lot more CPU time than doing the same thing using
         // the preprocessor.
