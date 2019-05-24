@@ -674,8 +674,12 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
                 }
 
-                EditorGUILayout.Slider(serialized.serializedShadowData.shadowDimmer, 0.0f, 1.0f, s_Styles.shadowDimmer);
-                EditorGUILayout.PropertyField(serialized.serializedShadowData.shadowTint, s_Styles.shadowTint);
+                // Dimmer and Tint don't have effect on baked shadow
+                if (!serialized.settings.isCompletelyBaked)
+                {
+                    EditorGUILayout.Slider(serialized.serializedShadowData.shadowDimmer, 0.0f, 1.0f, s_Styles.shadowDimmer);
+                    EditorGUILayout.PropertyField(serialized.serializedShadowData.shadowTint, s_Styles.shadowTint);
+                }                
 
                 if (serialized.settings.lightType.enumValueIndex != (int)LightType.Directional)
                 {

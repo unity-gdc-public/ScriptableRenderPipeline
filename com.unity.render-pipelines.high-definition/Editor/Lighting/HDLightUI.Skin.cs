@@ -82,8 +82,8 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             // Additional shadow data
             public readonly GUIContent shadowResolution = new GUIContent("Resolution", "Sets the rendered resolution of the shadow maps. A higher resolution increases the fidelity of shadows at the cost of GPU performance and memory usage.");
             public readonly GUIContent shadowFadeDistance = new GUIContent("Fade Distance", "Sets the distance at which Shadows fade before HDRP culls them completely. This minimizes popping.");
-            public readonly GUIContent shadowDimmer = new GUIContent("Opacity", "Dims the shadows this Light casts.");
-            public readonly GUIContent shadowTint = new GUIContent("Tint", "Tint the shadows.");
+            public readonly GUIContent shadowDimmer = new GUIContent("Dimmer", "Dims the shadows this Light casts.");
+            public readonly GUIContent shadowTint = new GUIContent("Tint", "Tint the shadows. This option affect dynamic shadows, contact shadows and shadow mask. It don't affect baked shadows.");
             public readonly GUIContent contactShadows = new GUIContent("Enable", "Enable support for Contact Shadows on this Light. This is better for lights with a lot of visible shadows.");
 
             // Bias control

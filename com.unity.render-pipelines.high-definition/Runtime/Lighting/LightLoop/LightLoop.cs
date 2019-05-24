@@ -1229,7 +1229,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 lightData.shadowDimmer           = shadowDistanceFade * additionalShadowData.shadowDimmer;
                 lightData.volumetricShadowDimmer = shadowDistanceFade * additionalShadowData.volumetricShadowDimmer;
                 lightData.contactShadowMask      = GetContactShadowMask(additionalShadowData.contactShadows);
-                lightData.shadowTint = new Vector3(additionalShadowData.shadowTint.r, additionalShadowData.shadowTint.g, additionalShadowData.shadowTint.b);
+                lightData.shadowTint             = new Vector3(additionalShadowData.shadowTint.r, additionalShadowData.shadowTint.g, additionalShadowData.shadowTint.b);
             }
             else
             {
