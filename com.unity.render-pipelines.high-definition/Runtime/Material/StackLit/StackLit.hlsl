@@ -2922,8 +2922,9 @@ bool IsNonZeroBSDF(float3 V, float3 L, PreLightData preLightData, BSDFData bsdfD
 {
     // Get N, L and NdotL parameters along with if transmission must be evaluated
     bool unused;
-    float mainN, mainL, mainNdotL;
-    GetNLForDirectionalPunctualLights(bsdfData, preLightData, L, V, mainN, mainL, mainNdotL, unused, light);
+    float3 mainN, mainL;
+    float mainNdotL;
+    GetNLForDirectionalPunctualLights(bsdfData, preLightData, L, V, mainN, mainL, mainNdotL, unused);
 
     return HasFlag(bsdfData.materialFeatures, MATERIALFEATUREFLAGS_STACK_LIT_TRANSMISSION) || (mainNdotL > 0.0);
 }
@@ -2944,6 +2945,7 @@ CBSDF EvaluateBSDF(float3 inV, float3 inL, PreLightData preLightData, BSDFData b
     // Get N, L and NdotL parameters along with if transmission must be evaluated
     bool unused0;
     float3 unused1, unused2;
+    float inNdotL;
     GetNLForDirectionalPunctualLights(bsdfData, preLightData, inL, inV, unused1, unused2, inNdotL, unused0);
 
     float NdotL[NDOTLV_SIZE];
@@ -3081,7 +3083,7 @@ CBSDF EvaluateBSDF(float3 inV, float3 inL, PreLightData preLightData, BSDFData b
     }
 #endif
 
-    float diffuseNdotL = saturate(0, NdotL[DNLV_BASE_IDX])
+    float diffuseNdotL = saturate(NdotL[DNLV_BASE_IDX]);
     cbsdf.diffR = diffTerm * diffuseNdotL;
     cbsdf.diffT = diffTerm * ComputeWrappedDiffuseLighting(-diffuseNdotL, TRANSMISSION_WRAP_LIGHT);
 
@@ -3119,8 +3121,9 @@ bool ShouldEvaluateThickObjectTransmission(float3 V, float3 L, PreLightData preL
 #ifdef MATERIAL_INCLUDE_TRANSMISSION
 
     bool lightCanOnlyBeTransmitted;
-    float mainN, mainL, mainNdotL;
-    GetNLForDirectionalPunctualLights(bsdfData, preLightData, L, V, mainN, mainL, mainNdotL, lightCanOnlyBeTransmitted, light);
+    float3 mainN, mainL;
+    float mainNdotL;
+    GetNLForDirectionalPunctualLights(bsdfData, preLightData, L, V, mainN, mainL, mainNdotL, lightCanOnlyBeTransmitted);
 
     return HasFlag(bsdfData.materialFeatures, MATERIALFEATUREFLAGS_TRANSMISSION_MODE_THICK_OBJECT) &&
             (shadowIndex >= 0.0) && lightCanOnlyBeTransmitted;
@@ -3149,7 +3152,7 @@ DirectLighting EvaluateBSDF_Directional(LightLoopContext lightLoopContext,
                                         DirectionalLightData light, BSDFData bsdfData,
                                         BuiltinData builtinData)
 {
-    return ShadeSurface_Directional(lightLoopContext, posInput, builtinData, preLightData, lightData, bsdfData, V);
+    return ShadeSurface_Directional(lightLoopContext, posInput, builtinData, preLightData, light, bsdfData, V);
 }
 
 //-----------------------------------------------------------------------------
@@ -3160,7 +3163,7 @@ DirectLighting EvaluateBSDF_Punctual(LightLoopContext lightLoopContext,
                                      float3 V, PositionInputs posInput,
                                      PreLightData preLightData, LightData light, BSDFData bsdfData, BuiltinData builtinData)
 {
-    return ShadeSurface_Punctual(lightLoopContext, posInput, builtinData, preLightData, lightData, bsdfData, V);
+    return ShadeSurface_Punctual(lightLoopContext, posInput, builtinData, preLightData, light, bsdfData, V);
 }
 
 // NEWLITTODO: For a refence rendering option for area light, like STACK_LIT_DISPLAY_REFERENCE_AREA option in eg EvaluateBSDF_<area light type> :
