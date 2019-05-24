@@ -275,8 +275,10 @@ namespace UnityEditor.Rendering.LookDev
             m_ViewContainer.RegisterCallback<MouseMoveEvent>(evt => OnMouseEventInViewPortInternal?.Invoke(evt));
 
             m_Views[(int)ViewIndex.First] = new Image() { name = k_FirstViewName, image = Texture2D.blackTexture };
+            m_Views[(int)ViewIndex.First].AddManipulator(new CameraController(LookDev.currentContext.GetViewContent(ViewIndex.First).camera, this));
             m_ViewContainer.Add(m_Views[(int)ViewIndex.First]);
             m_Views[(int)ViewIndex.Second] = new Image() { name = k_SecondViewName, image = Texture2D.blackTexture };
+            m_Views[(int)ViewIndex.Second].AddManipulator(new CameraController(LookDev.currentContext.GetViewContent(ViewIndex.Second).camera, this));
             m_ViewContainer.Add(m_Views[(int)ViewIndex.Second]);
         }
 

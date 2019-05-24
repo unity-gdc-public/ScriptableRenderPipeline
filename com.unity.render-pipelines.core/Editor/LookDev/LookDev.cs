@@ -95,7 +95,8 @@ namespace UnityEditor.Rendering.LookDev
         static void ConfigureLookDev(bool reloadWithTemporaryID)
         {
             open = true;
-            LoadConfig();
+            if (s_CurrentContext == null || s_CurrentContext.Equals(null))
+                LoadConfig();
             WaitingSRPReloadForConfiguringRenderer(5, reloadWithTemporaryID: reloadWithTemporaryID);
         }
 
