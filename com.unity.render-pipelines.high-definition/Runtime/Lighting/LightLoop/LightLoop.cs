@@ -1011,20 +1011,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 lightData.nonLightMappedOnly = 0;
             }
 
-            // Sun disk.
-            {
-                var sunDiskAngle = additionalLightData.sunDiskSize;
-                var sunHaloSize  = additionalLightData.sunHaloSize;
-
-                var cosConeInnerHalfAngle = Mathf.Clamp(Mathf.Cos(sunDiskAngle * 0.5f * Mathf.Deg2Rad), 0.0f, 1.0f);
-                var cosConeOuterHalfAngle = Mathf.Clamp(Mathf.Cos(sunDiskAngle * 0.5f * (1 + sunHaloSize) * Mathf.Deg2Rad), 0.0f, 1.0f);
-
-                var val = Mathf.Max(0.0001f, (cosConeInnerHalfAngle - cosConeOuterHalfAngle));
-                lightData.angleScale = 1.0f / val;
-                lightData.angleOffset = -cosConeOuterHalfAngle * lightData.angleScale;
-
-            }
-
             // Fallback to the first non shadow casting directional light.
             m_CurrentSunLight = m_CurrentSunLight == null ? lightComponent : m_CurrentSunLight;
 

@@ -3071,7 +3071,7 @@ float3 EvaluateTransmission(BSDFData bsdfData, float3 transmittance, float NdotL
 void GetNLForDirectionalPunctualLights(BSDFData bsdfData, PreLightData preLightData, float3 L, float3 V,
                                        out float3 mainN, out float3 mainL, out float mainNdotL,
                                        out bool lightCanOnlyBeTransmitted,
-                                       bool computeSunDiscEffect = true, DirectionalLightData light = (DirectionalLightData)0) // use the 2 later if light is directional
+                                       DirectionalLightData light = (DirectionalLightData)0) // use the 2 later if light is directional
 {
     // To avoid loosing the coat specular component due to the bottom normal modulation from the bottom normal map,
     // all the while keeping the code as much the same as with Lit and compatible with the rest of lightloop and
@@ -3105,16 +3105,7 @@ void GetNLForDirectionalPunctualLights(BSDFData bsdfData, PreLightData preLightD
     // where we use refract elsewhere in this file.
     skewedL[BASE_NORMAL_IDX] = L;
     skewedL[COAT_NORMAL_IDX] = L;
-    if (computeSunDiscEffect)
-    {
-        // Since we can have two normals, we replace this:
-        //  float3 L = ComputeSunLightDirection(light, N, V);
-        //  float  NdotL = dot(N, L); // Do not saturate
-        // by this:
-        //
-        skewedL[BASE_NORMAL_IDX] = ComputeSunLightDirection(light, N[BASE_NORMAL_IDX], V);
-        skewedL[COAT_NORMAL_IDX] = ComputeSunLightDirection(light, N[COAT_NORMAL_IDX], V);
-    }
+
     NdotL[BASE_NORMAL_IDX] = dot(N[BASE_NORMAL_IDX], skewedL[BASE_NORMAL_IDX]);
     NdotL[COAT_NORMAL_IDX] = dot(N[COAT_NORMAL_IDX], skewedL[COAT_NORMAL_IDX]);
 
@@ -3163,7 +3154,7 @@ DirectLighting EvaluateBSDF_Directional(LightLoopContext lightLoopContext,
     float3 inL = -light.forward;
     bool lightCanOnlyBeTransmitted;
     GetNLForDirectionalPunctualLights(bsdfData, preLightData, inL, V,
-                                      N, L, NdotL, lightCanOnlyBeTransmitted, /* computeSunDiscEffect*/ true, light);
+                                      N, L, NdotL, lightCanOnlyBeTransmitted, light);
     surfaceReflection = !lightCanOnlyBeTransmitted;
 
     // The rest is a copy of ShadeSurface_Directional, but without applying NdotL on BSDF diffuse/specular
@@ -3253,7 +3244,7 @@ DirectLighting EvaluateBSDF_Punctual(LightLoopContext lightLoopContext,
     // Get N, L and NdotL parameters along with if transmission must be evaluated
     bool lightCanOnlyBeTransmitted;
     GetNLForDirectionalPunctualLights(bsdfData, preLightData, L, V,
-                                      N, L, NdotL, lightCanOnlyBeTransmitted, /* computeSunDiscEffect*/ false);
+                                      N, L, NdotL, lightCanOnlyBeTransmitted);
     surfaceReflection = !lightCanOnlyBeTransmitted;
 
     // Caution: this function modifies N, NdotL, shadowIndex, contactShadowMask and shadowMaskSelector.

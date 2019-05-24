@@ -56,8 +56,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         public float   lightDimmer;
         public float   volumetricLightDimmer;   // Replaces 'lightDimer'
-        public float   angleScale;              // Sun disk highlight
-        public float   angleOffset;             // Sun disk highlight
 
         public Vector3 forward;
         public int     cookieIndex;             // -1 if unused (TODO: 16 bit)
