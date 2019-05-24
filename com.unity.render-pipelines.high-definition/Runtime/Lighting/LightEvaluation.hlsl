@@ -104,7 +104,7 @@ float3 EvaluateCookie_Directional(LightLoopContext lightLoopContext, Directional
 // Returns unassociated (non-premultiplied) color with alpha (attenuation).
 // The calling code must perform alpha-compositing.
 float4 EvaluateLight_Directional(LightLoopContext lightLoopContext, PositionInputs posInput,
-    DirectionalLightData light)
+                                 DirectionalLightData light)
 {
     float4 color = float4(light.color, 1.0);
 
