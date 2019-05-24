@@ -65,6 +65,7 @@ struct DirectionalLightData
     int shadowIndex;
     float3 color;
     int contactShadowMask;
+    float3 shadowTint;
     float shadowDimmer;
     float volumetricShadowDimmer;
     int nonLightMappedOnly;
@@ -97,6 +98,7 @@ struct LightData
     int shadowIndex;
     int contactShadowMask;
     int rayTracedAreaShadowIndex;
+    float3 shadowTint;
     float shadowDimmer;
     float volumetricShadowDimmer;
     int nonLightMappedOnly;

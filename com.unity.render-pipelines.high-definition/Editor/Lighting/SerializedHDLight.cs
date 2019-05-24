@@ -74,6 +74,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             public SerializedProperty fadeDistance;
             public SerializedProperty resolution;
             public SerializedProperty contactShadows;
+            public SerializedProperty shadowTint;            
 
             // Bias control
             public SerializedProperty viewBiasMin;
@@ -177,6 +178,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                     fadeDistance = o.Find(x => x.shadowFadeDistance),
                     resolution = o.Find(x => x.shadowResolution),
                     contactShadows = o.Find(x => x.contactShadows),
+                    shadowTint = o.Find(x => x.shadowTint),                    
 
                     viewBiasMin = o.Find(x => x.viewBiasMin),
                     viewBiasMax = o.Find(x => x.viewBiasMax),

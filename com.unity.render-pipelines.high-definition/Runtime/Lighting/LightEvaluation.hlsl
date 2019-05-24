@@ -183,7 +183,7 @@ float EvaluateShadow_Directional(LightLoopContext lightLoopContext, PositionInpu
 
 #ifdef DEBUG_DISPLAY
     if (_DebugShadowMapMode == SHADOWMAPDEBUGMODE_SINGLE_SHADOW && light.shadowIndex == _DebugSingleShadowIndex)
-        debugShadowAttenuation = shadow;
+        g_DebugShadowAttenuation = shadow;
 #endif
 
     return shadow;
@@ -345,7 +345,7 @@ float EvaluateShadow_Punctual(LightLoopContext lightLoopContext, PositionInputs 
 
 #ifdef DEBUG_DISPLAY
     if (_DebugShadowMapMode == SHADOWMAPDEBUGMODE_SINGLE_SHADOW && light.shadowIndex == _DebugSingleShadowIndex)
-        debugShadowAttenuation = shadow;
+        g_DebugShadowAttenuation = shadow;
 #endif
     return shadow;
 #else // LIGHT_EVALUATION_NO_SHADOWS

@@ -92,7 +92,7 @@ DirectLighting ShadeSurface_Directional(LightLoopContext lightLoopContext,
             // This code works for both surface reflection and thin object transmission.
             float shadow = EvaluateShadow_Directional(lightLoopContext, posInput, light, builtinData, shadowN);
             shadow *= ComputeMicroShadowing(GetAmbientOcclusionForMicroShadowing(bsdfData), abs(dot(bsdfData.normalWS, L)), _MicroShadowOpacity);
-            lightColor.rgb *= shadow;
+            lightColor.rgb *= ComputeShadowColor(shadow, light.shadowTint);
         }
 
         // Simulate a sphere/disk light with this hack.
@@ -184,7 +184,14 @@ DirectLighting ShadeSurface_Punctual(LightLoopContext lightLoopContext,
 
             // This code works for both surface reflection and thin object transmission.
             float shadow = EvaluateShadow_Punctual(lightLoopContext, posInput, light, builtinData, shadowN, L, distances);
-            lightColor.rgb *= shadow;
+            lightColor.rgb *= ComputeShadowColor(shadow, light.shadowTint);
+
+#ifdef DEBUG_DISPLAY
+            // The step with the attenuation is required to avoid seeing the screen tiles at the end of lights because the attenuation always falls to 0 before the tile ends.
+            // Note: g_DebugShadowAttenuation have been setup in EvaluateShadow_Punctual
+            if (_DebugShadowMapMode == SHADOWMAPDEBUGMODE_SINGLE_SHADOW && light.shadowIndex == _DebugSingleShadowIndex)
+                g_DebugShadowAttenuation *= step(FLT_EPS, lightColor.a);
+#endif
         }
 
         // Simulate a sphere/disk light with this hack.

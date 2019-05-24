@@ -71,7 +71,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public Vector3 color;
         public int     contactShadowMask;      // 0 if unused (TODO: 16 bit)
 
+        public Vector3 shadowTint;              // Use to tint shadow color
         public float   shadowDimmer;
+
         public float   volumetricShadowDimmer;  // Replaces 'shadowDimmer'
         public int     nonLightMappedOnly;      // Used with ShadowMask (TODO: use a bitfield)
         public float   minRoughness;            // Hack
@@ -114,6 +116,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         // TODO: Instead of doing this, we should pack the ray traced shadow index into the tile cookie for instance
         public int     rayTracedAreaShadowIndex;
+        public Vector3 shadowTint;              // Use to tint shadow color
 
         public float   shadowDimmer;
         public float   volumetricShadowDimmer;  // Replaces 'shadowDimmer'

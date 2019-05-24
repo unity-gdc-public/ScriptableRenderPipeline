@@ -1656,8 +1656,9 @@ DirectLighting EvaluateBSDF_Rect(   LightLoopContext lightLoopContext,
     }
 
 #if RASTERIZED_AREA_LIGHT_SHADOWS || SUPPORTS_RAYTRACED_AREA_SHADOWS
-    lighting.diffuse *= shadow;
-    lighting.specular *= shadow;
+    float3 shadowColor = ComputeShadowColor(shadow, lightData.shadowTint);
+    lighting.diffuse *= shadowColor;
+    lighting.specular *= shadowColor;
 #endif
 
 

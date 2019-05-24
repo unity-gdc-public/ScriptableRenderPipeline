@@ -631,7 +631,6 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                     {
                         EditorGUILayout.Slider(serialized.serializedShadowData.viewBiasScale, 0.0f, 15.0f, s_Styles.viewBiasScale);
                     }
-
                 }
 
             }
@@ -676,6 +675,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 }
 
                 EditorGUILayout.Slider(serialized.serializedShadowData.shadowDimmer, 0.0f, 1.0f, s_Styles.shadowDimmer);
+                EditorGUILayout.PropertyField(serialized.serializedShadowData.shadowTint, s_Styles.shadowTint);
 
                 if (serialized.settings.lightType.enumValueIndex != (int)LightType.Directional)
                 {
