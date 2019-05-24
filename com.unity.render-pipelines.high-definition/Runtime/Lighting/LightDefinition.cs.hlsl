@@ -55,8 +55,6 @@ struct DirectionalLightData
     uint lightLayers;
     float lightDimmer;
     float volumetricLightDimmer;
-    float angleScale;
-    float angleOffset;
     float3 forward;
     int cookieIndex;
     float3 right;
