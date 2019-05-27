@@ -251,7 +251,7 @@ CBSDF EvaluateBSDF(float3 V, float3 L, PreLightData preLightData, BSDFData bsdfD
     float flippedNdotL = ComputeWrappedDiffuseLighting(-NdotL, TRANSMISSION_WRAP_LIGHT);
 
 #if HDRP_ENABLE_SPECULAR
-    float LdotV, NdotH, LdotH, NdotV, invLenLV;
+    float LdotV, NdotH, LdotH, invLenLV;
     GetBSDFAngle(V, L, NdotL, NdotV, LdotV, NdotH, LdotH, invLenLV);
 
     float3 F = F_Schlick(bsdfData.fresnel0, LdotH);
