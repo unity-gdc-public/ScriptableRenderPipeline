@@ -333,7 +333,7 @@ bool IsNonZeroBSDF(float3 V, float3 L, PreLightData preLightData, BSDFData bsdfD
     return true; // Due to either reflection or transmission being always active
 }
 
-CBSDF EvaluateBSDF(float3 V, float3 L, float NdotL, PreLightData preLightData, BSDFData bsdfData)
+CBSDF EvaluateBSDF(float3 V, float3 L, PreLightData preLightData, BSDFData bsdfData)
 {
     CBSDF cbsdf;
     ZERO_INITIALIZE(CBSDF, cbsdf);
