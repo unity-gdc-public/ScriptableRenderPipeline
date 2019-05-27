@@ -32,6 +32,7 @@ DirectLighting ShadeSurface_Infinitesimal(PreLightData preLightData, BSDFData bs
     DirectLighting lighting;
     ZERO_INITIALIZE(DirectLighting, lighting);
 
+#ifndef DEBUG_DISPLAY
     if (Max3(lightColor.r, lightColor.g, lightColor.b) > 0)
     {
         CBSDF cbsdf = EvaluateBSDF(V, L, preLightData, bsdfData);
@@ -48,8 +49,7 @@ DirectLighting ShadeSurface_Infinitesimal(PreLightData preLightData, BSDFData bs
         lighting.diffuse  = (cbsdf.diffR + cbsdf.diffT * transmittance) * lightColor * diffuseDimmer;
         lighting.specular = (cbsdf.specR + cbsdf.specT * transmittance) * lightColor * specularDimmer;
     }
-
-#ifdef DEBUG_DISPLAY
+#else
     if (_DebugLightingMode == DEBUGLIGHTINGMODE_LUX_METER)
     {
         // Only lighting, no BSDF.
