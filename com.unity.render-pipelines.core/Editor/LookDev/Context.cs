@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 namespace UnityEditor.Rendering.LookDev
@@ -166,8 +167,12 @@ namespace UnityEditor.Rendering.LookDev
             if (!(environmentOrCubemapAsset is Environment)
                 && !(environmentOrCubemapAsset is Cubemap))
                 throw new System.ArgumentException("Only Environment or Cubemap accepted for environmentOrCubemapAsset parameter");
-            
-            environmentGUID = AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(environmentOrCubemapAsset));
+
+            string GUID;
+            long localIDInFile;
+            AssetDatabase.TryGetGUIDAndLocalFileIdentifier(environmentOrCubemapAsset, out GUID, out localIDInFile);
+            environmentGUID = $"{GUID},{localIDInFile}";
+
             if (environmentOrCubemapAsset is Environment)
                 environment = environmentOrCubemapAsset as Environment;
             else //Cubemap
@@ -182,15 +187,34 @@ namespace UnityEditor.Rendering.LookDev
             environment = null;
 
             GUID storedGUID;
-            GUID.TryParse(environmentGUID, out storedGUID);
+            string[] GUIDAndLocalIDInFile = environmentGUID.Split(new[] { ',' });
+            GUID.TryParse(GUIDAndLocalIDInFile[0], out storedGUID);
             if (storedGUID.Empty())
                 return;
+            long localIDInFile = GUIDAndLocalIDInFile.Length < 2 ? 0L : long.Parse(GUIDAndLocalIDInFile[1]);
 
-            string path = AssetDatabase.GUIDToAssetPath(environmentGUID);
-            environment = AssetDatabase.LoadAssetAtPath<Environment>(path);
+            string path = AssetDatabase.GUIDToAssetPath(GUIDAndLocalIDInFile[0]);
 
-            if (environment == null)
+            Type savedType = AssetDatabase.GetMainAssetTypeAtPath(path);
+            if (savedType == typeof(EnvironmentLibrary))
             {
+                object[] loaded = AssetDatabase.LoadAllAssetsAtPath(path);
+                for (int i = 0; i < loaded.Length; ++i)
+                {
+                    string garbage;
+                    long testedLocalIndex;
+                    if (AssetDatabase.TryGetGUIDAndLocalFileIdentifier((UnityEngine.Object)loaded[i], out garbage, out testedLocalIndex)
+                        && testedLocalIndex == localIDInFile)
+                    {
+                        environment = loaded[i] as Environment;
+                        break;
+                    }
+                }
+            }
+            else if (savedType == typeof(Environment))
+                environment = AssetDatabase.LoadAssetAtPath<Environment>(path);
+            else if (savedType == typeof(Cubemap))
+            { 
                 Cubemap cubemap = AssetDatabase.LoadAssetAtPath<Cubemap>(path);
                 environment = new Environment();
                 environment.sky.cubemap = cubemap;
