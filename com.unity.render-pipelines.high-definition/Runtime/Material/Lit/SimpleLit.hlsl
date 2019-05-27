@@ -265,10 +265,9 @@ CBSDF EvaluateBSDF(float3 V, float3 L, PreLightData preLightData, BSDFData bsdfD
     {
         cbsdf.specR = specTerm * clampedNdotL;
     }
-}
 #endif // HDRP_ENABLE_SPECULAR
 
-    float  diffTerm = Lambert();
+    float diffTerm = Lambert();
     cbsdf.diffR = diffTerm * clampedNdotL;
     cbsdf.diffT = diffTerm * flippedNdotL;
 
