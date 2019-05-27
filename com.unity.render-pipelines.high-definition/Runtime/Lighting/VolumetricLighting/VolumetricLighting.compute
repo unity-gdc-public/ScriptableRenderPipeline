@@ -188,9 +188,8 @@ VoxelLighting EvaluateVoxelLightingDirectional(LightLoopContext context, uint fe
             float3 shadowN = L;
 
             context.shadowValue = GetDirectionalShadowAttenuation(context.shadowContext,
-                                                                  posInput.positionWS, shadowN,
-                                                                  light.shadowIndex, L,
-                                                                  posInput.positionSS);
+                                                                  posInput.positionSS, posInput.positionWS, shadowN,
+                                                                  light.shadowIndex, L);
         }
     }
     else

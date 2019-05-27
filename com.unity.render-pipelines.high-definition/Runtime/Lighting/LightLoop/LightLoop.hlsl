@@ -14,7 +14,7 @@
 // LightLoop
 // ----------------------------------------------------------------------------
 
-void ApplyDebug(LightLoopContext lightLoopContext, PositionInputs posInput, BSDFData bsdfData, inout float3 diffuseLighting, inout float3 specularLighting)
+void ApplyDebug(LightLoopContext context, PositionInputs posInput, BSDFData bsdfData, inout float3 diffuseLighting, inout float3 specularLighting)
 {
 #ifdef DEBUG_DISPLAY
     if (_DebugLightingMode == DEBUGLIGHTINGMODE_DIFFUSE_LIGHTING)
@@ -49,23 +49,22 @@ void ApplyDebug(LightLoopContext lightLoopContext, PositionInputs posInput, BSDF
             real alpha;
             int cascadeCount;
 
-            int shadowSplitIndex = EvalShadow_GetSplitIndex(lightLoopContext.shadowContext, _DirectionalShadowIndex, posInput.positionWS, alpha, cascadeCount);
+            int shadowSplitIndex = EvalShadow_GetSplitIndex(context.shadowContext, _DirectionalShadowIndex, posInput.positionWS, alpha, cascadeCount);
             if (shadowSplitIndex >= 0)
             {
                 float shadow = 1.0;
                 if (_DirectionalShadowIndex >= 0)
                 {
+#if (SHADERPASS == SHADERPASS_FORWARD) || !defined(SCREEN_SPACE_SHADOWS)
                     DirectionalLightData light = _DirectionalLightDatas[_DirectionalShadowIndex];
 
                     float3 L = -light.forward;
-                    // TODO: the shadow code should do it for us. That would be far more efficient.
-                    float3 shadowN = GetNormalForShadowBias(bsdfData);
-                    shadowN *= FastSign(dot(shadowN, L));
-
-                    shadow = GetDirectionalShadowAttenuation(lightLoopContext.shadowContext,
-                                                             posInput.positionWS, shadowN,
-                                                             light.shadowIndex, L,
-                                                             posInput.positionSS);
+                    shadow = GetDirectionalShadowAttenuation(context.shadowContext,
+                                                             posInput.positionSS, posInput.positionWS, GetNormalForShadowBias(bsdfData),
+                                                             light.shadowIndex, L);
+#else
+                    shadow = GetScreenSpaceShadow(posInput);
+#endif
                 }
 
                 float3 cascadeShadowColor = lerp(s_CascadeColors[shadowSplitIndex], s_CascadeColors[shadowSplitIndex + 1], alpha);
@@ -136,14 +135,9 @@ void LightLoop( float3 V, PositionInputs posInput, PreLightData preLightData, BS
                 IsNonZeroBSDF(V, L, preLightData, bsdfData) &&
                 !ShouldEvaluateThickObjectTransmission(V, L, preLightData, bsdfData, light.shadowIndex))
             {
-                // TODO: the shadow code should do it for us. That would be far more efficient.
-                float3 shadowN  = GetNormalForShadowBias(bsdfData);
-                       shadowN *= FastSign(dot(shadowN, L));
-
                 context.shadowValue = GetDirectionalShadowAttenuation(context.shadowContext,
-                                                                      posInput.positionWS, shadowN,
-                                                                      light.shadowIndex, L,
-                                                                      posInput.positionSS);
+                                                                      posInput.positionSS, posInput.positionWS, GetNormalForShadowBias(bsdfData),
+                                                                      light.shadowIndex, L);
             }
 #else
             context.shadowValue = GetScreenSpaceShadow(posInput);

@@ -180,12 +180,8 @@ DirectLighting ShadeSurface_Punctual(LightLoopContext lightLoopContext,
         }
         else
         {
-            // TODO: the shadow code should do it for us. That would be far more efficient.
-            float3 shadowN  = GetNormalForShadowBias(bsdfData);
-                   shadowN *= FastSign(dot(shadowN, L));
-
             // This code works for both surface reflection and thin object transmission.
-            float shadow = EvaluateShadow_Punctual(lightLoopContext, posInput, light, builtinData, shadowN, L, distances);
+            float shadow = EvaluateShadow_Punctual(lightLoopContext, posInput, light, builtinData, GetNormalForShadowBias(bsdfData), L, distances);
             lightColor.rgb *= ComputeShadowColor(shadow, light.shadowTint);
 
 #ifdef DEBUG_DISPLAY
