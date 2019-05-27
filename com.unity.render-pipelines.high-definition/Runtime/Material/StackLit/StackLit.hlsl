@@ -3085,7 +3085,8 @@ CBSDF EvaluateBSDF(float3 inV, float3 inL, PreLightData preLightData, BSDFData b
 
     float diffuseNdotL = saturate(NdotL[DNLV_BASE_IDX]);
     cbsdf.diffR = diffTerm * diffuseNdotL;
-    cbsdf.diffT = diffTerm * ComputeWrappedDiffuseLighting(-diffuseNdotL, TRANSMISSION_WRAP_LIGHT);
+    // TODO: Note for Stephane: I use -inNdotL here as it match visually what was done before the refactor but I guess it should be -diffuseNdotL
+    cbsdf.diffT = diffTerm * ComputeWrappedDiffuseLighting(-inNdotL, TRANSMISSION_WRAP_LIGHT);
 
     return cbsdf;
 }
