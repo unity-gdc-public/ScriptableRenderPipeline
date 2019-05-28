@@ -127,7 +127,7 @@ namespace UnityEditor.Rendering.LookDev
 
         void OnMouseDragOrbit(MouseMoveEvent evt)
         {
-            Quaternion rotation = m_CameraState.rotationTarget;
+            Quaternion rotation = m_CameraState.rotation;
             rotation = Quaternion.AngleAxis(evt.mouseDelta.y * .003f * Mathf.Rad2Deg, rotation * Vector3.right) * rotation;
             rotation = Quaternion.AngleAxis(evt.mouseDelta.x * .003f * Mathf.Rad2Deg, Vector3.up) * rotation;
             m_CameraState.rotation = rotation;
@@ -149,22 +149,16 @@ namespace UnityEditor.Rendering.LookDev
         void OnMouseDragPan(MouseMoveEvent evt)
         {
             //[TODO: fix WorldToScreenPoint and ScreenToWorldPoint
-            //var screenPos = m_CameraState.WorldToScreenPoint(screen, m_CameraState.pivot);
-            //Debug.Log($"Pan: screenPosOfPivot:{screenPos}");
-            //screenPos += new Vector3(evt.mouseDelta.x, evt.mouseDelta.y, 0)f;
-            //Debug.Log($"Pan: newScreenPosOfPivot:{screenPos}");
-            //Vector3 worldDelta = m_CameraState.ScreenToWorldPoint(screen, screenPos) - m_CameraState.pivot;
-            //Debug.Log($"Pan: worldDelta:{worldDelta}");
-            //if (evt.shiftKey)
-            //    worldDelta *= 4;
-            //m_CameraState.pivot += worldDelta;
-            Vector3 displacement = (m_CameraState.up * evt.mouseDelta.y - m_CameraState.right * evt.mouseDelta.x )
-                //hard coded 0.0033f which seams to be good displacement speed for a pivot at 1f from camera
-                * 0.0033f * m_CameraState.distanceFromPivot;
+            var screenPos = m_CameraState.QuickProjectPivotInScreen(screen);
+            screenPos += new Vector3(evt.mouseDelta.x, -evt.mouseDelta.y, 0);
+            //Vector3 newWorldPos = m_CameraState.ScreenToWorldPoint(screen, screenPos);
+            Vector3 newWorldPos = m_CameraState.QuickReprojectionWithFixedFOVOnPivotPlane(screen, screenPos);
+            Vector3 worldDelta = newWorldPos - m_CameraState.pivot;
+            worldDelta *= EditorGUIUtility.pixelsPerPoint;
+            Debug.Log($"Pan: screen:({screen.width},{screen.height}) pivotScreenPos:({screenPos.x,10:F3},{screenPos.y,10:F3},{screenPos.z,10:F3}) mouseDelta:({evt.mouseDelta.x,10:F3},{evt.mouseDelta.y,10:F3}) worldDelta:({worldDelta.x,15:F9},{worldDelta.y,15:F9},{worldDelta.z,15:F9})");
             if (evt.shiftKey)
-                displacement *= 4;
-            m_CameraState.pivot += displacement;
-            Debug.Log($"Pan: DistanceToPivot:{m_CameraState.distanceFromPivot}");
+                worldDelta *= 4;
+            m_CameraState.pivot += worldDelta;
             evt.StopPropagation();
         }
 
