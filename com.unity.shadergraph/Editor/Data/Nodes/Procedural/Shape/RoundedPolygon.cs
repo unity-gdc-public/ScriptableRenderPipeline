@@ -3,7 +3,6 @@ using UnityEngine;
 
 namespace UnityEditor.ShaderGraph
 {
-
     [Title("Procedural", "Shape", "Rounded Polygon")]
     public class RoundedPolygon : CodeFunctionNode
     {
@@ -18,8 +17,6 @@ namespace UnityEditor.ShaderGraph
                 BindingFlags.Static | BindingFlags.NonPublic);
         }
 
-
-
         static string RoundedPolygon_Func(
             [Slot(0, Binding.MeshUV0)] Vector2 UV,
             [Slot(1, Binding.None, 0.5f, 0, 0, 0)] Vector1 Width,
@@ -32,86 +29,74 @@ namespace UnityEditor.ShaderGraph
                 @"
 {
 	UV = UV * 2. + {precision}2(-1.,-1.);
+
     UV.x = (Width==0)? 0xFFFFFF : UV.x / Width;
     UV.y = (Height==0)? 0xFFFFFF : UV.y / Height;
 
-    // chamfer = 1 : perfect circle
-    if (Roundness == 1)
-        Out = length(UV);
-    else
-    {
-        {precision} i_sides = floor(Sides);
-        {precision} fullAngle = 2. * PI / i_sides;
-        {precision} halfAngle = fullAngle / 2.;
-        {precision} opositeAngle = HALF_PI - halfAngle;
+    Roundness = clamp(Roundness, 1e-6, 1.);
 
-        {precision} diagonal = 1. / cos( halfAngle );
+    {precision} i_sides = floor( abs( Sides ) );
+    {precision} fullAngle = 2. * PI / i_sides;
+    {precision} halfAngle = fullAngle / 2.;
+    {precision} opositeAngle = HALF_PI - halfAngle;
 
-        // Chamfer values
-        {precision} chamferAngle = Roundness * halfAngle; // Angle taken by the chamfer
-        {precision} remainingAngle = halfAngle - chamferAngle; // Angle that remains
+    {precision} diagonal = 1. / cos( halfAngle );
 
-        {precision} ratio = tan(remainingAngle) / tan(halfAngle); // This is the ratio between the length of the polygon's triangle and the distance of the chamfer center to the polygon center
+    // Chamfer values
+    {precision} chamferAngle = Roundness * halfAngle; // Angle taken by the chamfer
+    {precision} remainingAngle = halfAngle - chamferAngle; // Angle that remains
 
-        // Center of the chamfer arc
-        {precision}2 chamferCenter = {precision}2(
-            cos(halfAngle) ,
-            sin(halfAngle)
-        )* ratio * diagonal;
+    {precision} ratio = tan(remainingAngle) / tan(halfAngle); // This is the ratio between the length of the polygon's triangle and the distance of the chamfer center to the polygon center
 
-        // starting of the chamfer arc
-        {precision}2 chamferOrigin = {precision}2(
-            1.,
-            tan(remainingAngle)
-        );
+    // Center of the chamfer arc
+    {precision}2 chamferCenter = {precision}2(
+        cos(halfAngle) ,
+        sin(halfAngle)
+    )* ratio * diagonal;
 
-        // Using Al Kashi algebra, we determine:
-        // The distance distance of the center of the chamfer to the center of the polygon (side A)
-        {precision} distA = length(chamferCenter);
-        // The radius of the chamfer (side B)
-        {precision} distB = 1. - chamferCenter.x;
-        // The refence length of side C, which is the distance to the chamfer start
-        {precision} distCref = length(chamferOrigin);
+    // starting of the chamfer arc
+    {precision}2 chamferOrigin = {precision}2(
+        1.,
+        tan(remainingAngle)
+    );
 
-        // This will rescale the chamfered polygon to fit the uv space
-        if( Roundness > 0 )
-        {
-            diagonal = length(chamferCenter) + distB;
-        }
+    // Using Al Kashi algebra, we determine:
+    // The distance distance of the center of the chamfer to the center of the polygon (side A)
+    {precision} distA = length(chamferCenter);
+    // The radius of the chamfer (side B)
+    {precision} distB = 1. - chamferCenter.x;
+    // The refence length of side C, which is the distance to the chamfer start
+    {precision} distCref = length(chamferOrigin);
 
-        {precision} uvScale = diagonal;
+    // This will rescale the chamfered polygon to fit the uv space
+    diagonal = length(chamferCenter) + distB;
 
-        // Disable uv scaling for polygons with side count multiple of 4 (sides will match with uv square)
-        if ( fmod(i_sides, 4.)  == 0)
-            uvScale = 1.;
+    {precision} uvScale = diagonal;
 
+    UV *= uvScale;
 
-        UV *= uvScale;
+    {precision}2 polaruv = {precision}2 (
+        atan2( UV.y, UV.x ),
+        length(UV)
+    );
 
-        {precision}2 polaruv = {precision}2 (
-			atan2( UV.y, UV.x ),
-			length(UV)
-		);
+    polaruv.x += PI;
 
-        polaruv.x += PI;
+    polaruv.x = fmod( polaruv.x + halfAngle + 3 * HALF_PI, fullAngle );
+    polaruv.x = abs(polaruv.x - halfAngle);
 
-        polaruv.x = fmod( polaruv.x + halfAngle, fullAngle );
-        polaruv.x = abs(polaruv.x - halfAngle);
+    UV = {precision}2( cos(polaruv.x), sin(polaruv.x) ) * polaruv.y;
 
-        UV = {precision}2( cos(polaruv.x), sin(polaruv.x) ) * polaruv.y;
+    // Calculate the angle needed for the Al Kashi algebra
+    {precision} angleRatio = 1. - (polaruv.x-remainingAngle) / chamferAngle;
+    // Calculate the distance of the polygon center to the chamfer extremity
+    {precision} distC = sqrt( distA*distA + distB*distB - 2.*distA*distB*cos( PI - halfAngle * angleRatio ) );
 
-        Out = UV.x;
+    Out = UV.x;
 
-        if ( ( halfAngle - polaruv.x ) < chamferAngle )
-        {
-            // Calculate the angle needed for the Al Kashi algebra
-            {precision} angleRatio = 1. - (polaruv.x-remainingAngle) / chamferAngle;
-            // Calculate the distance of the polygon center to the chamfer extremity
-            {precision} distC = sqrt( distA*distA + distB*distB - 2.*distA*distB*cos( PI - halfAngle * angleRatio ) );
+    float chamferZone = ( halfAngle - polaruv.x ) < chamferAngle;
 
-            Out = polaruv.y / distC ;
-        }
-    }
+    Out = lerp( UV.x, polaruv.y / distC, chamferZone );
 
 	// Output this to have the shape mask instead of the distance field
 	Out = saturate((1 - Out) / fwidth(Out));
