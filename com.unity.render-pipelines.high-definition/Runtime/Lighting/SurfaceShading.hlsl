@@ -87,12 +87,8 @@ DirectLighting ShadeSurface_Directional(LightLoopContext lightLoopContext,
         }
         else
         {
-            // TODO: the shadow code should do it for us. That would be far more efficient.
-            float3 shadowN  = GetNormalForShadowBias(bsdfData);
-                   shadowN *= FastSign(dot(shadowN, L));
-
             // This code works for both surface reflection and thin object transmission.
-            float shadow = EvaluateShadow_Directional(lightLoopContext, posInput, light, builtinData, shadowN);
+            float shadow = EvaluateShadow_Directional(lightLoopContext, posInput, light, builtinData, GetNormalForShadowBias(bsdfData));
             shadow *= ComputeMicroShadowing(GetAmbientOcclusionForMicroShadowing(bsdfData), abs(dot(bsdfData.normalWS, L)), _MicroShadowOpacity);
             lightColor.rgb *= ComputeShadowColor(shadow, light.shadowTint);
         }
