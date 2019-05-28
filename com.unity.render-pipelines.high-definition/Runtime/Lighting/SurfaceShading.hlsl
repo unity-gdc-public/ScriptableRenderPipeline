@@ -96,12 +96,15 @@ DirectLighting ShadeSurface_Directional(LightLoopContext lightLoopContext,
 
             float shadow = 1.0;
             // For thin transmission we don't want micro shadow, contact shadow or baked shadows.
-            if (!isThinTransmission)
-            {                
-                shadow = ComputeMicroShadowing(GetAmbientOcclusionForMicroShadowing(bsdfData), abs(dot(bsdfData.normalWS, L)), _MicroShadowOpacity);
+            if (isThinTransmission)
+            {
                 // This will disable contact shadow and shadow mask
                 light.contactShadowMask = 0;
                 light.shadowMaskSelector.x = -1;
+            }
+            else
+            {
+                shadow = ComputeMicroShadowing(GetAmbientOcclusionForMicroShadowing(bsdfData), abs(dot(bsdfData.normalWS, L)), _MicroShadowOpacity);
             }
             // This code works for both surface reflection and thin object transmission.
             shadow *= EvaluateShadow_Directional(lightLoopContext, posInput, light, builtinData, GetNormalForShadowBias(bsdfData));
@@ -201,7 +204,7 @@ DirectLighting ShadeSurface_Punctual(LightLoopContext lightLoopContext,
 
             float shadow = 1.0;
             // For thin transmission we don't want contact shadow or baked shadows.
-            if (!isThinTransmission)
+            if (isThinTransmission)
             {
                 // This will disable contact shadow and shadow mask
                 light.contactShadowMask = 0;
