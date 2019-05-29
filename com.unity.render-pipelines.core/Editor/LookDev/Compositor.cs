@@ -1,5 +1,3 @@
-//#define TEMPORARY_RENDERDOC_INTEGRATION //require specific c++
-
 using System;
 using UnityEngine;
 using IDataProvider = UnityEngine.Rendering.LookDev.IDataProvider;
@@ -83,10 +81,8 @@ namespace UnityEditor.Rendering.LookDev
         }
 
         Color m_AmbientColor = new Color(0.0f, 0.0f, 0.0f, 0.0f);
-
-#if TEMPORARY_RENDERDOC_INTEGRATION
+        
         bool m_RenderDocAcquisitionRequested;
-#endif
 
         public Compositer(
             IViewDisplayer displayer,
@@ -108,13 +104,7 @@ namespace UnityEditor.Rendering.LookDev
         }
 
         void RenderDocAcquisitionRequested()
-#if TEMPORARY_RENDERDOC_INTEGRATION
             => m_RenderDocAcquisitionRequested = true;
-#else
-        {
-            UnityEngine.Debug.LogWarning("RenderDoc integration flag not set. Full RenderDoc is not possible.");
-        }
-#endif
 
         void CleanUp()
         {
@@ -131,11 +121,9 @@ namespace UnityEditor.Rendering.LookDev
 
         public void Render()
         {
-#if TEMPORARY_RENDERDOC_INTEGRATION
             //TODO: make integration EditorWindow agnostic!
             if (UnityEditorInternal.RenderDoc.IsLoaded() && UnityEditorInternal.RenderDoc.IsSupported() && m_RenderDocAcquisitionRequested)
                 UnityEditorInternal.RenderDoc.BeginCaptureRenderDoc(m_Displayer as EditorWindow);
-#endif
 
             switch (m_Contexts.layout.viewLayout)
             {
@@ -155,8 +143,7 @@ namespace UnityEditor.Rendering.LookDev
                     RenderCompositeAndOutput();
                     break;
             }
-
-#if TEMPORARY_RENDERDOC_INTEGRATION
+            
             //TODO: make integration EditorWindow agnostic!
             if (UnityEditorInternal.RenderDoc.IsLoaded() && UnityEditorInternal.RenderDoc.IsSupported() && m_RenderDocAcquisitionRequested)
                 UnityEditorInternal.RenderDoc.EndCaptureRenderDoc(m_Displayer as EditorWindow);
@@ -165,7 +152,6 @@ namespace UnityEditor.Rendering.LookDev
             //allows to gather both view and composition in render doc at once
             //TODO: check this
             m_RenderDocAcquisitionRequested = false;
-#endif
         }
 
         void RenderSingleAndOutput(ViewIndex index)

@@ -1,5 +1,3 @@
-//#define TEMPORARY_RENDERDOC_INTEGRATION //require specific c++
-
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -103,7 +101,7 @@ namespace UnityEditor.Rendering.LookDev
                 }
             }
         }
-        
+
         event Action<Layout, bool> OnLayoutChangedInternal;
         event Action<Layout, bool> IViewDisplayer.OnLayoutChanged
         {
@@ -242,21 +240,15 @@ namespace UnityEditor.Rendering.LookDev
             toolbar.Add(toolbarRadio);
             toolbar.Add(new ToolbarSpacer());
             //to complete
-
-
-            toolbar.Add(new ToolbarSpacer() { flex = true });
-
-            //TODO: better RenderDoc integration
-#if TEMPORARY_RENDERDOC_INTEGRATION
+            
             if (UnityEditorInternal.RenderDoc.IsInstalled() && UnityEditorInternal.RenderDoc.IsLoaded())
             {
+                toolbar.Add(new ToolbarSpacer() { flex = true });
                 toolbar.Add(new ToolbarButton(() => OnRenderDocAcquisitionTriggeredInternal?.Invoke())
                 {
                     text = "RenderDoc Content"
                 });
             }
-#endif
-
             toolbar.Add(toolbarEnvironment);
             rootVisualElement.Add(toolbar);
         }
