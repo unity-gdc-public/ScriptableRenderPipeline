@@ -4,9 +4,9 @@ using UnityEngine;
 namespace UnityEditor.ShaderGraph
 {
     [Title("Procedural", "Shape", "Rounded Polygon")]
-    public class RoundedPolygon : CodeFunctionNode
+    public class RoundedPolygonNode : CodeFunctionNode
     {
-        public RoundedPolygon()
+        public RoundedPolygonNode()
         {
             name = "Rounded Polygon";
         }
