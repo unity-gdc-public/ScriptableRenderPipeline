@@ -120,6 +120,7 @@ namespace UnityEditor.Rendering.LookDev
         {
             m_Displayer.OnRenderDocAcquisitionTriggered -= RenderDocAcquisitionRequested;
             EditorApplication.update -= Render;
+            m_Stages?.Dispose();
         }
         public void Dispose()
         {
