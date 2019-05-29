@@ -83,9 +83,17 @@ namespace UnityEditor.Rendering.LookDev
                 if (value ^ m_IsDragging)
                 {
                     if (value)
+                    {
                         target.RegisterCallback<MouseMoveEvent>(OnMouseDrag);
+                        target.CaptureMouse();
+                        EditorGUIUtility.SetWantsMouseJumping(1);
+                    }
                     else
+                    {
+                        EditorGUIUtility.SetWantsMouseJumping(0);
+                        target.ReleaseMouse();
                         target.UnregisterCallback<MouseMoveEvent>(OnMouseDrag);
+                    }
                     m_IsDragging = value;
                 }
             }
