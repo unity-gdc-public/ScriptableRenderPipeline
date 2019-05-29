@@ -419,8 +419,10 @@ CBSDF EvaluateBSDF(float3 V, float3 L, PreLightData preLightData, BSDFData bsdfD
 
         specTerm = F * DV;
 
-        // Use abs for NdotV and NdotL to evaluate diffuse term also for transmission
-        diffTerm = DisneyDiffuse(abs(NdotV), abs(NdotL), LdotV, bsdfData.perceptualRoughness);
+        // Use abs NdotL to evaluate diffuse term also for transmission
+        // TODO: See with Evgenii about the clampedNdotV here. This is what we use before the refactor
+        // but now maybe we want to revisit it for transmission
+        diffTerm = DisneyDiffuse(clampedNdotV, abs(NdotL), LdotV, bsdfData.perceptualRoughness);
     }
 
     // The compiler should optimize these. Can revisit later if necessary.

@@ -1251,8 +1251,10 @@ CBSDF EvaluateBSDF(float3 V, float3 L, PreLightData preLightData, BSDFData bsdfD
     // for multi-bounce GGX), and the visual difference is negligible.
     // Therefore, we choose not to separate diffuse lighting into reflected and transmitted.
 
-    // Use abs for NdotV and NdotL to evaluate diffuse term also for transmission
-    float diffTerm = DisneyDiffuse(abs(NdotV), abs(NdotL), LdotV, bsdfData.perceptualRoughness);
+    // Use abs NdotL to evaluate diffuse term also for transmission
+    // TODO: See with Evgenii about the clampedNdotV here. This is what we use before the refactor
+    // but now maybe we want to revisit it for transmission
+    float diffTerm = DisneyDiffuse(clampedNdotV, abs(NdotL), LdotV, bsdfData.perceptualRoughness);
 #endif
 
     if (HasFlag(bsdfData.materialFeatures, MATERIALFEATUREFLAGS_LIT_CLEAR_COAT))
