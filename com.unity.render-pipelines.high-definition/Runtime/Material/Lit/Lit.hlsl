@@ -1222,12 +1222,14 @@ CBSDF EvaluateBSDF(float3 V, float3 L, PreLightData preLightData, BSDFData bsdfD
         float BdotL = dot(bsdfData.bitangentWS, L);
 
         // TODO: Do comparison between this correct version and the one from isotropic and see if there is any visual difference
-        DV = DV_SmithJointGGXAniso(TdotH, BdotH, NdotH, clampedNdotV, TdotL, BdotL, clampedNdotL,
+        // We use abs(NdotL) to handle transmisison like it was before the refactor
+        DV = DV_SmithJointGGXAniso(TdotH, BdotH, NdotH, clampedNdotV, TdotL, BdotL, abs(NdotL),
                                    bsdfData.roughnessT, bsdfData.roughnessB, preLightData.partLambdaV);
     }
     else
     {
-        DV = DV_SmithJointGGX(NdotH, clampedNdotL, clampedNdotV, bsdfData.roughnessT, preLightData.partLambdaV);
+        // We use abs(NdotL) to handle transmisison like it was before the refactor
+        DV = DV_SmithJointGGX(NdotH, abs(NdotL), clampedNdotV, bsdfData.roughnessT, preLightData.partLambdaV);
     }
 
     float3 specTerm = F * DV;
@@ -1267,7 +1269,8 @@ CBSDF EvaluateBSDF(float3 V, float3 L, PreLightData preLightData, BSDFData bsdfD
 
         // Add top specular
         // TODO: Should we call just D_GGX here ?
-        float DV = DV_SmithJointGGX(NdotH, clampedNdotL, clampedNdotV, bsdfData.coatRoughness, preLightData.coatPartLambdaV);
+        // We use abs(NdotL) to handle transmisison like it was before the refactor
+        float DV = DV_SmithJointGGX(NdotH, abs(NdotL), clampedNdotV, bsdfData.coatRoughness, preLightData.coatPartLambdaV);
         specTerm += coatF * DV;
 
         // Note: The modification of the base roughness and fresnel0 by the clear coat is already handled in FillMaterialClearCoatData

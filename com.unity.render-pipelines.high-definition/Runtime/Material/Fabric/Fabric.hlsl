@@ -354,7 +354,7 @@ bool IsNonZeroBSDF(float3 V, float3 L, PreLightData preLightData, BSDFData bsdfD
 {
     float NdotL = dot(bsdfData.normalWS, L);
 
-    return HasFlag(bsdfData.materialFeatures, MATERIALFEATUREFLAGS_FABRIC_TRANSMISSION) || (NdotL > 0);
+    return HasFlag(bsdfData.materialFeatures, MATERIALFEATUREFLAGS_FABRIC_TRANSMISSION) || (NdotL > 0.0);
 }
 
 // Ref: https://www.slideshare.net/jalnaga/custom-fabric-shader-for-unreal-engine-4
@@ -411,7 +411,8 @@ CBSDF EvaluateBSDF(float3 V, float3 L, PreLightData preLightData, BSDFData bsdfD
         float BdotL = dot(bsdfData.bitangentWS, L);
 
         // TODO: Do comparison between this correct version and the one from isotropic and see if there is any visual difference
-        float DV = DV_SmithJointGGXAniso(   TdotH, BdotH, NdotH, clampedNdotV, TdotL, BdotL, clampedNdotL,
+        // We use abs(NdotL) to handle transmisison like it was before the refactor
+        float DV = DV_SmithJointGGXAniso(   TdotH, BdotH, NdotH, clampedNdotV, TdotL, BdotL, abs(NdotL),
                                             bsdfData.roughnessT, bsdfData.roughnessB, preLightData.partLambdaV);
 
         // Fabric are dieletric but we simulate forward scattering effect with colored specular (fuzz tint term)
