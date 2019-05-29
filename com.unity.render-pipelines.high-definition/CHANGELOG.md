@@ -21,11 +21,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Fixed issue when texture where deleted in ShadowCascadeGUI
 - Fixed issue in FrameSettingsHistory when disabling a camera several time without enabling it in between.
 - Fixed volumetric reprojection with camera-relative code and XR stereo instancing
+- Added custom BaseShaderPreprocessor in HDEditorUtils.GetBaseShaderPreprocessorList()
+- Fixed compile issue when USE_XR_SDK is not defined
+- Fixed procedural sky sun disk intensity for high directional light intensities
 
 ### Changed
 - Optimization: Reduce the group size of the deferred lighting pass from 16x16 to 8x8
 - Replaced HDCamera.computePassCount by viewCount
-- Removed xrInstancing flag in RTHandles (replaced by TextureXR.slices and TextureXR.dimensions) 
+- Removed xrInstancing flag in RTHandles (replaced by TextureXR.slices and TextureXR.dimensions)
+- Refactor the HDRenderPipeline and lightloop code to preprare for high level rendergraph
 
 ## [6.7.0-preview] - 2019-05-16
 

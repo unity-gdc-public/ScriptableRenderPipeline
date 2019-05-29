@@ -1660,7 +1660,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             // Caution: We require sun light here as some skies use the sun light to render, it means that UpdateSkyEnvironment must be called after PrepareLightsForGPU.
             // TODO: Try to arrange code so we can trigger this call earlier and use async compute here to run sky convolution during other passes (once we move convolution shader to compute).
-            UpdateSkyEnvironment(hdCamera, cmd);
+            if(m_CurrentDebugDisplaySettings.GetDebugLightingMode() != DebugLightingMode.MatcapView)
+                UpdateSkyEnvironment(hdCamera, cmd);
 
             hdCamera.xr.StartLegacyStereo(camera, cmd, renderContext);
 
@@ -2813,31 +2814,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     DrawTransparentRendererList(renderContext, cmd, hdCamera.frameSettings, rendererListTransparent);
                 }
             }
-        }
-
-        void RenderDeferredLighting(HDCamera hdCamera, CommandBuffer cmd)
-        {
-            if (hdCamera.frameSettings.litShaderMode != LitShaderMode.Deferred)
-                return;
-
-            m_MRTCache2[0] = m_CameraColorBuffer;
-            m_MRTCache2[1] = m_CameraSssDiffuseLightingBuffer;
-            var depthTexture = m_SharedRTManager.GetDepthTexture();
-
-            var options = new LightingPassOptions();
-
-            if (hdCamera.frameSettings.IsEnabled(FrameSettingsField.SubsurfaceScattering))
-            {
-                // Output split lighting for materials asking for it (masked in the stencil buffer)
-                options.outputSplitLighting = true;
-
-                RenderDeferredLighting(hdCamera, cmd, m_CurrentDebugDisplaySettings, m_MRTCache2, m_SharedRTManager.GetDepthStencilBuffer(), depthTexture, options);
-            }
-
-            // Output combined lighting for all the other materials.
-            options.outputSplitLighting = false;
-
-            RenderDeferredLighting(hdCamera, cmd, m_CurrentDebugDisplaySettings, m_MRTCache2, m_SharedRTManager.GetDepthStencilBuffer(), depthTexture, options);
         }
 
         void UpdateSkyEnvironment(HDCamera hdCamera, CommandBuffer cmd)
