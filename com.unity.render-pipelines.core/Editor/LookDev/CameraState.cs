@@ -46,7 +46,7 @@ namespace UnityEditor.Rendering.LookDev
             float aspect = screen.width / screen.height;
             //Note: verticalDistance is same than distance from pivot with fixed FoV 90°
             float verticalDistance = distanceFromPivot;
-            Vector2 normalizedScreenPoint = new Vector3(
+            Vector2 normalizedScreenPoint = new Vector2(
                 screenPoint.x * 2f / screen.width - 1f,
                 screenPoint.y * 2f / screen.height - 1f);
             return pivot

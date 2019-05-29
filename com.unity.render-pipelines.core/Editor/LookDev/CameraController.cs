@@ -27,7 +27,7 @@ namespace UnityEditor.Rendering.LookDev
         ViewTool m_BehaviorState;
         static TimeHelper s_Timer = new TimeHelper();
 
-        CameraState m_CameraState;
+        protected CameraState m_CameraState;
         DisplayWindow m_Window;
 
         Rect screen => target.contentRect;
@@ -74,7 +74,7 @@ namespace UnityEditor.Rendering.LookDev
             set => flySpeedNormalized = Mathf.InverseLerp(m_FlySpeedMin, m_FlySpeedMax, value);
         }
 
-        bool isDragging
+        virtual protected bool isDragging
         {
             get => m_IsDragging;
             set
@@ -112,7 +112,7 @@ namespace UnityEditor.Rendering.LookDev
             m_BehaviorState = ViewTool.None;
         }
         
-        void OnScrollWheel(WheelEvent evt)
+        protected virtual void OnScrollWheel(WheelEvent evt)
         {
             // See UnityEditor.SceneViewMotion.HandleScrollWheel
             switch (m_BehaviorState)
@@ -410,5 +410,72 @@ namespace UnityEditor.Rendering.LookDev
             }
         }
     }
-    
+
+    class SwitchableCameraController : CameraController
+    {
+        CameraState m_FirstView;
+        CameraState m_SecondView;
+
+        bool switchedDrag = false;
+        bool switchedWheel = false;
+
+        public SwitchableCameraController(CameraState cameraStateFirstView, CameraState cameraStateSecondView, DisplayWindow window)
+            : base(cameraStateFirstView, window)
+        {
+            m_FirstView = cameraStateFirstView;
+            m_SecondView = cameraStateSecondView;
+        }
+
+        void SwitchTo(ViewIndex index)
+        {
+            CameraState stateToSwitch;
+            switch(index)
+            {
+                case ViewIndex.First:
+                    stateToSwitch = m_FirstView;
+                    break;
+                case ViewIndex.Second:
+                    stateToSwitch = m_SecondView;
+                    break;
+                default:
+                    throw new ArgumentException("Unknown ViewIndex");
+            }
+
+            if (stateToSwitch != m_CameraState)
+                m_CameraState = stateToSwitch;
+        }
+
+        public void SwitchUntilNextEndOfDrag()
+        {
+            switchedDrag = true;
+            SwitchTo(ViewIndex.Second);
+        }
+
+        override protected bool isDragging
+        {
+            get => base.isDragging; 
+            set
+            {
+                bool switchBack = false;
+                if (switchedDrag && base.isDragging && !value)
+                    switchBack = true;
+                base.isDragging = value;
+                if (switchBack)
+                    SwitchTo(ViewIndex.First);
+            }
+        }
+        
+        public void SwitchUntilNextWheelEvent()
+        {
+            switchedWheel = true;
+            SwitchTo(ViewIndex.Second);
+        }
+
+        protected override void OnScrollWheel(WheelEvent evt)
+        {
+            base.OnScrollWheel(evt);
+            if (switchedWheel)
+                SwitchTo(ViewIndex.First);
+        }
+    }
 }

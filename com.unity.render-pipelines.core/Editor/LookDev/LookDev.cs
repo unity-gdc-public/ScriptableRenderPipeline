@@ -19,7 +19,6 @@ namespace UnityEditor.Rendering.LookDev
         static IEnvironmentDisplayer s_EnvironmentDisplayer;
         static Compositer s_Compositor;
         static StageCache s_Stages;
-        static ComparisonGizmo s_Comparator;
         static Context s_CurrentContext;
 
         static IDataProvider dataProvider
@@ -124,7 +123,6 @@ namespace UnityEditor.Rendering.LookDev
         static void ConfigureRenderer(bool reloadWithTemporaryID)
         {
             s_Stages = new StageCache(dataProvider, currentContext);
-            s_Comparator = new ComparisonGizmo(currentContext.layout.gizmoState, s_ViewDisplayer);
             s_Compositor = new Compositer(s_ViewDisplayer, currentContext, dataProvider, s_Stages);
         }
 
@@ -146,7 +144,6 @@ namespace UnityEditor.Rendering.LookDev
                 //free references for memory cleaning
                 s_ViewDisplayer = null;
                 s_Stages = null;
-                s_Comparator = null;
                 s_Compositor = null;
                 //currentContext = null;
             };

@@ -291,7 +291,7 @@ namespace UnityEditor.Rendering.LookDev
         public ViewIndex GetViewFromComposition(Vector2 localCoordinate)
         {
             Rect compositionRect = m_Displayer.GetRect(ViewCompositionIndex.Composite);
-            Vector2 normalizedLocalCoordinate = ComparisonGizmo.GetNormalizedCoordinates(localCoordinate, compositionRect);
+            Vector2 normalizedLocalCoordinate = ComparisonGizmoController.GetNormalizedCoordinates(localCoordinate, compositionRect);
             switch (m_Contexts.layout.viewLayout)
             {
                 case Layout.CustomSplit:
