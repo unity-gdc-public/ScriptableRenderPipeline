@@ -383,12 +383,8 @@ CBSDF EvaluateBSDF(float3 V, float3 L, PreLightData preLightData, BSDFData bsdfD
         // Bypass the normal map...
         float geomNdotV = dot(bsdfData.geomNormalWS, V);
 
-        // Probably worth branching here for perf reasons.
-        if (NdotL > 0)
-        {
-            // G = NdotL * NdotV.
-            cbsdf.specR = 0.25 * F * (hairSpec1 + hairSpec2) * clampedNdotL * saturate(geomNdotV * FLT_MAX);
-        }
+        // G = NdotL * NdotV.
+        cbsdf.specR = 0.25 * F * (hairSpec1 + hairSpec2) * clampedNdotL * saturate(geomNdotV * FLT_MAX);
 
         // Yibing's and Morten's hybrid scatter model hack.
         float scatterFresnel1 = pow(saturate(-LdotV), 9.0) * pow(saturate(1.0 - geomNdotV * geomNdotV), 12.0);

@@ -256,7 +256,8 @@ CBSDF EvaluateBSDF(float3 V, float3 L, PreLightData preLightData, BSDFData bsdfD
 
     float3 F = F_Schlick(bsdfData.fresnel0, LdotH);
 
-    float DV = DV_SmithJointGGX(NdotH, clampedNdotL, clampedNdotV, bsdfData.roughnessT, preLightData.partLambdaV);
+    // We use abs(NdotL) to handle the none case of double sided
+    float DV = DV_SmithJointGGX(NdotH, abs(NdotL), clampedNdotV, bsdfData.roughnessT, preLightData.partLambdaV);
     float3 specTerm = F * DV;
 
     // Probably worth branching here for perf reasons.
