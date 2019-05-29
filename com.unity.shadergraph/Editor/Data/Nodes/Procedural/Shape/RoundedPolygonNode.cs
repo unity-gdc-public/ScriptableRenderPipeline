@@ -30,8 +30,10 @@ namespace UnityEditor.ShaderGraph
 {
 	UV = UV * 2. + {precision}2(-1.,-1.);
 
-    UV.x = (Width==0)? 0xFFFFFF : UV.x / Width;
-    UV.y = (Height==0)? 0xFFFFFF : UV.y / Height;
+    {precision} epsilon = 1e-6;
+
+    UV.x = UV.x / ( Width + (Width==0)*epsilon);
+    UV.y = UV.y / ( Height + (Height==0)*epsilon);
 
     Roundness = clamp(Roundness, 1e-6, 1.);
 
@@ -80,9 +82,9 @@ namespace UnityEditor.ShaderGraph
         length(UV)
     );
 
-    polaruv.x += PI;
+    polaruv.x += HALF_PI + 2*PI;
 
-    polaruv.x = fmod( polaruv.x + halfAngle + 3 * HALF_PI, fullAngle );
+    polaruv.x = fmod( polaruv.x + halfAngle, fullAngle );
     polaruv.x = abs(polaruv.x - halfAngle);
 
     UV = {precision}2( cos(polaruv.x), sin(polaruv.x) ) * polaruv.y;
