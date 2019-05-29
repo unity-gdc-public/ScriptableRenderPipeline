@@ -213,6 +213,15 @@ namespace UnityEditor.Rendering.LookDev
                 m_CameraState.viewSize = m_CameraState.viewSize + zoomDelta * m_ZoomSpeed * .003f;
             evt.StopPropagation();
         }
+
+        void OnKeyDownReset(KeyDownEvent evt)
+        {
+            if (evt.keyCode == KeyCode.Escape)
+            {
+                ResetCameraControl();
+                evt.StopPropagation();
+            }
+        }
         
         void OnKeyDownFPS(KeyDownEvent evt)
         {
@@ -283,42 +292,7 @@ namespace UnityEditor.Rendering.LookDev
             else
                 m_CameraState.pivot += m_CameraState.rotation * GetMotionDirection();
         }
-
-        struct KeyCombination
-        {
-            KeyCode key;
-            EventModifiers modifier;
-            public bool shiftOnLastMatch;
-
-            public KeyCombination(UnityEditor.ShortcutManagement.KeyCombination shortcutCombination)
-            {
-                key = shortcutCombination.keyCode;
-                modifier = EventModifiers.None;
-                if ((shortcutCombination.modifiers & ShortcutModifiers.Shift) != 0)
-                    modifier |= EventModifiers.Shift;
-                if ((shortcutCombination.modifiers & ShortcutModifiers.Alt) != 0)
-                    modifier |= EventModifiers.Alt;
-                if ((shortcutCombination.modifiers & ShortcutModifiers.Action) != 0)
-                {
-                    if (Application.platform == RuntimePlatform.OSXEditor || Application.platform == RuntimePlatform.OSXPlayer)
-                        modifier |= EventModifiers.Command;
-                    else
-                        modifier |= EventModifiers.Control;
-                }
-                shiftOnLastMatch = false;
-            }
-
-            //atLeastModifier allow case were A is required but event provide shift+A
-            public bool Match(IKeyboardEvent evt, bool atLeastForModifier = true)
-            {
-                shiftOnLastMatch = evt.shiftKey;
-                if (atLeastForModifier)
-                    return key == evt.keyCode && modifier == (evt.modifiers & modifier);
-                else
-                    return key == evt.keyCode && modifier == evt.modifiers;
-            }
-        }
-
+        
         bool GetKeyCombinationByID(string ID, out KeyCombination combination)
         {
             var sequence = ShortcutManager.instance.GetShortcutBinding(ID).keyCombinationSequence.GetEnumerator();
@@ -334,14 +308,6 @@ namespace UnityEditor.Rendering.LookDev
             }
         }
 
-        void OnKeyDownReset(KeyDownEvent evt)
-        {
-            if (evt.keyCode == KeyCode.Escape)
-            {
-                ResetCameraControl();
-                evt.StopPropagation();
-            }
-        }
 
         void OnMouseUp(MouseUpEvent evt)
         {
@@ -394,19 +360,55 @@ namespace UnityEditor.Rendering.LookDev
             target.UnregisterCallback<KeyDownEvent>(OnKeyDown);
             target.UnregisterCallback<KeyUpEvent>(OnKeyUpFPS);
         }
-    }
-    
-    struct TimeHelper
-    {
-        long lastTime;
-
-        public void Begin() => lastTime = System.DateTime.Now.Ticks;
-
-        public float Update()
+        
+        struct KeyCombination
         {
-            float deltaTime = (System.DateTime.Now.Ticks - lastTime) / 10000000.0f;
-            lastTime = System.DateTime.Now.Ticks;
-            return deltaTime;
+            KeyCode key;
+            EventModifiers modifier;
+            public bool shiftOnLastMatch;
+
+            public KeyCombination(UnityEditor.ShortcutManagement.KeyCombination shortcutCombination)
+            {
+                key = shortcutCombination.keyCode;
+                modifier = EventModifiers.None;
+                if ((shortcutCombination.modifiers & ShortcutModifiers.Shift) != 0)
+                    modifier |= EventModifiers.Shift;
+                if ((shortcutCombination.modifiers & ShortcutModifiers.Alt) != 0)
+                    modifier |= EventModifiers.Alt;
+                if ((shortcutCombination.modifiers & ShortcutModifiers.Action) != 0)
+                {
+                    if (Application.platform == RuntimePlatform.OSXEditor || Application.platform == RuntimePlatform.OSXPlayer)
+                        modifier |= EventModifiers.Command;
+                    else
+                        modifier |= EventModifiers.Control;
+                }
+                shiftOnLastMatch = false;
+            }
+
+            //atLeastModifier allow case were A is required but event provide shift+A
+            public bool Match(IKeyboardEvent evt, bool atLeastForModifier = true)
+            {
+                shiftOnLastMatch = evt.shiftKey;
+                if (atLeastForModifier)
+                    return key == evt.keyCode && modifier == (evt.modifiers & modifier);
+                else
+                    return key == evt.keyCode && modifier == evt.modifiers;
+            }
+        }
+
+        struct TimeHelper
+        {
+            long lastTime;
+
+            public void Begin() => lastTime = System.DateTime.Now.Ticks;
+
+            public float Update()
+            {
+                float deltaTime = (System.DateTime.Now.Ticks - lastTime) / 10000000.0f;
+                lastTime = System.DateTime.Now.Ticks;
+                return deltaTime;
+            }
         }
     }
+    
 }
