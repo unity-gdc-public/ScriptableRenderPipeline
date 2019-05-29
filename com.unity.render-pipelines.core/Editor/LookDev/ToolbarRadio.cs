@@ -15,7 +15,7 @@ namespace UnityEditor.Rendering.LookDev
         public new static readonly string ussClassName = "unity-toolbar-radio";
 
         public int radioLength { get; private set; } = 0;
-
+        
         int m_Value;
         public int value
         {
@@ -41,10 +41,15 @@ namespace UnityEditor.Rendering.LookDev
             }
         }
 
-        public ToolbarRadio()
+        public ToolbarRadio() : this(null) { }
+
+        public ToolbarRadio(string label = null)
         {
             RemoveFromClassList(Toolbar.ussClassName);
             AddToClassList(ussClassName);
+
+            if (label != null)
+                Add(new Label() { text = label });
         }
 
         public void AddRadio(string text = null, Texture2D icon = null)
@@ -63,6 +68,8 @@ namespace UnityEditor.Rendering.LookDev
             else
                 toggle.text = text;
             Add(toggle);
+            if (radioLength == 0)
+                toggle.style.borderLeftWidth = 1;
             radioLength++;
         }
 

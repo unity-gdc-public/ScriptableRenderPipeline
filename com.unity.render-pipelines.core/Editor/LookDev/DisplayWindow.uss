@@ -105,10 +105,11 @@ Image.unity-list-view__item:selected
     padding-left: 1px;
 }
 
-#toolbar > .unity-label
+#toolbar > * > .unity-label
 {
     padding-top: 3px;
     padding-bottom: 0px;
+    min-width:30px;
 }
 
 #toolbarEnvironment
@@ -116,7 +117,37 @@ Image.unity-list-view__item:selected
     width: 221px;
 }
 
+#toolbarRadio > .unity-toolbar-toggle
+{
+    padding-top: 0px;
+    padding-right: 0px;
+    padding-bottom: 0px;
+    padding-left: 0px;
+    margin-left: 0px;
+    margin-right: 0px;
+    border-left: 0px
+}
 
+#renderdoc-content
+{
+    flex: 1;
+    flex-direction: row;
+    max-width: 80px;
+    flex-shrink: 0;
+    min-width: 24px;
+}
+
+#renderdoc-content > Label
+{
+    -unity-text-align : middle-left;
+    min-width: 0px;
+}
+
+#renderdoc-content > Image
+{
+    flex-shrink: 0;
+    min-width: 16px;
+}
 
 /* /////////// */
 /* DRAG'N'DROP */
@@ -138,21 +169,4 @@ Image.unity-list-view__item:selected
 #secondView
 {
     background-color: rgb(0, 255, 0);
-}
-
-
-
-#RDbar
-{
-    flex-direction:row-reverse;
-    height:25px;
-    margin-top:0px;
-}
-
-
-#RDbar > Image
-{
-    background-color: rgb(255, 255, 0);
-    margin-right:80px;
-    width:20px;
 }

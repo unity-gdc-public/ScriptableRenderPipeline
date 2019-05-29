@@ -185,13 +185,6 @@ namespace UnityEditor.Rendering.LookDev
             rootVisualElement.styleSheets.Add(
                 AssetDatabase.LoadAssetAtPath<StyleSheet>(Style.k_uss));
 
-            var RDbar = new VisualElement() { name = "RDbar" };
-            Image test = new Image();
-            RDbar.Add(test);
-            rootVisualElement.Add(RDbar);
-            test.RegisterCallback<MouseDownEvent>(evt
-                => Debug.Log("click"));
-
             CreateToolbar();
             
             m_MainContainer = new VisualElement() { name = k_MainContainerName };
@@ -211,7 +204,7 @@ namespace UnityEditor.Rendering.LookDev
         void CreateToolbar()
         {
             // Layout swapper part
-            var toolbarRadio = new ToolbarRadio() { name = k_ToolbarRadioName };
+            var toolbarRadio = new ToolbarRadio("Layout:") { name = k_ToolbarRadioName };
             toolbarRadio.AddRadios(new[] {
                 CoreEditorUtils.LoadIcon(Style.k_IconFolder, "LookDevSingle1"),
                 CoreEditorUtils.LoadIcon(Style.k_IconFolder, "LookDevSingle2"),
@@ -236,18 +229,22 @@ namespace UnityEditor.Rendering.LookDev
 
             // Aggregate parts
             var toolbar = new Toolbar() { name = k_ToolbarName };
-            toolbar.Add(new Label() { text = "Layout:" });
             toolbar.Add(toolbarRadio);
             toolbar.Add(new ToolbarSpacer());
             //to complete
-            
+
+            toolbar.Add(new ToolbarSpacer() { flex = true });
             if (UnityEditorInternal.RenderDoc.IsInstalled() && UnityEditorInternal.RenderDoc.IsLoaded())
             {
-                toolbar.Add(new ToolbarSpacer() { flex = true });
-                toolbar.Add(new ToolbarButton(() => OnRenderDocAcquisitionTriggeredInternal?.Invoke())
+                var renderDocButton = new ToolbarButton(() => OnRenderDocAcquisitionTriggeredInternal?.Invoke())
                 {
-                    text = "RenderDoc Content"
+                    name = "renderdoc-content"
+                };
+                renderDocButton.Add(new Image() {
+                    image = CoreEditorUtils.LoadIcon(Style.k_IconFolder, "renderdoc")
                 });
+                renderDocButton.Add(new Label() { text = " Content" });
+                toolbar.Add(renderDocButton);
             }
             toolbar.Add(toolbarEnvironment);
             rootVisualElement.Add(toolbar);
