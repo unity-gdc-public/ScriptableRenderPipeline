@@ -284,7 +284,11 @@ namespace UnityEditor.Rendering.LookDev
         public void UpdateSceneLighting(ViewIndex index, IDataProvider provider)
         {
             Stage stage = this[index];
-            provider.UpdateSky(stage.camera, m_Contexts.GetViewContent(index).environment?.sky.cubemap, stage.runtimeInterface);
+            Environment environment = m_Contexts.GetViewContent(index).environment;
+            provider.UpdateSky(stage.camera,
+                environment?.sky,
+                environment?.shadow,
+                stage.runtimeInterface);
         }
         
         private bool disposedValue = false; // To detect redundant calls

@@ -1,7 +1,5 @@
 using UnityEngine;
-using UnityEngine.Rendering;
 using System;
-using System.Collections.Generic;
 using UnityEngine.UIElements;
 using UnityEditor.UIElements;
 
@@ -45,13 +43,33 @@ namespace UnityEditor.Rendering.LookDev
                         m_Longitude = 360f + m_Longitude;
                 }
             }
+            
+            public static implicit operator UnityEngine.Rendering.LookDev.Shadow(Shadow shadow)
+                => shadow == null
+                ? default
+                : new UnityEngine.Rendering.LookDev.Shadow()
+                {
+                    cubemap = shadow.cubemap,
+                    latlongCoordinate = new Vector2(shadow.m_Latitude, shadow.m_Longitude),
+                    intensity = shadow.intensity,
+                    color = shadow.color
+                };
         }
 
         [Serializable]
         public class Sky
         {
             public Cubemap cubemap;
-            public float angleOffset = 0.0f;
+            public float rotation = 0.0f;
+            
+            public static implicit operator UnityEngine.Rendering.LookDev.Sky(Sky sky)
+                => sky == null
+                ? default
+                : new UnityEngine.Rendering.LookDev.Sky()
+                {
+                    cubemap = sky.cubemap,
+                    rotation = sky.rotation
+                };
         }
 
         public Sky sky = new Sky();
@@ -101,10 +119,16 @@ namespace UnityEditor.Rendering.LookDev
         FloatField shadowIntensity;
         ColorField shadowColor;
 
+        Action OnChangeCallback;
+
         public Environment target => environment;
 
         public EnvironmentElement() => Create(withPreview: true);
-        public EnvironmentElement(bool withPreview) => Create(withPreview);
+        public EnvironmentElement(bool withPreview, Action OnChangeCallback = null)
+        {
+            this.OnChangeCallback = OnChangeCallback;
+            Create(withPreview);
+        }
 
         public EnvironmentElement(Environment environment)
         {
@@ -135,7 +159,7 @@ namespace UnityEditor.Rendering.LookDev
             if (latlong != null && !latlong.Equals(null))
                 latlong.image = GetLatLongThumbnailTexture();
             skyCubemapField.SetValueWithoutNotify(environment.sky.cubemap);
-            skyRotationOffset.SetValueWithoutNotify(environment.sky.angleOffset);
+            skyRotationOffset.SetValueWithoutNotify(environment.sky.rotation);
             shadowCubemapField.SetValueWithoutNotify(environment.shadow.cubemap);
             shadowLatitude.SetValueWithoutNotify(environment.shadow.latitude);
             shadowLongitude.SetValueWithoutNotify(environment.shadow.longitude);
@@ -167,7 +191,7 @@ namespace UnityEditor.Rendering.LookDev
                     1f));   //Pixel per Point
             cubeToLatlongMaterial.SetVector("_CubeToLatLongParams",
                 new Vector4(
-                    Mathf.Deg2Rad * environment.sky.angleOffset,    //rotation of the environment in radian
+                    Mathf.Deg2Rad * environment.sky.rotation,    //rotation of the environment in radian
                     1f,     //alpha
                     1f,     //intensity
                     0f));   //LOD
@@ -188,7 +212,7 @@ namespace UnityEditor.Rendering.LookDev
                         1f));   //Pixel per Point
                 cubeToLatlongMaterial.SetVector("_CubeToLatLongParams",
                     new Vector4(
-                        Mathf.Deg2Rad * environment.sky.angleOffset,    //rotation of the environment in radian
+                        Mathf.Deg2Rad * environment.sky.rotation,    //rotation of the environment in radian
                         1f,   //alpha
                         0.3f,   //intensity
                         0f));   //LOD
@@ -230,6 +254,7 @@ namespace UnityEditor.Rendering.LookDev
                 if (latlong != null && !latlong.Equals(null))
                     latlong.image = GetLatLongThumbnailTexture(environment, k_SkyThumbnailWidth);
                 EditorUtility.SetDirty(environment);
+                OnChangeCallback?.Invoke();
             });
             skyFoldout.Add(skyCubemapField);
 
@@ -238,10 +263,11 @@ namespace UnityEditor.Rendering.LookDev
             {
                 if (environment == null || environment.Equals(null))
                     return;
-                environment.sky.angleOffset = evt.newValue;
+                environment.sky.rotation = evt.newValue;
                 if (latlong != null && !latlong.Equals(null))
                     latlong.image = GetLatLongThumbnailTexture(environment, k_SkyThumbnailWidth);
                 EditorUtility.SetDirty(environment);
+                OnChangeCallback?.Invoke();
             });
             skyFoldout.Add(skyRotationOffset);
             var style = skyFoldout.Q<Toggle>().style;
@@ -264,6 +290,7 @@ namespace UnityEditor.Rendering.LookDev
                 if (latlong != null && !latlong.Equals(null))
                     latlong.image = GetLatLongThumbnailTexture(environment, k_SkyThumbnailWidth);
                 EditorUtility.SetDirty(environment);
+                OnChangeCallback?.Invoke();
             });
             shadowFoldout.Add(shadowCubemapField);
 
@@ -275,7 +302,8 @@ namespace UnityEditor.Rendering.LookDev
                 environment.shadow.latitude = evt.newValue;
                 //clamping code occurred. Reassign clamped value
                 shadowLatitude.SetValueWithoutNotify(environment.shadow.latitude);
-                EditorUtility.SetDirty(environment); //
+                EditorUtility.SetDirty(environment);
+                OnChangeCallback?.Invoke();
             });
             shadowFoldout.Add(shadowLatitude);
 
@@ -288,6 +316,7 @@ namespace UnityEditor.Rendering.LookDev
                 //clamping code occurred. Reassign clamped value
                 shadowLongitude.SetValueWithoutNotify(environment.shadow.longitude);
                 EditorUtility.SetDirty(environment);
+                OnChangeCallback?.Invoke();
             });
             shadowFoldout.Add(shadowLongitude);
 
@@ -298,6 +327,7 @@ namespace UnityEditor.Rendering.LookDev
                     return;
                 environment.shadow.intensity = evt.newValue;
                 EditorUtility.SetDirty(environment);
+                OnChangeCallback?.Invoke();
             });
             shadowFoldout.Add(shadowIntensity);
 
@@ -308,6 +338,7 @@ namespace UnityEditor.Rendering.LookDev
                     return;
                 environment.shadow.color = evt.newValue;
                 EditorUtility.SetDirty(environment);
+                OnChangeCallback?.Invoke();
             });
             shadowFoldout.Add(shadowColor);
             style = shadowFoldout.Q<Toggle>().style;

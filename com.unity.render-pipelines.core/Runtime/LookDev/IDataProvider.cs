@@ -7,7 +7,22 @@ namespace UnityEngine.Rendering.LookDev
     public interface IDataProvider
     {
         void FirstInit(StageRuntimeInterface stage);
-        void UpdateSky(Camera camera, Cubemap skybox, StageRuntimeInterface stage);
+
+        // Note: this function signature is subject to change in order to incorporate shadow information
+        void UpdateSky(Camera camera, Sky sky, Shadow shadow, StageRuntimeInterface stage);
+    }
+
+    public struct Sky
+    {
+        public Cubemap cubemap;
+        public float rotation;
+    }
+    public struct Shadow
+    {
+        public Cubemap cubemap;
+        public Vector2 latlongCoordinate;
+        public float intensity;
+        public Color color;
     }
 
     /// <summary>Runtime link to reflect some Stage functionality for SRP editing</summary>

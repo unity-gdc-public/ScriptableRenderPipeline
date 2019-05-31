@@ -331,8 +331,12 @@ namespace UnityEditor.Rendering.LookDev
             m_MainContainer.Add(m_EnvironmentContainer);
             if (showEnvironmentPanel)
                 m_MainContainer.AddToClassList(k_ShowEnvironmentPanelClass);
-            
-            m_EnvironmentInspector = new EnvironmentElement(withPreview: false);
+
+            m_EnvironmentInspector = new EnvironmentElement(withPreview: false, () =>
+            {
+                LookDev.SaveContextChangeAndApply(ViewIndex.First);
+                LookDev.SaveContextChangeAndApply(ViewIndex.Second);
+            });
             m_EnvironmentList = new ListView();
             m_EnvironmentList.selectionType = SelectionType.Single;
             m_EnvironmentList.itemHeight = EnvironmentElement.k_SkyThumbnailHeight;

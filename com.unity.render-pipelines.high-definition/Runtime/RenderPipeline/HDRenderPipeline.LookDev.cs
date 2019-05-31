@@ -51,11 +51,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             //volumeGO.hideFlags = HideFlags.None;
         }
 
-        void IDataProvider.UpdateSky(Camera camera, Cubemap skybox, StageRuntimeInterface SRI)
+        void IDataProvider.UpdateSky(Camera camera, Sky sky, Shadow shadow, StageRuntimeInterface SRI)
         {
             //[TODO: add rotation and intensity]
             LookDevDataForHDRP data = (LookDevDataForHDRP)SRI.SRPData;
-            if (skybox == null)
+            if (sky.cubemap == null)
             {
                 data.visualEnvironment.skyType.Override((int)0); //Skytype.None do not really exist
                 data.additionalCameraData.clearColorMode = HDAdditionalCameraData.ClearColorMode.Color;
@@ -63,7 +63,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             else
             {
                 data.visualEnvironment.skyType.Override((int)SkyType.HDRISky);
-                data.sky.hdriSky.Override(skybox);
+                data.sky.hdriSky.Override(sky.cubemap);
+                data.sky.rotation.Override(sky.rotation);
                 data.additionalCameraData.clearColorMode = HDAdditionalCameraData.ClearColorMode.Sky;
             }
         }
