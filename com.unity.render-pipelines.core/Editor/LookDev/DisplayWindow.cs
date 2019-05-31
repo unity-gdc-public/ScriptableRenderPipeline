@@ -71,10 +71,8 @@ namespace UnityEditor.Rendering.LookDev
         VisualElement m_EnvironmentContainer;
         ListView m_EnvironmentList;
         EnvironmentElement m_EnvironmentInspector;
-        Image m_CurrenttlyEditedEnvironmentPreview;
 
         Image[] m_Views = new Image[2];
-        
 
         Layout layout
         {
@@ -353,19 +351,34 @@ namespace UnityEditor.Rendering.LookDev
             m_EnvironmentList.onSelectionChanged += objects =>
             {
                 if (objects.Count == 0 || (LookDev.currentContext.environmentLibrary?.Count ?? 0) == 0)
+                {
                     m_EnvironmentInspector.style.visibility = Visibility.Hidden;
+                    m_EnvironmentInspector.style.height = 0;
+                }
                 else
                 {
                     m_EnvironmentInspector.style.visibility = Visibility.Visible;
+                    m_EnvironmentInspector.style.height = new StyleLength(StyleKeyword.Auto);
                     m_EnvironmentInspector.Bind(
                         LookDev.currentContext.environmentLibrary[m_EnvironmentList.selectedIndex],
-                        m_EnvironmentList.selectedItem as Image);
+                        m_EnvironmentList.Q("unity-content-container")[m_EnvironmentList.selectedIndex] as Image);
                 }
             };
             m_EnvironmentList.onItemChosen += obj =>
                 EditorGUIUtility.PingObject(LookDev.currentContext.environmentLibrary[(int)obj]);
             m_EnvironmentContainer.Add(m_EnvironmentInspector);
             m_EnvironmentContainer.Add(m_EnvironmentList);
+
+            //add ability to unselect
+            m_EnvironmentList.RegisterCallback<MouseDownEvent>(evt =>
+            {
+                var clickedIndex = (int)(evt.localMousePosition.y / m_EnvironmentList.itemHeight);
+                if (clickedIndex >= m_EnvironmentList.itemsSource.Count)
+                {
+                    m_EnvironmentList.selectedIndex = -1;
+                    evt.StopPropagation();
+                }
+            });
 
             RefreshLibraryDisplay();
         }
@@ -377,7 +390,7 @@ namespace UnityEditor.Rendering.LookDev
             for (int i = 0; i < itemMax; i++)
                 items.Add(i);
             m_EnvironmentList.itemsSource = items;
-            m_EnvironmentInspector.style.visibility = itemMax == 0
+            m_EnvironmentInspector.style.visibility = (itemMax == 0 || m_EnvironmentList.selectedIndex == -1)
                 ? Visibility.Hidden
                 : Visibility.Visible;
             m_EnvironmentList
