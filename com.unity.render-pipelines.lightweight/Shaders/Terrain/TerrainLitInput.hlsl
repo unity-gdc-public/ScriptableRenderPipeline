@@ -5,13 +5,11 @@
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/CommonMaterial.hlsl"
 #include "Packages/com.unity.render-pipelines.lightweight/ShaderLibrary/SurfaceInput.hlsl"
 
-CBUFFER_START(_Terrain)
 half _Metallic0, _Metallic1, _Metallic2, _Metallic3;
 half _Smoothness0, _Smoothness1, _Smoothness2, _Smoothness3;
 
 float4 _Control_ST;
 half4 _Splat0_ST, _Splat1_ST, _Splat2_ST, _Splat3_ST;
-CBUFFER_END
 
 TEXTURE2D(_Control);    SAMPLER(sampler_Control);
 TEXTURE2D(_Splat0);     SAMPLER(sampler_Splat0);
