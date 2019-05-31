@@ -34,6 +34,24 @@ real GetOddNegativeScale()
     return unity_WorldTransformParams.w;
 }
 
+// This function always return the absolute position in WS
+float3 GetAbsolutePositionWS(float3 positionRWS)
+{
+#if (SHADEROPTIONS_CAMERA_RELATIVE_RENDERING != 0)
+    positionRWS += _WorldSpaceCameraPos;
+#endif
+    return positionRWS;
+}
+
+// This function return the camera relative position in WS
+float3 GetCameraRelativePositionWS(float3 positionWS)
+{
+#if (SHADEROPTIONS_CAMERA_RELATIVE_RENDERING != 0)
+    positionWS -= _WorldSpaceCameraPos;
+#endif
+    return positionWS;
+}
+
 float3 TransformObjectToWorld(float3 positionOS)
 {
     return mul(GetObjectToWorldMatrix(), float4(positionOS, 1.0)).xyz;
