@@ -58,7 +58,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 #if ENABLE_RAYTRACING
         public HDRaytracingManager m_RayTracingManager = new HDRaytracingManager();
         readonly HDRaytracingReflections m_RaytracingReflections = new HDRaytracingReflections();
-        readonly HDRaytracingShadowManager m_RaytracingShadows = new HDRaytracingShadowManager();
         readonly HDRaytracingRenderer m_RaytracingRenderer = new HDRaytracingRenderer();
         readonly HDRaytracingIndirectDiffuse m_RaytracingIndirectDiffuse = new HDRaytracingIndirectDiffuse();
         public float GetRaysPerFrame(RayCountManager.RayCountValues rayValues) { return m_RayTracingManager.rayCountManager.GetRaysPerFrame(rayValues); }
@@ -108,7 +107,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         RTHandleSystem.RTHandle m_CameraSssDiffuseLightingBuffer;
 
         RTHandleSystem.RTHandle m_ContactShadowBuffer;
-        RTHandleSystem.RTHandle m_ScreenSpaceShadowsBuffer;
         RTHandleSystem.RTHandle m_DistortionBuffer;
 
         RTHandleSystem.RTHandle m_LowResTransparentBuffer;
@@ -187,6 +185,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         {
             int highestDim = Math.Max(currentPlatformRenderPipelineSettings.decalSettings.atlasWidth, currentPlatformRenderPipelineSettings.decalSettings.atlasHeight);
             return (int)Math.Log(highestDim, 2);
+        }
+
+        public int GetMaxScreenSpaceShadows()
+        {
+            return currentPlatformRenderPipelineSettings.hdShadowInitParams.supportScreenSpaceShadows ? currentPlatformRenderPipelineSettings.hdShadowInitParams.maxScreenSpaceShadows : 0;
         }
 
         readonly SkyManager m_SkyManager = new SkyManager();
@@ -367,11 +370,13 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 #if ENABLE_RAYTRACING
             m_RayTracingManager.Init(m_Asset.currentPlatformRenderPipelineSettings, m_Asset.renderPipelineResources, m_Asset.renderPipelineRayTracingResources, m_BlueNoise, this, m_SharedRTManager, m_DebugDisplaySettings);
             m_RaytracingReflections.Init(m_Asset, m_SkyManager, m_RayTracingManager, m_SharedRTManager, m_GbufferManager);
-            m_RaytracingShadows.Init(m_Asset, m_RayTracingManager, m_SharedRTManager, this, m_GbufferManager);
             m_RaytracingRenderer.Init(m_Asset, m_SkyManager, m_RayTracingManager, m_SharedRTManager);
             m_AmbientOcclusionSystem.InitRaytracing(m_RayTracingManager, m_SharedRTManager);
             m_RaytracingIndirectDiffuse.Init(m_Asset, m_SkyManager, m_RayTracingManager, m_SharedRTManager, m_GbufferManager);
 #endif
+
+            // Initialize screen space shadows
+            InitializeScreenSpaceShadows();
 
             CameraCaptureBridge.enabled = true;
         }
@@ -450,7 +455,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             m_DistortionBuffer = RTHandles.Alloc(Vector2.one, TextureXR.slices, dimension: TextureXR.dimension, colorFormat: Builtin.GetDistortionBufferFormat(), useDynamicScale: true, name: "Distortion");
 
             m_ContactShadowBuffer = RTHandles.Alloc(Vector2.one, TextureXR.slices, dimension: TextureXR.dimension, colorFormat: GraphicsFormat.R32_UInt, enableRandomWrite: true, useDynamicScale: true, name: "ContactShadowsBuffer");
-            m_ScreenSpaceShadowsBuffer = RTHandles.Alloc(Vector2.one, TextureXR.slices, dimension: TextureXR.dimension, colorFormat: GraphicsFormat.R16_SFloat, enableRandomWrite: false, useDynamicScale: true, name: "ScreenSpaceShadowsBuffer");
 
             if (m_Asset.currentPlatformRenderPipelineSettings.lowresTransparentSettings.enabled)
             {
@@ -492,7 +496,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             RTHandles.Release(m_DistortionBuffer);
             RTHandles.Release(m_ContactShadowBuffer);
-            RTHandles.Release(m_ScreenSpaceShadowsBuffer);
 
             RTHandles.Release(m_LowResTransparentBuffer);
 
@@ -665,10 +668,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             base.Dispose(disposing);
 
+            ReleaseScreenSpaceShadows();
+
 #if ENABLE_RAYTRACING
             m_RaytracingIndirectDiffuse.Release();
             m_RaytracingRenderer.Release();
-            m_RaytracingShadows.Release();
             m_RaytracingReflections.Release();
             m_RayTracingManager.Release();
 #endif
@@ -1718,14 +1722,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 }
 #endif
 
-                // Evaluate raytraced area shadows if required
-                bool areaShadowsRendered = false;
-#if ENABLE_RAYTRACING
-                areaShadowsRendered = m_RaytracingShadows.RenderAreaShadows(hdCamera, cmd, renderContext, m_FrameCount);
-#endif
-                cmd.SetGlobalInt(HDShaderIDs._RaytracedAreaShadow, areaShadowsRendered ? 1 : 0);
-
-
                 hdCamera.xr.StopLegacyStereo(camera, cmd, renderContext);
 
                 var buildLightListTask = new HDGPUAsyncTask("Build light list", ComputeQueueType.Background);
@@ -1773,10 +1769,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     haveAsyncTaskWithShadows = true;
                 }
 
-                using (new ProfilingSample(cmd, "Render shadows", CustomSamplerId.RenderShadows.GetSampler()))
+                using (new ProfilingSample(cmd, "Render shadow maps", CustomSamplerId.RenderShadowMaps.GetSampler()))
                 {
                     // This call overwrites camera properties passed to the shader system.
-                    RenderShadows(renderContext, cmd, cullingResults, hdCamera);
+                    RenderShadowMaps(renderContext, cmd, cullingResults, hdCamera);
 
                     hdCamera.SetupGlobalParams(cmd, m_Time, m_LastTime, m_FrameCount);
                 }
@@ -1808,6 +1804,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     }
 
                     DispatchContactShadows();
+                }
+
+                using (new ProfilingSample(cmd, "Render screen space shadows", CustomSamplerId.ScreenSpaceShadows.GetSampler()))
+                {
+                    RenderScreenSpaceShadows(hdCamera, cmd);
                 }
 
                 // Contact shadows needs the light loop so we do them after the build light list
@@ -1855,8 +1856,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 // Render the volumetric lighting.
                 // The pass requires the volume properties, the light list and the shadows, and can run async.
                 VolumetricLightingPass(hdCamera, cmd, m_FrameCount);
-
-                RenderScreenSpaceShadows(hdCamera, m_ScreenSpaceShadowsBuffer, cmd);
 
                 SetMicroShadowingSettings(cmd);
 

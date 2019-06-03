@@ -101,6 +101,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             public readonly GUIContent filterSampleCount = new GUIContent("Filter Sample Count");
             public readonly GUIContent minFilterSize = new GUIContent("Minimal size of the filter");
             public readonly GUIContent areaLightShadowCone = new GUIContent("Shadow Cone", "Aperture of the cone used for shadowing the area light.");
+            public readonly GUIContent useScreenSpaceShadows = new GUIContent("Screen Space Shadows", "Render screen space shadow.");
 #if ENABLE_RAYTRACING
             public readonly GUIContent useRayTracedShadows = new GUIContent("Use Ray traced shadows", "If selected, ray traced shadows are used in place of rasterized ones");
             public readonly GUIContent numRayTracingSamples = new GUIContent("Num samples", "This defines the number of samples that will be used to evaluate this shadow.");
