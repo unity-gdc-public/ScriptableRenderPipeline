@@ -71,7 +71,7 @@ namespace UnityEditor.ShaderGraph
     {precision} distCref = length(chamferOrigin);
 
     // This will rescale the chamfered polygon to fit the uv space
-    diagonal = length(chamferCenter) + distB;
+    // diagonal = length(chamferCenter) + distB;
 
     {precision} uvScale = diagonal;
 
