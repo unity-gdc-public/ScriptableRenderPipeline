@@ -1,5 +1,5 @@
 editors:
-  - version: trunk
+  - version: android/sdk-tools/fix-path-guessing
 platforms:
   - name: Windows64
     type: Unity::VM::GPU
@@ -91,11 +91,14 @@ projects:
     flavor: {{ mobile.flavor }}
   commands:
    - pip install unity-downloader-cli --extra-index-url https://artifactory.eu-cph-1.unityops.net/api/pypi/common-python/simple
-   - git clone -b staging git@github.cds.internal.unity3d.com:unity/utr.git TestProjects/{{ project.folder }}/utr
-   - cd TestProjects\{{ project.folder }} && unity-downloader-cli -b {{ editor.version }} -p WindowsEditor -c editor -c {{ mobile.name }} --wait
-   - start %ANDROID_SDK_ROOT%\platform-tools\adb.exe connect %BOKKEN_DEVICE_IP%
-   - cd TestProjects\{{ project.folder }} && utr\utr --suite=playmode --platform={{ mobile.name }} --testproject=. --editor-location=WindowsEditor --artifacts_path=upm-ci~\test-results --scripting-backend=il2cpp
+   - git clone git@github.cds.internal.unity3d.com:unity/utr.git utr
+   - unity-downloader-cli -b {{ editor.version }} -p WindowsEditor -c editor -c {{ mobile.name }} --wait
+   - >
+      %ANDROID_SDK_ROOT%\platform-tools\adb.exe connect %BOKKEN_DEVICE_IP%
+   - powershell %ANDROID_SDK_ROOT%\platform-tools\adb.exe devices
+   - utr\utr --suite=playmode --platform={{ mobile.name }} --testproject=TestProjects\{{ project.folder }} --editor-location=WindowsEditor --artifacts_path=upm-ci~\test-results --scripting-backend=il2cpp
    #- start /WAIT %CD%\TestProjects\{{ project.folder }}\WindowsEditor\Unity -cleanTestPrefs -batchmode -automated -upmNoDefaultPackages -enableAllModules -runTests -buildTarget Android -projectPath .\Time -logFile %CD%\TestArtifacts\Editor_EditorLog.txt -testResults %CD%\TestArtifacts\Android_TestResults.xml -testPlatform Android
+   #- sleep 1000000000
    - start %ANDROID_SDK_ROOT%\platform-tools\adb.exe kill-server
   artifacts:
     logs:
