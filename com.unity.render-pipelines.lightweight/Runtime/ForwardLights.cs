@@ -7,7 +7,7 @@ namespace UnityEngine.Rendering.LWRP
     internal class ForwardLights
     {
         [StructLayout(LayoutKind.Sequential)]
-        public struct LightShaderData
+        internal struct LightShaderData
         {
             public Vector4 position;
             public Vector4 color;
@@ -71,8 +71,7 @@ namespace UnityEngine.Rendering.LWRP
             m_AdditionalLightOcclusionProbeChannels = new Vector4[maxLights];
 
             GraphicsDeviceType gfxDeviceType = SystemInfo.graphicsDeviceType;
-            m_UseStructuredBuffer = !(gfxDeviceType == GraphicsDeviceType.OpenGLES3 ||
-                                      gfxDeviceType == GraphicsDeviceType.OpenGLES2);
+            m_UseStructuredBuffer = RenderingUtils.useStructuredBuffer;
         }
 
         public void Setup(ScriptableRenderContext context, ref RenderingData renderingData)

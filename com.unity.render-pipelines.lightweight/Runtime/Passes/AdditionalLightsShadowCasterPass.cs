@@ -1,11 +1,19 @@
 using System;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using Unity.Collections;
 
 namespace UnityEngine.Rendering.LWRP
 {
     internal class AdditionalLightsShadowCasterPass : ScriptableRenderPass
     {
+        [StructLayout(LayoutKind.Sequential)]
+        internal struct ShadowShaderData
+        {
+            public Matrix4x4 worldToShadowMatrix;
+            public float shadowStrength;
+        }
+
         private static class AdditionalShadowsConstantBuffer
         {
             public static int _AdditionalLightsWorldToShadow;
@@ -16,6 +24,10 @@ namespace UnityEngine.Rendering.LWRP
             public static int _AdditionalShadowOffset3;
             public static int _AdditionalShadowmapSize;
         }
+
+        public static int m_AdditionalShadowsBufferId;
+        ComputeBuffer m_AdditionalShadowsBuffer;
+        bool m_UseStructuredBuffer;
 
         const int k_ShadowmapBufferBits = 16;
         private RenderTargetHandle m_AdditionalLightsShadowmap;
@@ -47,6 +59,15 @@ namespace UnityEngine.Rendering.LWRP
             AdditionalShadowsConstantBuffer._AdditionalShadowOffset3 = Shader.PropertyToID("_AdditionalShadowOffset3");
             AdditionalShadowsConstantBuffer._AdditionalShadowmapSize = Shader.PropertyToID("_AdditionalShadowmapSize");
             m_AdditionalLightsShadowmap.Init("_AdditionalLightsShadowmapTexture");
+
+            m_AdditionalShadowsBufferId = Shader.PropertyToID("_AdditionalShadowsBuffer");
+            m_UseStructuredBuffer = RenderingUtils.useStructuredBuffer;
+            if (m_UseStructuredBuffer)
+            {
+                int stride;
+                unsafe { stride = sizeof(ShadowShaderData); }
+                m_AdditionalShadowsBuffer = new ComputeBuffer(maxLights, stride);
+            }
         }
 
         public bool Setup(ref RenderingData renderingData)
@@ -215,8 +236,27 @@ namespace UnityEngine.Rendering.LWRP
             float invHalfShadowAtlasHeight = 0.5f * invShadowAtlasHeight;
 
             cmd.SetGlobalTexture(m_AdditionalLightsShadowmap.id, m_AdditionalLightsShadowmapTexture);
-            cmd.SetGlobalMatrixArray(AdditionalShadowsConstantBuffer._AdditionalLightsWorldToShadow, m_AdditionalLightShadowMatrices);
-            cmd.SetGlobalFloatArray(AdditionalShadowsConstantBuffer._AdditionalShadowStrength, m_AdditionalLightsShadowStrength);
+
+            if (m_UseStructuredBuffer)
+            {
+                NativeArray<ShadowShaderData> shadowBufferData = new NativeArray<ShadowShaderData>(m_AdditionalLightSlices.Length, Allocator.Temp);
+                for (int i = 0; i < m_AdditionalLightSlices.Length; ++i)
+                {
+                    ShadowShaderData data;
+                    data.worldToShadowMatrix = m_AdditionalLightSlices[i].shadowTransform;
+                    data.shadowStrength = m_AdditionalLightsShadowStrength[i];
+                    shadowBufferData[i] = data;
+                }
+                m_AdditionalShadowsBuffer.SetData(shadowBufferData);
+                shadowBufferData.Dispose();
+                cmd.SetGlobalBuffer(m_AdditionalShadowsBufferId, m_AdditionalShadowsBuffer);
+            }
+            else
+            {
+                cmd.SetGlobalMatrixArray(AdditionalShadowsConstantBuffer._AdditionalLightsWorldToShadow, m_AdditionalLightShadowMatrices);
+                cmd.SetGlobalFloatArray(AdditionalShadowsConstantBuffer._AdditionalShadowStrength, m_AdditionalLightsShadowStrength);
+            }
+
             cmd.SetGlobalVector(AdditionalShadowsConstantBuffer._AdditionalShadowOffset0, new Vector4(-invHalfShadowAtlasWidth, -invHalfShadowAtlasHeight, 0.0f, 0.0f));
             cmd.SetGlobalVector(AdditionalShadowsConstantBuffer._AdditionalShadowOffset1, new Vector4(invHalfShadowAtlasWidth, -invHalfShadowAtlasHeight, 0.0f, 0.0f));
             cmd.SetGlobalVector(AdditionalShadowsConstantBuffer._AdditionalShadowOffset2, new Vector4(-invHalfShadowAtlasWidth, invHalfShadowAtlasHeight, 0.0f, 0.0f));

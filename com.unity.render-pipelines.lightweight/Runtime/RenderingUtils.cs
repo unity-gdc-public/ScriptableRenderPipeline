@@ -64,6 +64,15 @@ namespace UnityEngine.Rendering.LWRP
             }
         }
 
+        public static bool useStructuredBuffer
+        {
+            get
+            {
+                GraphicsDeviceType gfxDeviceType = SystemInfo.graphicsDeviceType;
+                return !(gfxDeviceType == GraphicsDeviceType.OpenGLES3 || gfxDeviceType == GraphicsDeviceType.OpenGLES2);
+            }
+        }
+
         static Material s_ErrorMaterial;
         static Material errorMaterial
         {

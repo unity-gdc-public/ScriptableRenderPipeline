@@ -24,7 +24,6 @@ SAMPLER_CMP(sampler_MainLightShadowmapTexture);
 TEXTURE2D_SHADOW(_AdditionalLightsShadowmapTexture);
 SAMPLER_CMP(sampler_AdditionalLightsShadowmapTexture);
 
-CBUFFER_START(_MainLightShadowBuffer)
 // Last cascade is initialized with a no-op matrix. It always transforms
 // shadow coord to half3(0, 0, NEAR_PLANE). We use this trick to avoid
 // branching since ComputeCascadeIndex can return cascade index = MAX_SHADOW_CASCADES
@@ -40,17 +39,23 @@ half4       _MainLightShadowOffset2;
 half4       _MainLightShadowOffset3;
 half4       _MainLightShadowData;    // (x: shadowStrength)
 float4      _MainLightShadowmapSize; // (xy: 1/width and 1/height, zw: width and height)
-CBUFFER_END
 
-CBUFFER_START(_AdditionalLightsShadowBuffer)
+#if USE_STRUCTURED_BUFFER_FOR_LIGHT_DATA
+struct ShadowShaderData
+{
+    float4x4 worldToShadowMatrix;
+    float shadowStrength;
+};
+StructuredBuffer<ShadowShaderData> _AdditionalShadowsBuffer;
+#else
 float4x4    _AdditionalLightsWorldToShadow[MAX_VISIBLE_LIGHTS];
 half        _AdditionalShadowStrength[MAX_VISIBLE_LIGHTS];
+#endif
 half4       _AdditionalShadowOffset0;
 half4       _AdditionalShadowOffset1;
 half4       _AdditionalShadowOffset2;
 half4       _AdditionalShadowOffset3;
 float4      _AdditionalShadowmapSize; // (xy: 1/width and 1/height, zw: width and height)
-CBUFFER_END
 
 float4 _ShadowBias; // x: depth bias, y: normal bias
 
@@ -98,7 +103,11 @@ half GetMainLightShadowStrength()
 
 half GetAdditionalLightShadowStrenth(int lightIndex)
 {
+#if USE_STRUCTURED_BUFFER_FOR_LIGHT_DATA
+    return _AdditionalShadowsBuffer[lightIndex].shadowStrength;
+#else
     return _AdditionalShadowStrength[lightIndex];
+#endif
 }
 
 half SampleScreenSpaceShadowmap(float4 shadowCoord)
@@ -204,9 +213,16 @@ half AdditionalLightRealtimeShadow(int lightIndex, float3 positionWS)
 #if !defined(_ADDITIONAL_LIGHT_SHADOWS) || defined(_RECEIVE_SHADOWS_OFF)
     return 1.0h;
 #else
-    float4 shadowCoord = mul(_AdditionalLightsWorldToShadow[lightIndex], float4(positionWS, 1.0));
     ShadowSamplingData shadowSamplingData = GetAdditionalLightShadowSamplingData();
+
+#if USE_STRUCTURED_BUFFER_FOR_LIGHT_DATA
+    float4 shadowCoord = mul(_AdditionalShadowsBuffer[lightIndex].worldToShadowMatrix, float4(positionWS, 1.0));
+#else
+    float4 shadowCoord = mul(_AdditionalLightsWorldToShadow[lightIndex], float4(positionWS, 1.0));
+#endif
+
     half shadowStrength = GetAdditionalLightShadowStrenth(lightIndex);
+
     return SampleShadowmap(shadowCoord, TEXTURE2D_ARGS(_AdditionalLightsShadowmapTexture, sampler_AdditionalLightsShadowmapTexture), shadowSamplingData, shadowStrength, true);
 #endif
 }
