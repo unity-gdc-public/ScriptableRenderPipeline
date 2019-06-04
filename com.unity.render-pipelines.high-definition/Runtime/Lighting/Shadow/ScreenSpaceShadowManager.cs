@@ -119,14 +119,14 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public bool RenderAreaShadows(HDCamera hdCamera, CommandBuffer cmd, int frameCount)
         {
             // Let's check all the resources and states to see if we should render the effect
-            HDRaytracingEnvironment rtEnvironement = m_RayTracingManager.CurrentEnvironment();
+            HDRaytracingEnvironment rtEnvironment = m_RayTracingManager.CurrentEnvironment();
 
             RaytracingShader shadowRaytrace = m_Asset.renderPipelineRayTracingResources.areaShadowsRaytracingRT;
             ComputeShader shadowsCompute = m_Asset.renderPipelineRayTracingResources.areaShadowRaytracingCS;
             ComputeShader shadowFilter = m_Asset.renderPipelineRayTracingResources.areaShadowFilterCS;
 
             // Make sure everything is valid
-            bool invalidState = rtEnvironement == null ||
+            bool invalidState = rtEnvironment == null ||
 					hdCamera.frameSettings.litShaderMode != LitShaderMode.Deferred ||
                     shadowRaytrace == null || shadowsCompute == null || shadowFilter == null ||
                     m_Asset.renderPipelineResources.textures.owenScrambledTex == null || m_Asset.renderPipelineResources.textures.scramblingTex == null;
@@ -142,7 +142,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 ?? hdCamera.AllocHistoryFrameRT((int)HDCameraFrameHistoryType.RaytracedAreaAnalytic, AreaAnalyticHistoryBufferAllocatorFunction, 1);
 
             // Grab the acceleration structure for the target camera
-            RaytracingAccelerationStructure accelerationStructure = m_RayTracingManager.RequestAccelerationStructure(rtEnvironement.shadowLayerMask);
+            RaytracingAccelerationStructure accelerationStructure = m_RayTracingManager.RequestAccelerationStructure(rtEnvironment.shadowLayerMask);
 
             // Define the shader pass to use for the reflection pass
             cmd.SetRaytracingShaderPass(shadowRaytrace, "VisibilityDXR");
@@ -177,7 +177,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             int numTilesY = (texHeight + (areaTileSize - 1)) / areaTileSize;
 
             // Inject the ray generation data
-            cmd.SetGlobalFloat(HDShaderIDs._RaytracingRayBias, rtEnvironement.rayBias);
+            cmd.SetGlobalFloat(HDShaderIDs._RaytracingRayBias, rtEnvironment.rayBias);
 
             int numLights = m_lightList.lights.Count;
 
@@ -369,7 +369,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 HDUtils.SetRenderTarget(cmd, m_DenoiseBuffer0, clearFlag: ClearFlag.Color);
 
                 // If the screen space shadows we are asked to deliver is available output it to the intermediate texture
-                if(m_ScreenSpaceShadowIterator > hdrp.m_CurrentDebugDisplaySettings.data.screenSpaceShadowIndex)
+                if(m_ScreenSpaceShadowIndex > hdrp.m_CurrentDebugDisplaySettings.data.screenSpaceShadowIndex)
                 {
                     int targetKernel = shadowFilter.FindKernel("WriteShadowTextureDebug");
                     cmd.SetComputeIntParam(shadowFilter, HDShaderIDs._RaytracingShadowSlot, (int)hdrp.m_CurrentDebugDisplaySettings.data.screenSpaceShadowIndex);
