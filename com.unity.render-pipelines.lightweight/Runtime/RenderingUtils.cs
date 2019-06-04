@@ -1,9 +1,27 @@
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 using UnityEngine.Rendering.PostProcessing;
 
 namespace UnityEngine.Rendering.LWRP
 {
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct LightShaderData
+    {
+        public Vector4 position;
+        public Vector4 color;
+        public Vector4 attenuation;
+        public Vector4 spotDirection;
+        public Vector4 occlusionProbeChannels;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct ShadowShaderData
+    {
+        public Matrix4x4 worldToShadowMatrix;
+        public float shadowStrength;
+    }
+
     public static class RenderingUtils
     {
         static int m_PostProcessingTemporaryTargetId = Shader.PropertyToID("_TemporaryColorTexture");
@@ -64,13 +82,39 @@ namespace UnityEngine.Rendering.LWRP
             }
         }
 
-        public static bool useStructuredBuffer
+        internal static bool useStructuredBuffer
         {
             get
             {
                 GraphicsDeviceType gfxDeviceType = SystemInfo.graphicsDeviceType;
                 return !(gfxDeviceType == GraphicsDeviceType.OpenGLES3 || gfxDeviceType == GraphicsDeviceType.OpenGLES2);
             }
+        }
+
+        static ComputeBuffer m_LightDataBuffer = null;
+        internal static ComputeBuffer GetLightDataBuffer(int size)
+        {
+            return GetOrUpdateBuffer<LightShaderData>(m_LightDataBuffer, size);
+        }
+
+        static ComputeBuffer m_ShadowDataBuffer = null;
+        internal static ComputeBuffer GetShadowDataBuffer(int size)
+        {
+            return GetOrUpdateBuffer<ShadowShaderData>(m_ShadowDataBuffer, size);
+        }
+
+        static ComputeBuffer GetOrUpdateBuffer<T>(ComputeBuffer buffer, int size) where T : struct
+        {
+            if (buffer == null)
+                buffer = new ComputeBuffer(size, Marshal.SizeOf<T>());
+
+            if (size > buffer.count)
+            {
+                buffer.Release();
+                buffer = new ComputeBuffer(size, Marshal.SizeOf<T>());
+            }
+
+            return buffer;
         }
 
         static Material s_ErrorMaterial;

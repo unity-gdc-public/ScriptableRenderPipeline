@@ -57,7 +57,7 @@ namespace UnityEngine.Rendering.LWRP
             ref CameraData cameraData = ref renderingData.cameraData;
             if (cameraData.isStereoEnabled || cameraData.isSceneViewCamera || cameraData.isDefaultViewport)
             {
-                cmd.Blit(m_Source.Identifier(), BuiltinRenderTextureType.CameraTarget);
+                cmd.Blit(m_Source.Identifier(), BuiltinRenderTextureType.CameraTarget, m_BlitMaterial);
             }
             else
             {

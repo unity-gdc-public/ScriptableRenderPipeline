@@ -7,13 +7,6 @@ namespace UnityEngine.Rendering.LWRP
 {
     internal class AdditionalLightsShadowCasterPass : ScriptableRenderPass
     {
-        [StructLayout(LayoutKind.Sequential)]
-        internal struct ShadowShaderData
-        {
-            public Matrix4x4 worldToShadowMatrix;
-            public float shadowStrength;
-        }
-
         private static class AdditionalShadowsConstantBuffer
         {
             public static int _AdditionalLightsWorldToShadow;
@@ -26,7 +19,6 @@ namespace UnityEngine.Rendering.LWRP
         }
 
         public static int m_AdditionalShadowsBufferId;
-        ComputeBuffer m_AdditionalShadowsBuffer;
         bool m_UseStructuredBuffer;
 
         const int k_ShadowmapBufferBits = 16;
@@ -62,12 +54,6 @@ namespace UnityEngine.Rendering.LWRP
 
             m_AdditionalShadowsBufferId = Shader.PropertyToID("_AdditionalShadowsBuffer");
             m_UseStructuredBuffer = RenderingUtils.useStructuredBuffer;
-            if (m_UseStructuredBuffer)
-            {
-                int stride;
-                unsafe { stride = sizeof(ShadowShaderData); }
-                m_AdditionalShadowsBuffer = new ComputeBuffer(maxLights, stride);
-            }
         }
 
         public bool Setup(ref RenderingData renderingData)
@@ -227,7 +213,8 @@ namespace UnityEngine.Rendering.LWRP
 
         void SetupAdditionalLightsShadowReceiverConstants(CommandBuffer cmd, ref ShadowData shadowData)
         {
-            for (int i = 0; i < m_AdditionalLightSlices.Length; ++i)
+            int shadowLightsCount = m_AdditionalLightSlices.Length;
+            for (int i = 0; i < shadowLightsCount; ++i)
                 m_AdditionalLightShadowMatrices[i] = m_AdditionalLightSlices[i].shadowTransform;
 
             float invShadowAtlasWidth = 1.0f / shadowData.additionalLightsShadowmapWidth;
@@ -239,17 +226,19 @@ namespace UnityEngine.Rendering.LWRP
 
             if (m_UseStructuredBuffer)
             {
-                NativeArray<ShadowShaderData> shadowBufferData = new NativeArray<ShadowShaderData>(m_AdditionalLightSlices.Length, Allocator.Temp);
-                for (int i = 0; i < m_AdditionalLightSlices.Length; ++i)
+                NativeArray<ShadowShaderData> shadowBufferData = new NativeArray<ShadowShaderData>(shadowLightsCount, Allocator.Temp);
+                for (int i = 0; i < shadowLightsCount; ++i)
                 {
                     ShadowShaderData data;
                     data.worldToShadowMatrix = m_AdditionalLightSlices[i].shadowTransform;
                     data.shadowStrength = m_AdditionalLightsShadowStrength[i];
                     shadowBufferData[i] = data;
                 }
-                m_AdditionalShadowsBuffer.SetData(shadowBufferData);
+
+                var shadowBuffer = RenderingUtils.GetShadowDataBuffer(shadowLightsCount);
+                shadowBuffer.SetData(shadowBufferData);
+                cmd.SetGlobalBuffer(m_AdditionalShadowsBufferId, shadowBuffer);
                 shadowBufferData.Dispose();
-                cmd.SetGlobalBuffer(m_AdditionalShadowsBufferId, m_AdditionalShadowsBuffer);
             }
             else
             {
