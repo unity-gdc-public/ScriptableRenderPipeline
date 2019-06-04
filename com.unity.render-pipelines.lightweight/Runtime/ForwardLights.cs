@@ -231,6 +231,7 @@ namespace UnityEngine.Rendering.LWRP
         {
             var lights = lightData.visibleLights;
             int additionalLightsCount = lightData.additionalLightsCount;
+            int maxAdditionalLightsCount = LightweightRenderPipeline.maxVisibleAdditionalLights;
             if (additionalLightsCount > 0)
             {
                 if (m_UseStructuredBuffer)
@@ -239,26 +240,24 @@ namespace UnityEngine.Rendering.LWRP
                     if (m_AdditionalLightsBuffer == null || additionalLightsCount > m_AdditionalLightsBuffer.count)
                     {
                         int stride;
-                        unsafe
-                        {
-                            stride = sizeof(LightShaderData);
-                        }
+                        unsafe { stride = sizeof(LightShaderData); }
 
                         if (m_AdditionalLightsBuffer != null)
                             m_AdditionalLightsBuffer.Release();
                         m_AdditionalLightsBuffer = new ComputeBuffer(additionalLightsCount, stride);
                     }
 
-                    for (int i = 0; i < additionalLightsCount; ++i)
+                    for (int i = 0, lightIter = 0; i < lights.Length && lightIter < maxAdditionalLightsCount; ++i)
                     {
                         VisibleLight light = lights[i];
-                        if (light.lightType != LightType.Directional)
+                        if (lightData.mainLightIndex != i && light.lightType != LightType.Directional)
                         {
                             LightShaderData data;
                             InitializeLightConstants(lights, i,
                                 out data.position, out data.color, out data.attenuation,
                                 out data.spotDirection, out data.occlusionProbeChannels);
-                            additionalLightsData[i] = data;
+                            additionalLightsData[lightIter] = data;
+                            lightIter++;
                         }
                     }
 
@@ -268,16 +267,17 @@ namespace UnityEngine.Rendering.LWRP
                 }
                 else
                 {
-                    for (int i = 0; i < additionalLightsCount; ++i)
+                    for (int i = 0, lightIter = 0; i < lights.Length && lightIter < maxAdditionalLightsCount; ++i)
                     {
                         VisibleLight light = lights[i];
-                        if (light.lightType != LightType.Directional)
+                        if (lightData.mainLightIndex != i && light.lightType != LightType.Directional)
                         {
-                                InitializeLightConstants(lights, i, out m_AdditionalLightPositions[additionalLightsCount],
-                                    out m_AdditionalLightColors[additionalLightsCount],
-                                    out m_AdditionalLightAttenuations[additionalLightsCount],
-                                    out m_AdditionalLightSpotDirections[additionalLightsCount],
-                                    out m_AdditionalLightOcclusionProbeChannels[additionalLightsCount]);
+                            InitializeLightConstants(lights, i, out m_AdditionalLightPositions[lightIter],
+                                out m_AdditionalLightColors[lightIter],
+                                out m_AdditionalLightAttenuations[lightIter],
+                                out m_AdditionalLightSpotDirections[lightIter],
+                                out m_AdditionalLightOcclusionProbeChannels[lightIter]);
+                            lightIter++;
                         }
                     }
 
