@@ -27,6 +27,12 @@ namespace UnityEditor.Rendering.LookDev
         CustomCircular
     }
 
+    public enum SidePanel {
+        None = -1,
+        Environment,
+        Debug
+    }
+
     [System.Serializable]
     public class Context : ScriptableObject
     {
@@ -108,8 +114,8 @@ namespace UnityEditor.Rendering.LookDev
     public class LayoutContext
     {
         public Layout viewLayout;
-        public ViewCompositionIndex lastFocusedView = ViewCompositionIndex.First;
-        public bool showEnvironmentPanel;
+        public ViewIndex lastFocusedView = ViewIndex.First;
+        public SidePanel showedSidePanel;
 
         [SerializeField]
         internal ComparisonGizmoState gizmoState = new ComparisonGizmoState();
@@ -124,6 +130,11 @@ namespace UnityEditor.Rendering.LookDev
     {
         [field: SerializeField]
         public CameraState camera { get; private set; } = new CameraState();
+
+
+        /// <summary>The currently viewed debugState</summary>
+        [field: SerializeField]
+        public DebugContext debug { get; private set; } = new DebugContext();
 
         //Environment asset, sub-asset (under a library) or cubemap
         [SerializeField]
@@ -267,8 +278,21 @@ namespace UnityEditor.Rendering.LookDev
 
         internal void CleanTemporaryObjectIndexes()
             => viewedObjecHierarchytInstanceID = 0;
+    }
 
-        //[TODO: add object position]
-        //[TODO: manage shadow and lights]
+
+    [System.Serializable]
+    public class DebugContext
+    {
+        /// <summary>Display the debug grey balls</summary>
+        public bool greyBalls;
+        
+        [SerializeField]
+        string colorChartGUID = ""; //Empty GUID
+        
+        /// <summary>The currently used color chart</summary>
+        public Texture2D colorChart { get; private set; }
+
+
     }
 }

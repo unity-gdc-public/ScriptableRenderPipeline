@@ -41,7 +41,14 @@
 #environmentContainer
 {
 	width: 0px;
+    visibility: hidden;
     flex-direction: column-reverse;
+}
+
+#debugContainer
+{
+	width: 0px;
+    visibility: hidden;
 }
 
 #environmentContainer > EnvironmentElement
@@ -53,12 +60,29 @@
 
 .showEnvironmentPanel > #environmentContainer
 {
+	width: 219px; 
+    visibility: visible;
+}
+
+.showDebugPanel > #debugContainer
+{
 	width: 219px;
+    visibility: visible;
 }
 
 .unity-label
 {
     min-width:90px;
+}
+
+.unity-composite-field__field > .unity-base-field__label
+{
+    min-width:10px;
+}
+
+#unity-text-input
+{
+    min-width:40px;
 }
 
 #environmentContainer > ListView
@@ -112,12 +136,17 @@ Image.unity-list-view__item:selected
     min-width:30px;
 }
 
-#toolbarEnvironment
+#sideToolbar
 {
-    width: 221px;
+    width: 218px;
 }
 
-#toolbarRadio > .unity-toolbar-toggle
+#sideToolbar > #tabsRadio
+{
+    flex-direction: row;
+}
+
+.unity-toolbar-toggle
 {
     padding-top: 0px;
     padding-right: 0px;
@@ -125,7 +154,7 @@ Image.unity-list-view__item:selected
     padding-left: 0px;
     margin-left: 0px;
     margin-right: 0px;
-    border-left: 0px
+    border-left-width: 0px;
 }
 
 #renderdoc-content

@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace UnityEngine.Rendering.LookDev
 {
 
@@ -16,6 +18,17 @@ namespace UnityEngine.Rendering.LookDev
         /// <param name="shadow">The new Shadow information</param>
         /// <param name="stage">Access element of the LookDev's scene</param>
         void UpdateSky(Camera camera, Sky sky, Shadow shadow, StageRuntimeInterface stage);
+
+        /// <summary>Notify the LookDev about what debug view mode are available in this SRP</summary>
+        /// <returns>The list of the mode, None is not required.</returns>
+        IEnumerable<string> supportedDebugModes { get; }
+
+        /// <summary>Notify the SRP about a change in the DebugMode used</summary>
+        /// <param name="debugIndex">
+        /// -1: None
+        /// Others: map the result of <see cref="supportedDebugModes()"/>
+        /// </param>
+        void UpdateDebugMode(int debugIndex);
     }
 
     public struct Sky

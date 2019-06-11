@@ -14,7 +14,7 @@ namespace UnityEditor.Rendering.LookDev
 
         void Repaint();
 
-        event Action<Layout, bool> OnLayoutChanged;
+        event Action<Layout, SidePanel> OnLayoutChanged;
 
         event Action OnRenderDocAcquisitionTriggered;
         
@@ -54,20 +54,24 @@ namespace UnityEditor.Rendering.LookDev
         //If you change them, update the uss file too.
         const string k_MainContainerName = "mainContainer";
         const string k_EnvironmentContainerName = "environmentContainer";
+        const string k_ShowEnvironmentPanelClass = "showEnvironmentPanel";
         const string k_ViewContainerName = "viewContainer";
         const string k_FirstViewName = "firstView";
         const string k_SecondViewName = "secondView";
         const string k_ToolbarName = "toolbar";
         const string k_ToolbarRadioName = "toolbarRadio";
-        const string k_ToolbarEnvironmentName = "toolbarEnvironment";
+        const string k_TabsRadioName = "tabsRadio";
+        const string k_SideToolbarName = "sideToolbar";
         const string k_SharedContainerClass = "container";
         const string k_FirstViewClass = "firstView";
         const string k_SecondViewsClass = "secondView";
         const string k_VerticalViewsClass = "verticalSplit";
-        const string k_ShowEnvironmentPanelClass = "showEnvironmentPanel";
+        const string k_DebugContainerName = "debugContainer";
+        const string k_ShowDebugPanelClass = "showDebugPanel";
 
         VisualElement m_MainContainer;
         VisualElement m_ViewContainer;
+        VisualElement m_DebugContainer;
         VisualElement m_EnvironmentContainer;
         ListView m_EnvironmentList;
         EnvironmentElement m_EnvironmentInspector;
@@ -81,27 +85,27 @@ namespace UnityEditor.Rendering.LookDev
             {
                 if (LookDev.currentContext.layout.viewLayout != value)
                 {
-                    OnLayoutChangedInternal?.Invoke(value, showEnvironmentPanel);
+                    OnLayoutChangedInternal?.Invoke(value, sidePanel);
                     ApplyLayout(value);
                 }
             }
         }
         
-        bool showEnvironmentPanel
+        SidePanel sidePanel
         {
-            get => LookDev.currentContext.layout.showEnvironmentPanel;
+            get => LookDev.currentContext.layout.showedSidePanel;
             set
             {
-                if (LookDev.currentContext.layout.showEnvironmentPanel != value)
+                if (LookDev.currentContext.layout.showedSidePanel != value)
                 {
                     OnLayoutChangedInternal?.Invoke(layout, value);
-                    ApplyEnvironmentToggling(value);
+                    ApplySidePanelChange(value);
                 }
             }
         }
 
-        event Action<Layout, bool> OnLayoutChangedInternal;
-        event Action<Layout, bool> IViewDisplayer.OnLayoutChanged
+        event Action<Layout, SidePanel> OnLayoutChangedInternal;
+        event Action<Layout, SidePanel> IViewDisplayer.OnLayoutChanged
         {
             add => OnLayoutChangedInternal += value;
             remove => OnLayoutChangedInternal -= value;
@@ -191,10 +195,11 @@ namespace UnityEditor.Rendering.LookDev
 
             CreateViews();
             CreateEnvironment();
+            CreateDebug();
             CreateDropAreas();
 
             ApplyLayout(layout);
-            ApplyEnvironmentToggling(showEnvironmentPanel);
+            ApplySidePanelChange(sidePanel);
         }
 
         void OnDisable() => OnClosedInternal?.Invoke();
@@ -202,8 +207,8 @@ namespace UnityEditor.Rendering.LookDev
         void CreateToolbar()
         {
             // Layout swapper part
-            var toolbarRadio = new ToolbarRadio("Layout:") { name = k_ToolbarRadioName };
-            toolbarRadio.AddRadios(new[] {
+            var layoutRadio = new ToolbarRadio("Layout:") { name = k_ToolbarRadioName };
+            layoutRadio.AddRadios(new[] {
                 CoreEditorUtils.LoadIcon(Style.k_IconFolder, "LookDevSingle1"),
                 CoreEditorUtils.LoadIcon(Style.k_IconFolder, "LookDevSingle2"),
                 CoreEditorUtils.LoadIcon(Style.k_IconFolder, "LookDevSideBySideVertical"),
@@ -211,23 +216,26 @@ namespace UnityEditor.Rendering.LookDev
                 CoreEditorUtils.LoadIcon(Style.k_IconFolder, "LookDevSplit"),
                 CoreEditorUtils.LoadIcon(Style.k_IconFolder, "LookDevZone"),
                 });
-            toolbarRadio.RegisterCallback((ChangeEvent<int> evt)
+            layoutRadio.RegisterCallback((ChangeEvent<int> evt)
                 => layout = (Layout)evt.newValue);
-            toolbarRadio.SetValueWithoutNotify((int)layout);
+            layoutRadio.SetValueWithoutNotify((int)layout);
 
             // Environment part
-            var toolbarEnvironment = new Toolbar() { name = k_ToolbarEnvironmentName };
-            var showEnvironmentToggle = new ToolbarToggle() { text = "Show Environment" };
-            showEnvironmentToggle.RegisterCallback((ChangeEvent<bool> evt)
-                => showEnvironmentPanel = evt.newValue);
-            showEnvironmentToggle.SetValueWithoutNotify(showEnvironmentPanel);
-            toolbarEnvironment.Add(showEnvironmentToggle);
+            var sideRadio = new ToolbarRadio(canDeselectAll: true) { name = k_TabsRadioName };
+            sideRadio.AddRadios(new[] {
+                "Environment",
+                "Debug"
+            });
+            sideRadio.RegisterCallback((ChangeEvent<int> evt)
+                => sidePanel = (SidePanel)evt.newValue);
+            sideRadio.SetValueWithoutNotify((int)sidePanel);
 
-            //other parts to be completed
+            var sideToolbar = new Toolbar() { name = k_SideToolbarName };
+            sideToolbar.Add(sideRadio);
 
             // Aggregate parts
             var toolbar = new Toolbar() { name = k_ToolbarName };
-            toolbar.Add(toolbarRadio);
+            toolbar.Add(layoutRadio);
             toolbar.Add(new ToolbarSpacer());
             //to complete
 
@@ -244,7 +252,7 @@ namespace UnityEditor.Rendering.LookDev
                 renderDocButton.Add(new Label() { text = " Content" });
                 toolbar.Add(renderDocButton);
             }
-            toolbar.Add(toolbarEnvironment);
+            toolbar.Add(sideToolbar);
             rootVisualElement.Add(toolbar);
         }
 
@@ -321,7 +329,38 @@ namespace UnityEditor.Rendering.LookDev
                 RefreshLibraryDisplay();
             });
         }
-        
+
+        void CreateDebug()
+        {
+            if (m_MainContainer == null || m_MainContainer.Equals(null))
+                throw new System.MemberAccessException("m_MainContainer should be assigned prior CreateEnvironment()");
+
+            m_DebugContainer = new VisualElement() { name = k_DebugContainerName };
+            m_MainContainer.Add(m_DebugContainer);
+            if (sidePanel == SidePanel.Debug)
+                m_MainContainer.AddToClassList(k_ShowDebugPanelClass);
+
+
+            //[TODO: finish]
+            Toggle greyBalls = new Toggle("Grey balls");
+            greyBalls.SetValueWithoutNotify(LookDev.currentContext.GetViewContent(LookDev.currentContext.layout.lastFocusedView).debug.greyBalls);
+            greyBalls.RegisterValueChangedCallback(evt =>
+            {
+                LookDev.currentContext.GetViewContent(LookDev.currentContext.layout.lastFocusedView).debug.greyBalls = evt.newValue;
+            });
+            m_DebugContainer.Add(greyBalls);
+
+            //[TODO: debug why list sometimes empty on resource reloading]
+            List<string> list = new List<string>(LookDev.dataProvider?.supportedDebugModes ?? Enumerable.Empty<string>());
+            if (list.Count == 0)
+                Debug.LogError("FixMe: No entry provided for debug modes");
+            list.Insert(0, "None");
+            PopupField<string> debugView = new PopupField<string>("Debug view mode", list, 0);
+            debugView.RegisterValueChangedCallback(evt
+                => LookDev.dataProvider.UpdateDebugMode(list.IndexOf(evt.newValue) - 1));
+            m_DebugContainer.Add(debugView);
+        }
+
         void CreateEnvironment()
         {
             if (m_MainContainer == null || m_MainContainer.Equals(null))
@@ -329,7 +368,7 @@ namespace UnityEditor.Rendering.LookDev
 
             m_EnvironmentContainer = new VisualElement() { name = k_EnvironmentContainerName };
             m_MainContainer.Add(m_EnvironmentContainer);
-            if (showEnvironmentPanel)
+            if (sidePanel == SidePanel.Environment)
                 m_MainContainer.AddToClassList(k_ShowEnvironmentPanelClass);
 
             m_EnvironmentInspector = new EnvironmentElement(withPreview: false, () =>
@@ -613,17 +652,37 @@ namespace UnityEditor.Rendering.LookDev
                 m_ViewContainer.RemoveFromClassList(k_VerticalViewsClass);
         }
 
-        void ApplyEnvironmentToggling(bool open)
+        void ApplySidePanelChange(SidePanel sidePanel)
         {
-            if (open)
+            switch(sidePanel)
             {
-                if (!m_MainContainer.ClassListContains(k_ShowEnvironmentPanelClass))
-                    m_MainContainer.AddToClassList(k_ShowEnvironmentPanelClass);
-            }
-            else
-            {
-                if (m_MainContainer.ClassListContains(k_ShowEnvironmentPanelClass))
-                    m_MainContainer.RemoveFromClassList(k_ShowEnvironmentPanelClass);
+                case SidePanel.None:
+                    if (m_MainContainer.ClassListContains(k_ShowEnvironmentPanelClass))
+                        m_MainContainer.RemoveFromClassList(k_ShowEnvironmentPanelClass);
+                    if (m_MainContainer.ClassListContains(k_ShowDebugPanelClass))
+                        m_MainContainer.RemoveFromClassList(k_ShowDebugPanelClass);
+                    m_EnvironmentContainer.Q<EnvironmentElement>().style.visibility = Visibility.Hidden;
+                    m_EnvironmentContainer.Q(className: "unity-base-slider--vertical").Q("unity-dragger").style.display = DisplayStyle.None;
+                    break;
+                case SidePanel.Environment:
+                    if (!m_MainContainer.ClassListContains(k_ShowEnvironmentPanelClass))
+                        m_MainContainer.AddToClassList(k_ShowEnvironmentPanelClass);
+                    if (m_MainContainer.ClassListContains(k_ShowDebugPanelClass))
+                        m_MainContainer.RemoveFromClassList(k_ShowDebugPanelClass);
+                    if (m_EnvironmentList.selectedIndex != -1)
+                        m_EnvironmentContainer.Q<EnvironmentElement>().style.visibility = Visibility.Visible;
+                    m_EnvironmentContainer.Q(className: "unity-base-slider--vertical").Q("unity-dragger").style.display = DisplayStyle.Flex;
+                    break;
+                case SidePanel.Debug:
+                    if (m_MainContainer.ClassListContains(k_ShowEnvironmentPanelClass))
+                        m_MainContainer.RemoveFromClassList(k_ShowEnvironmentPanelClass);
+                    if (!m_MainContainer.ClassListContains(k_ShowDebugPanelClass))
+                        m_MainContainer.AddToClassList(k_ShowDebugPanelClass);
+                    m_EnvironmentContainer.Q<EnvironmentElement>().style.visibility = Visibility.Hidden;
+                    m_EnvironmentContainer.Q(className: "unity-base-slider--vertical").Q("unity-dragger").style.display = DisplayStyle.None;
+                    break;
+                default:
+                    throw new ArgumentException("Unknown SidePanel");
             }
         }
     }

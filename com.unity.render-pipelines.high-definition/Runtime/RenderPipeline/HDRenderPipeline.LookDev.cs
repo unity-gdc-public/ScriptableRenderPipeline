@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.LookDev;
 
@@ -68,5 +69,20 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 data.additionalCameraData.clearColorMode = HDAdditionalCameraData.ClearColorMode.Sky;
             }
         }
+
+        IEnumerable<string> IDataProvider.supportedDebugModes
+            => new[]
+            {
+                "Albedo",
+                "Normal",
+                "Smoothness",
+                "AmbientOcclusion",
+                "Metal",
+                "Specular",
+                "Alpha"
+            };
+
+        void IDataProvider.UpdateDebugMode(int debugIndex)
+            => debugDisplaySettings.SetDebugViewCommonMaterialProperty((Attributes.MaterialSharedProperty)(debugIndex + 1));
     }
 }

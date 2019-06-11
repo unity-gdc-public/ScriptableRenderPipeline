@@ -21,7 +21,7 @@ namespace UnityEditor.Rendering.LookDev
         static StageCache s_Stages;
         static Context s_CurrentContext;
 
-        static IDataProvider dataProvider
+        internal static IDataProvider dataProvider
             => RenderPipelineManager.currentPipeline as IDataProvider;
 
         public static Context currentContext
@@ -150,7 +150,7 @@ namespace UnityEditor.Rendering.LookDev
             s_ViewDisplayer.OnLayoutChanged += (layout, envPanelOpen) =>
             {
                 currentContext.layout.viewLayout = layout;
-                currentContext.layout.showEnvironmentPanel = envPanelOpen;
+                currentContext.layout.showedSidePanel = envPanelOpen;
                 SaveConfig();
             };
             s_ViewDisplayer.OnChangingObjectInView += (go, index, localPos) =>
