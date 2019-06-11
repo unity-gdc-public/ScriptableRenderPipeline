@@ -13,7 +13,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             public Volume volume;
         }
 
-        void IDataProvider.FirstInit(StageRuntimeInterface SRI)
+        void IDataProvider.FirstInitScene(StageRuntimeInterface SRI)
         {
             Camera camera = SRI.camera;
             camera.allowHDR = true;
@@ -64,7 +64,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             {
                 data.visualEnvironment.skyType.Override((int)SkyType.HDRISky);
                 data.sky.hdriSky.Override(sky.cubemap);
-                data.sky.rotation.Override(sky.rotation);
+                data.sky.rotation.Override(sky.longitudeOffset);
                 data.additionalCameraData.clearColorMode = HDAdditionalCameraData.ClearColorMode.Sky;
             }
         }

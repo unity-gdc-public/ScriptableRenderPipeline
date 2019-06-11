@@ -261,7 +261,7 @@ namespace UnityEditor.Rendering.LookDev
                     throw new ArgumentException("Unknown ViewIndex: " + index);
             }
 
-            dataProvider.FirstInit(stage.runtimeInterface);
+            dataProvider.FirstInitScene(stage.runtimeInterface);
             return stage;
         }
 

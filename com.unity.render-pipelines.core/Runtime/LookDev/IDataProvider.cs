@@ -6,22 +6,28 @@ namespace UnityEngine.Rendering.LookDev
 
     public interface IDataProvider
     {
-        void FirstInit(StageRuntimeInterface stage);
+        /// <summary>Additional configuration required by this SRP on LookDev's scene creation</summary>
+        /// <param name="stage">Access element of the LookDev's scene</param>
+        void FirstInitScene(StageRuntimeInterface stage);
 
-        // Note: this function signature is subject to change in order to incorporate shadow information
+        /// <summary>Notify the SRP that sky have changed in LookDev</summary>
+        /// <param name="camera">The camera of the LookDev's scene</param>
+        /// <param name="sky">The new Sky informations</param>
+        /// <param name="shadow">The new Shadow information</param>
+        /// <param name="stage">Access element of the LookDev's scene</param>
         void UpdateSky(Camera camera, Sky sky, Shadow shadow, StageRuntimeInterface stage);
     }
 
     public struct Sky
     {
         public Cubemap cubemap;
-        public float rotation;
+        public float longitudeOffset;
+        public float exposure;
     }
     public struct Shadow
     {
         public Cubemap cubemap;
-        public Vector2 latlongCoordinate;
-        public float intensity;
+        public Vector2 sunPosition;
         public Color color;
     }
 
