@@ -4,23 +4,31 @@ using IDataProvider = UnityEngine.Rendering.LookDev.IDataProvider;
 
 namespace UnityEditor.Rendering.LookDev
 {
+    enum ShadowCompositionPass
+    {
+        Sky,
+        ShadowMask,
+        Shadow
+    }
+
     class RenderTextureCache
     {
-        RenderTexture[] m_RTs = new RenderTexture[3];
+        RenderTexture[] m_RTs = new RenderTexture[7];
 
-        public RenderTexture this[ViewCompositionIndex index]
+        public RenderTexture this[ViewCompositionIndex index, ShadowCompositionPass passIndex = 0]
         {
-            get => m_RTs[(int)index];
-            set => m_RTs[(int)index] = value;
+            get => m_RTs[(int)index * 3 + (int)(index == ViewCompositionIndex.Composite ? 0 : passIndex)];
+            set => m_RTs[(int)index * 3 + (int)(index == ViewCompositionIndex.Composite ? 0 : passIndex)] = value;
         }
 
         public static RenderTexture UpdateSize(RenderTexture renderTexture, Rect rect, bool pixelPerfect, Camera renderingCamera)
         {
             int width = (int)rect.width;
             int height = (int)rect.height;
-            if (renderTexture == null
+            if ((renderTexture == null
                 || width != renderTexture.width
                 || height != renderTexture.height)
+                && !rect.IsNullOrInverted())
             {
                 if (renderTexture != null)
                     UnityEngine.Object.DestroyImmediate(renderTexture);
@@ -28,10 +36,6 @@ namespace UnityEditor.Rendering.LookDev
                 // Do not use GetTemporary to manage render textures. Temporary RTs are only
                 // garbage collected each N frames, and in the editor we might be wildly resizing
                 // the inspector, thus using up tons of memory.
-                //GraphicsFormat format = camera.allowHDR ? GraphicsFormat.R16G16B16A16_SFloat : GraphicsFormat.R8G8B8A8_UNorm;
-                //m_RenderTexture = new RenderTexture(rtWidth, rtHeight, 16, format);
-                //m_RenderTexture.hideFlags = HideFlags.HideAndDontSave;
-                //TODO: check format
                 renderTexture = new RenderTexture(
                     width, height, 0,
                     RenderTextureFormat.ARGBHalf, RenderTextureReadWrite.Default);
@@ -46,7 +50,14 @@ namespace UnityEditor.Rendering.LookDev
         }
 
         public void UpdateSize(Rect rect, ViewCompositionIndex index, bool pixelPerfect, Camera renderingCamera)
-            => this[index] = UpdateSize(this[index], rect, pixelPerfect, renderingCamera);
+        {
+            this[index] = UpdateSize(this[index], rect, pixelPerfect, renderingCamera);
+            if (index != ViewCompositionIndex.Composite)
+            {
+                this[index, ShadowCompositionPass.Shadow] = UpdateSize(this[index, ShadowCompositionPass.Shadow], rect, pixelPerfect, renderingCamera);
+                this[index, ShadowCompositionPass.ShadowMask] = UpdateSize(this[index, ShadowCompositionPass.ShadowMask], rect, pixelPerfect, renderingCamera);
+            }
+        }
     }
 
     class Compositer : IDisposable
