@@ -387,17 +387,20 @@ namespace UnityEditor.Rendering.LookDev
             }
 
             public void SetValueWithoutNotify(float newValue)
-                => SetValueWithoutNotify_Internal(TrunkValue(value));
+                => SetValueWithoutNotify_Internal(TrunkValue(newValue));
 
             void SetValueWithoutNotify_Internal(float newTrunkedValue)
             {
-                slider.SetValueWithoutNotify(newTrunkedValue);
+                //Note: SetValueWithoutNotify do not change the cursor position
+                // Passing by slider will cause a loop but this loop will be break
+                //as new value match the legacy one
+                //slider.SetValueWithoutNotify(newTrunkedValue);
+                slider.value = newTrunkedValue;
                 endField.SetValueWithoutNotify(newTrunkedValue);
             }
 
             float TrunkValue(float value)
             {
-                float result;
                 if (maxCharLength < 0)
                     return value;
 
