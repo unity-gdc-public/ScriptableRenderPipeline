@@ -320,7 +320,6 @@ float4 EvaluateLight_Punctual(LightLoopContext lightLoopContext, PositionInputs 
     }
 #endif
 
-#ifndef LIGHT_EVALUATION_NO_COOKIE
     // Projector lights (box, pyramid) always have cookies, so we can perform clipping inside the if().
     // Thus why we don't disable the code here based on LIGHT_EVALUATION_NO_COOKIE but we do it
     // inside the EvaluateCookie_Punctual call
@@ -331,18 +330,6 @@ float4 EvaluateLight_Punctual(LightLoopContext lightLoopContext, PositionInputs 
 
         color *= cookie;
     }
-#endif
-
-    return color;
-}
-
-// distances = {d, d^2, 1/d, d_proj}, where d_proj = dot(lightToSample, light.forward).
-float EvaluateShadow_Punctual(LightLoopContext lightLoopContext, PositionInputs posInput,
-                              LightData light, BuiltinData builtinData, float3 N, float3 L, float4 distances)
-{
-#ifndef LIGHT_EVALUATION_NO_SHADOWS
-    float shadow     = 1.0;
-    float shadowMask = 1.0;
 
     return color;
 }
@@ -383,11 +370,7 @@ float EvaluateShadow_Punctual(LightLoopContext lightLoopContext, PositionInputs 
 
     // Transparents have no contact shadow information
 #if !defined(_SURFACE_TYPE_TRANSPARENT) && !defined(LIGHT_EVALUATION_NO_CONTACT_SHADOWS)
-<<<<<<< HEAD
-    shadow = min(shadow, GetContactShadow(lightLoopContext, light.contactShadowMask));
-=======
     shadow = min(shadow, NdotL > 0.0 ? GetContactShadow(lightLoopContext, light.contactShadowMask) : 1.0);
->>>>>>> 861dd2dbfebbdb0a73ae5e444c9ec2ae639c35b1
 #endif
 
 #ifdef DEBUG_DISPLAY
