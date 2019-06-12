@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 6
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: RoundedPolygon
+  m_Shader: {fileID: -6465566751694194690, guid: 4d1f88b6621e72c429fa03b4b178839f,
+    type: 3}
+  m_ShaderKeywords: 
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs: []
+    m_Floats:
+    - Vector1_2D5454D9: 5
+    - Vector1_4789D2C8: 0.25
+    - Vector1_604313E8: -0.45
+    - Vector1_67C13473: 0.3333
+    - Vector1_8C57CAF2: 0.2
+    - Vector1_B0614246: 0.25
+    - Vector1_C011EF11: 0.45
+    m_Colors: []

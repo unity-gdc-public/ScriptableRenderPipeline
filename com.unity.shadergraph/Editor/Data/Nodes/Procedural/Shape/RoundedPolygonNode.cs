@@ -4,7 +4,7 @@ using UnityEngine;
 namespace UnityEditor.ShaderGraph
 {
     [Title("Procedural", "Shape", "Rounded Polygon")]
-    public class RoundedPolygonNode : CodeFunctionNode
+    class RoundedPolygonNode : CodeFunctionNode
     {
         public RoundedPolygonNode()
         {
@@ -13,8 +13,7 @@ namespace UnityEditor.ShaderGraph
 
         protected override MethodInfo GetFunctionToConvert()
         {
-            return GetType().GetMethod("RoundedPolygon_Func",
-                BindingFlags.Static | BindingFlags.NonPublic);
+            return GetType().GetMethod("RoundedPolygon_Func", BindingFlags.Static | BindingFlags.NonPublic);
         }
 
         static string RoundedPolygon_Func(
@@ -28,56 +27,56 @@ namespace UnityEditor.ShaderGraph
             return
                 @"
 {
-	UV = UV * 2. + {precision}2(-1.,-1.);
+	UV = UV * 2. + $precision2(-1.,-1.);
 
-    {precision} epsilon = 1e-6;
+    $precision epsilon = 1e-6;
 
     UV.x = UV.x / ( Width + (Width==0)*epsilon);
     UV.y = UV.y / ( Height + (Height==0)*epsilon);
 
     Roundness = clamp(Roundness, 1e-6, 1.);
 
-    {precision} i_sides = floor( abs( Sides ) );
-    {precision} fullAngle = 2. * PI / i_sides;
-    {precision} halfAngle = fullAngle / 2.;
-    {precision} opositeAngle = HALF_PI - halfAngle;
+    $precision i_sides = floor( abs( Sides ) );
+    $precision fullAngle = 2. * PI / i_sides;
+    $precision halfAngle = fullAngle / 2.;
+    $precision opositeAngle = HALF_PI - halfAngle;
 
-    {precision} diagonal = 1. / cos( halfAngle );
+    $precision diagonal = 1. / cos( halfAngle );
 
     // Chamfer values
-    {precision} chamferAngle = Roundness * halfAngle; // Angle taken by the chamfer
-    {precision} remainingAngle = halfAngle - chamferAngle; // Angle that remains
+    $precision chamferAngle = Roundness * halfAngle; // Angle taken by the chamfer
+    $precision remainingAngle = halfAngle - chamferAngle; // Angle that remains
 
-    {precision} ratio = tan(remainingAngle) / tan(halfAngle); // This is the ratio between the length of the polygon's triangle and the distance of the chamfer center to the polygon center
+    $precision ratio = tan(remainingAngle) / tan(halfAngle); // This is the ratio between the length of the polygon's triangle and the distance of the chamfer center to the polygon center
 
     // Center of the chamfer arc
-    {precision}2 chamferCenter = {precision}2(
+    $precision2 chamferCenter = $precision2(
         cos(halfAngle) ,
         sin(halfAngle)
     )* ratio * diagonal;
 
     // starting of the chamfer arc
-    {precision}2 chamferOrigin = {precision}2(
+    $precision2 chamferOrigin = $precision2(
         1.,
         tan(remainingAngle)
     );
 
     // Using Al Kashi algebra, we determine:
     // The distance distance of the center of the chamfer to the center of the polygon (side A)
-    {precision} distA = length(chamferCenter);
+    $precision distA = length(chamferCenter);
     // The radius of the chamfer (side B)
-    {precision} distB = 1. - chamferCenter.x;
+    $precision distB = 1. - chamferCenter.x;
     // The refence length of side C, which is the distance to the chamfer start
-    {precision} distCref = length(chamferOrigin);
+    $precision distCref = length(chamferOrigin);
 
     // This will rescale the chamfered polygon to fit the uv space
     // diagonal = length(chamferCenter) + distB;
 
-    {precision} uvScale = diagonal;
+    $precision uvScale = diagonal;
 
     UV *= uvScale;
 
-    {precision}2 polaruv = {precision}2 (
+    $precision2 polaruv = $precision2 (
         atan2( UV.y, UV.x ),
         length(UV)
     );
@@ -87,12 +86,12 @@ namespace UnityEditor.ShaderGraph
     polaruv.x = fmod( polaruv.x + halfAngle, fullAngle );
     polaruv.x = abs(polaruv.x - halfAngle);
 
-    UV = {precision}2( cos(polaruv.x), sin(polaruv.x) ) * polaruv.y;
+    UV = $precision2( cos(polaruv.x), sin(polaruv.x) ) * polaruv.y;
 
     // Calculate the angle needed for the Al Kashi algebra
-    {precision} angleRatio = 1. - (polaruv.x-remainingAngle) / chamferAngle;
+    $precision angleRatio = 1. - (polaruv.x-remainingAngle) / chamferAngle;
     // Calculate the distance of the polygon center to the chamfer extremity
-    {precision} distC = sqrt( distA*distA + distB*distB - 2.*distA*distB*cos( PI - halfAngle * angleRatio ) );
+    $precision distC = sqrt( distA*distA + distB*distB - 2.*distA*distB*cos( PI - halfAngle * angleRatio ) );
 
     Out = UV.x;
 
