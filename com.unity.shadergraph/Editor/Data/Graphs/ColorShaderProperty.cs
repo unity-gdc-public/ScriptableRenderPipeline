@@ -6,10 +6,13 @@ using UnityEngine;
 namespace UnityEditor.ShaderGraph
 {
     [Serializable]
-    public class ColorShaderProperty : AbstractShaderProperty<Color>
+    class ColorShaderProperty : AbstractShaderProperty<Color>
     {
         [SerializeField]
         private ColorMode m_ColorMode;
+
+        [SerializeField]
+        private bool m_Hidden = false;
 
         public ColorMode colorMode
         {
@@ -21,6 +24,12 @@ namespace UnityEditor.ShaderGraph
 
                 m_ColorMode = value;
             }
+        }
+
+        public bool hidden
+        {
+            get { return m_Hidden; }
+            set { m_Hidden = value; }
         }
 
         public ColorShaderProperty()
@@ -38,6 +47,21 @@ namespace UnityEditor.ShaderGraph
             get { return new Vector4(value.r, value.g, value.b, value.a); }
         }
 
+        public override bool isBatchable
+        {
+            get { return true; }
+        }
+
+        public override bool isExposable
+        {
+            get { return true; }
+        }
+
+        public override bool isRenamable
+        {
+            get { return true; }
+        }
+
         public override string GetPropertyBlockString()
         {
             if (!generatePropertyBlock)
@@ -46,24 +70,28 @@ namespace UnityEditor.ShaderGraph
             var result = new StringBuilder();
             if (colorMode == ColorMode.HDR)
                 result.Append("[HDR]");
+            if (m_Hidden)
+            {
+                result.Append("[HideInInspector] ");
+            }
             result.Append(referenceName);
             result.Append("(\"");
             result.Append(displayName);
             result.Append("\", Color) = (");
-            result.Append(value.r);
+            result.Append(NodeUtils.FloatToShaderValue(value.r));
             result.Append(",");
-            result.Append(value.g);
+            result.Append(NodeUtils.FloatToShaderValue(value.g));
             result.Append(",");
-            result.Append(value.b);
+            result.Append(NodeUtils.FloatToShaderValue(value.b));
             result.Append(",");
-            result.Append(value.a);
+            result.Append(NodeUtils.FloatToShaderValue(value.a));
             result.Append(")");
             return result.ToString();
         }
 
         public override string GetPropertyDeclarationString(string delimiter = ";")
         {
-            return string.Format("float4 {0}{1}", referenceName, delimiter);
+            return string.Format("{0}4 {1}{2}", concretePrecision.ToShaderString(), referenceName, delimiter);
         }
 
         public override PreviewProperty GetPreviewMaterialProperty()
@@ -75,16 +103,18 @@ namespace UnityEditor.ShaderGraph
             };
         }
 
-        public override INode ToConcreteNode()
+        public override AbstractMaterialNode ToConcreteNode()
         {
             return new ColorNode { color = new ColorNode.Color(value, colorMode) };
         }
 
-        public override IShaderProperty Copy()
+        public override AbstractShaderProperty Copy()
         {
             var copied = new ColorShaderProperty();
             copied.displayName = displayName;
             copied.value = value;
+            copied.hidden = hidden;
+            copied.colorMode = colorMode;
             return copied;
         }
     }

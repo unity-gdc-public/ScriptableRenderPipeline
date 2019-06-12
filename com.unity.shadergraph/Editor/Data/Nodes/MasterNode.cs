@@ -4,14 +4,13 @@ using System.Linq;
 using UnityEditor.Graphing;
 using UnityEditor.Graphing.Util;
 using UnityEngine;
-using UnityEngine.Experimental.Rendering;
-using UnityEngine.Experimental.UIElements;
 using UnityEngine.Rendering;
+using UnityEngine.UIElements;
 
 namespace UnityEditor.ShaderGraph
 {
     [Serializable]
-    public abstract class MasterNode<T> : AbstractMaterialNode, IMasterNode, IHasSettings
+    abstract class MasterNode<T> : AbstractMaterialNode, IMasterNode, IHasSettings
         where T : class, ISubShader
     {
         [NonSerialized]
@@ -22,7 +21,7 @@ namespace UnityEditor.ShaderGraph
 
         public override bool hasPreview
         {
-            get { return true; }
+            get { return false; }
         }
 
         public override bool allowedInSubGraph
@@ -60,14 +59,24 @@ namespace UnityEditor.ShaderGraph
             Dirty(ModificationScope.Graph);
         }
 
+        public ISubShader GetActiveSubShader()
+        {
+            foreach (var subShader in m_SubShaders)
+            {
+                if (subShader.IsPipelineCompatible(GraphicsSettings.renderPipelineAsset))
+                    return subShader;
+            }
+            return null;
+        }
+
         public string GetShader(GenerationMode mode, string outputName, out List<PropertyCollector.TextureInfo> configuredTextures, List<string> sourceAssetDependencyPaths = null)
         {
-            var activeNodeList = ListPool<INode>.Get();
+            var activeNodeList = ListPool<AbstractMaterialNode>.Get();
             NodeUtils.DepthFirstCollectNodesFromNode(activeNodeList, this);
 
             var shaderProperties = new PropertyCollector();
 
-            var abstractMaterialGraph = owner as AbstractMaterialGraph;
+            var abstractMaterialGraph = owner as GraphData;
             if (abstractMaterialGraph != null)
                 abstractMaterialGraph.CollectShaderProperties(shaderProperties, mode);
 
@@ -127,7 +136,7 @@ namespace UnityEditor.ShaderGraph
             {
                 foreach (var type in assembly.GetTypesOrNothing())
                 {
-                    var isValid = !type.IsAbstract && type.IsPublic && !type.IsGenericType && type.IsClass && typeof(T).IsAssignableFrom(type);
+                    var isValid = !type.IsAbstract && !type.IsGenericType && type.IsClass && typeof(T).IsAssignableFrom(type);
                     if (isValid && !subShaders.Any(s => s.GetType() == type))
                     {
                         try
@@ -158,5 +167,7 @@ namespace UnityEditor.ShaderGraph
         {
             return null;
         }
+
+        public virtual void ProcessPreviewMaterial(Material Material) {}
     }
 }

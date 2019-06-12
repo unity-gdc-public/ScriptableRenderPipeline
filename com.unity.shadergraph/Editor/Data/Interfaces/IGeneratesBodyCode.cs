@@ -1,7 +1,7 @@
 namespace UnityEditor.ShaderGraph
 {
-    public interface IGeneratesBodyCode
+    interface IGeneratesBodyCode
     {
-        void GenerateNodeCode(ShaderGenerator visitor, GenerationMode generationMode);
+        void GenerateNodeCode(ShaderStringBuilder sb, GraphContext graphContext, GenerationMode generationMode);
     }
 }

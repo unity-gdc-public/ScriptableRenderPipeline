@@ -5,11 +5,12 @@ using UnityEngine;
 namespace UnityEditor.ShaderGraph
 {
     [Serializable]
-    public class Matrix2ShaderProperty : MatrixShaderProperty
+    class Matrix2ShaderProperty : MatrixShaderProperty
     {
         public Matrix2ShaderProperty()
         {
-            displayName = "Matrix2";
+            displayName = "Matrix2x2";
+            value = Matrix4x4.identity;
         }
 
         public override PropertyType propertyType
@@ -17,12 +18,16 @@ namespace UnityEditor.ShaderGraph
             get { return PropertyType.Matrix2; }
         }
 
-        public override string GetPropertyDeclarationString(string delimiter = ";")
+        public override PreviewProperty GetPreviewMaterialProperty()
         {
-            return "float4x4 " + referenceName + " = float4x4(1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)" + delimiter;
+            return new PreviewProperty(PropertyType.Matrix2)
+            {
+                name = referenceName,
+                matrixValue = value
+            };
         }
 
-        public override INode ToConcreteNode()
+        public override AbstractMaterialNode ToConcreteNode()
         {
             return new Matrix2Node
             {
@@ -31,7 +36,7 @@ namespace UnityEditor.ShaderGraph
             };
         }
 
-        public override IShaderProperty Copy()
+        public override AbstractShaderProperty Copy()
         {
             var copied = new Matrix2ShaderProperty();
             copied.displayName = displayName;

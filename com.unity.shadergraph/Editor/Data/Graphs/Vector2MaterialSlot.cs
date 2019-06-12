@@ -3,12 +3,12 @@ using System.Collections.Generic;
 using UnityEditor.Graphing;
 using UnityEditor.ShaderGraph.Drawing.Slots;
 using UnityEngine;
-using UnityEngine.Experimental.UIElements;
+using UnityEngine.UIElements;
 
 namespace UnityEditor.ShaderGraph
 {
     [Serializable]
-    public class Vector2MaterialSlot : MaterialSlot, IMaterialSlotHasValue<Vector2>
+    class Vector2MaterialSlot : MaterialSlot, IMaterialSlotHasValue<Vector2>
     {
         [SerializeField]
         Vector2 m_Value;
@@ -52,9 +52,11 @@ namespace UnityEditor.ShaderGraph
             return new MultiFloatSlotControlView(owner, m_Labels, () => value, (newValue) => value = newValue);
         }
 
-        protected override string ConcreteSlotValueAsVariable(AbstractMaterialNode.OutputPrecision precision)
+        protected override string ConcreteSlotValueAsVariable()
         {
-            return precision + "2 (" + NodeUtils.FloatToShaderValue(value.x) + "," + NodeUtils.FloatToShaderValue(value.y) + ")";
+            return string.Format("$precision2 ({0}, {1})"
+                , NodeUtils.FloatToShaderValue(value.x)
+                , NodeUtils.FloatToShaderValue(value.y));
         }
 
         public override void AddDefaultProperty(PropertyCollector properties, GenerationMode generationMode)

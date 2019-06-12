@@ -6,7 +6,7 @@ using UnityEditor.ShaderGraph.Drawing.Controls;
 namespace UnityEditor.ShaderGraph
 {
     [Title("Input", "Texture", "Sample Texture 3D")]
-    public class SampleTexture3DNode : AbstractMaterialNode, IGeneratesBodyCode
+    class SampleTexture3DNode : AbstractMaterialNode, IGeneratesBodyCode
     {
         public const int OutputSlotId = 0;
         public const int TextureInputId = 1;
@@ -26,10 +26,6 @@ namespace UnityEditor.ShaderGraph
             UpdateNodeAfterDeserialization();
         }
 
-        public override string documentationURL
-        {
-            get { return "https://github.com/Unity-Technologies/ShaderGraph/wiki/Sample-Texture-3D-Node"; }
-        }
 
         public sealed override void UpdateNodeAfterDeserialization()
         {
@@ -41,7 +37,7 @@ namespace UnityEditor.ShaderGraph
         }
 
         // Node generations
-        public virtual void GenerateNodeCode(ShaderGenerator visitor, GenerationMode generationMode)
+        public virtual void GenerateNodeCode(ShaderStringBuilder sb, GraphContext graphContext, GenerationMode generationMode)
         {
             var uvName = GetSlotValue(UVInput, generationMode);
 
@@ -50,14 +46,13 @@ namespace UnityEditor.ShaderGraph
             var edgesSampler = owner.GetEdges(samplerSlot.slotReference);
 
             var id = GetSlotValue(TextureInputId, generationMode);
-            var result = string.Format("{0}4 {1} = SAMPLE_TEXTURE3D({2}, {3}, {4});"
-                    , precision
+            var result = string.Format("$precision4 {0} = SAMPLE_TEXTURE3D({1}, {2}, {3});"
                     , GetVariableNameForSlot(OutputSlotId)
                     , id
                     , edgesSampler.Any() ? GetSlotValue(SamplerInput, generationMode) : "sampler" + id
                     , uvName);
 
-            visitor.AddShaderChunk(result, true);
+            sb.AppendLine(result);
         }
     }
 }

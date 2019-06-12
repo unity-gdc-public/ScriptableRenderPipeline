@@ -6,7 +6,7 @@ using UnityEngine;
 namespace UnityEditor.ShaderGraph
 {
     [Serializable]
-    public class Texture3DShaderProperty : AbstractShaderProperty<SerializableTexture>
+    class Texture3DShaderProperty : AbstractShaderProperty<SerializableTexture>
     {
         [SerializeField]
         private bool m_Modifiable = true;
@@ -33,6 +33,21 @@ namespace UnityEditor.ShaderGraph
             get { return new Vector4(); }
         }
 
+        public override bool isBatchable
+        {
+            get { return false; }
+        }
+
+        public override bool isExposable
+        {
+            get { return true; }
+        }
+
+        public override bool isRenamable
+        {
+            get { return true; }
+        }
+
         public override string GetPropertyBlockString()
         {
             var result = new StringBuilder();
@@ -56,7 +71,7 @@ namespace UnityEditor.ShaderGraph
 
         public override string GetPropertyAsArgumentString()
         {
-            return string.Format("TEXTURE3D_ARGS({0}, sampler{0})", referenceName);
+            return string.Format("TEXTURE3D_PARAM({0}, sampler{0})", referenceName);
         }
 
         public override PreviewProperty GetPreviewMaterialProperty()
@@ -68,12 +83,12 @@ namespace UnityEditor.ShaderGraph
             };
         }
 
-        public override INode ToConcreteNode()
+        public override AbstractMaterialNode ToConcreteNode()
         {
             return new Texture3DAssetNode { texture = (Texture3D)value.texture };
         }
 
-        public override IShaderProperty Copy()
+        public override AbstractShaderProperty Copy()
         {
             var copied = new Texture3DShaderProperty();
             copied.displayName = displayName;

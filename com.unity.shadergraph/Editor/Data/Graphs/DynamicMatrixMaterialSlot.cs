@@ -2,12 +2,13 @@ using System;
 using UnityEditor.Graphing;
 using UnityEditor.ShaderGraph.Drawing.Slots;
 using UnityEngine;
-using UnityEngine.Experimental.UIElements;
+
+using UnityEngine.UIElements;
 
 namespace UnityEditor.ShaderGraph
 {
     [Serializable]
-    public class DynamicMatrixMaterialSlot : MaterialSlot, IMaterialSlotHasValue<Matrix4x4>
+    class DynamicMatrixMaterialSlot : MaterialSlot, IMaterialSlotHasValue<Matrix4x4>
     {
         [SerializeField]
         private Matrix4x4 m_Value = Matrix4x4.identity;
@@ -58,7 +59,7 @@ namespace UnityEditor.ShaderGraph
             m_ConcreteValueType = valueType;
         }
 
-        protected override string ConcreteSlotValueAsVariable(AbstractMaterialNode.OutputPrecision precision)
+        protected override string ConcreteSlotValueAsVariable()
         {
             var channelCount = (int)SlotValueHelper.GetMatrixDimension(concreteValueType);
             var values = "";
@@ -73,7 +74,7 @@ namespace UnityEditor.ShaderGraph
                     values += value.GetRow(r)[c];
                 }
             }
-            return string.Format("{0}{1}x{1}({2})", precision, channelCount, values);
+            return string.Format("$precision{0}x{0}({1})", channelCount, values);
         }
 
         public override void AddDefaultProperty(PropertyCollector properties, GenerationMode generationMode)
@@ -85,7 +86,7 @@ namespace UnityEditor.ShaderGraph
             if (matOwner == null)
                 throw new Exception(string.Format("Slot {0} either has no owner, or the owner is not a {1}", this, typeof(AbstractMaterialNode)));
 
-            IShaderProperty property;
+            AbstractShaderProperty property;
             switch (concreteValueType)
             {
                 case ConcreteSlotValueType.Matrix4:

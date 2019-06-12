@@ -5,7 +5,7 @@ namespace UnityEditor.ShaderGraph
 {
     [FormerName("UnityEngine.MaterialGraph.WorldPosNode")]
     [Title("Input", "Geometry", "Position")]
-    public class PositionNode : GeometryNode, IMayRequirePosition
+    class PositionNode : GeometryNode, IMayRequirePosition
     {
         private const int kOutputSlotId = 0;
         public const string kOutputSlotName = "Out";
@@ -14,13 +14,10 @@ namespace UnityEditor.ShaderGraph
         public PositionNode()
         {
             name = "Position";
+            precision = Precision.Float;
             UpdateNodeAfterDeserialization();
         }
 
-        public override string documentationURL
-        {
-            get { return "https://github.com/Unity-Technologies/ShaderGraph/wiki/Position-Node"; }
-        }
 
         public sealed override void UpdateNodeAfterDeserialization()
         {

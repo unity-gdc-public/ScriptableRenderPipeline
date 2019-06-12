@@ -15,23 +15,26 @@ namespace UnityEditor.TestTools.Graphics
                     return RuntimePlatform.Android;
                 case BuildTarget.iOS:
                     return RuntimePlatform.IPhonePlayer;
+#if !UNITY_2019_2_OR_NEWER
                 case BuildTarget.StandaloneLinux:
-                case BuildTarget.StandaloneLinux64:
                 case BuildTarget.StandaloneLinuxUniversal:
+#endif
+                case BuildTarget.StandaloneLinux64:
                     return RuntimePlatform.LinuxPlayer;
                 case BuildTarget.StandaloneOSX:
                     return RuntimePlatform.OSXPlayer;
                 case BuildTarget.PS4:
                     return RuntimePlatform.PS4;
+#if !UNITY_2018_3_OR_NEWER
                 case BuildTarget.PSP2:
                     return RuntimePlatform.PSP2;
+#endif
                 case BuildTarget.Switch:
                     return RuntimePlatform.Switch;
                 case BuildTarget.WebGL:
                     return RuntimePlatform.WebGLPlayer;
                 case BuildTarget.WSAPlayer:
-                    throw new NotImplementedException(
-                        "Don't know how to determine the target UWP architecture from the build settings");
+                    return RuntimePlatform.WSAPlayerX64;
                 case BuildTarget.StandaloneWindows:
                 case BuildTarget.StandaloneWindows64:
                     return RuntimePlatform.WindowsPlayer;
@@ -39,6 +42,10 @@ namespace UnityEditor.TestTools.Graphics
                     return RuntimePlatform.XboxOne;
                 case BuildTarget.tvOS:
                     return RuntimePlatform.tvOS;
+#if UNITY_2019_3_OR_NEWER
+                case BuildTarget.Stadia:
+                    return RuntimePlatform.Stadia;
+#endif
             }
 
             throw new ArgumentOutOfRangeException("target", target, "Unknown BuildTarget");
@@ -54,14 +61,20 @@ namespace UnityEditor.TestTools.Graphics
                     return BuildTarget.iOS;
                 case RuntimePlatform.LinuxEditor:
                 case RuntimePlatform.LinuxPlayer:
+#if UNITY_2019_2_OR_NEWER
+                    return BuildTarget.StandaloneLinux64;
+#else
                     return BuildTarget.StandaloneLinuxUniversal;
+#endif
                 case RuntimePlatform.OSXEditor:
                 case RuntimePlatform.OSXPlayer:
                     return BuildTarget.StandaloneOSX;
                 case RuntimePlatform.PS4:
                     return BuildTarget.PS4;
+#if !UNITY_2018_3_OR_NEWER
                 case RuntimePlatform.PSP2:
                     return BuildTarget.PSP2;
+#endif
                 case RuntimePlatform.Switch:
                     return BuildTarget.Switch;
 #if !UNITY_2017_2_OR_NEWER
@@ -81,6 +94,10 @@ namespace UnityEditor.TestTools.Graphics
                     return BuildTarget.WSAPlayer;
                 case RuntimePlatform.XboxOne:
                     return BuildTarget.XboxOne;
+#if UNITY_2019_3_OR_NEWER
+                case RuntimePlatform.Stadia:
+                    return BuildTarget.Stadia;
+#endif
             }
 
             throw new ArgumentOutOfRangeException("platform", platform, "Unknown RuntimePlatform");

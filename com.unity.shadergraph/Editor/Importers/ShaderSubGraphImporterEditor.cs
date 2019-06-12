@@ -6,8 +6,11 @@ using Debug = System.Diagnostics.Debug;
 namespace UnityEditor.ShaderGraph
 {
     [CustomEditor(typeof(ShaderSubGraphImporter))]
-    public class ShaderSubGraphImporterEditor : ScriptedImporterEditor
+    class ShaderSubGraphImporterEditor : ScriptedImporterEditor
     {
+        public override bool showImportedObject => Unsupported.IsDeveloperMode();
+        protected override bool needsApplyRevert => false;
+
         public override void OnInspectorGUI()
         {
             if (GUILayout.Button("Open Shader Editor"))
@@ -16,6 +19,8 @@ namespace UnityEditor.ShaderGraph
                 Debug.Assert(importer != null, "importer != null");
                 ShaderGraphImporterEditor.ShowGraphEditWindow(importer.assetPath);
             }
+
+            ApplyRevertGUI();
         }
     }
 }

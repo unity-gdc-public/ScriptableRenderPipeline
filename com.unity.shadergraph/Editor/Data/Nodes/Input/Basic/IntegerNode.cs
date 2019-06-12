@@ -6,7 +6,7 @@ using UnityEditor.Graphing;
 namespace UnityEditor.ShaderGraph
 {
     [Title("Input", "Basic", "Integer")]
-    public class IntegerNode : AbstractMaterialNode, IGeneratesBodyCode, IPropertyFromNode
+    class IntegerNode : AbstractMaterialNode, IGeneratesBodyCode, IPropertyFromNode
     {
         [SerializeField]
         private int m_Value;
@@ -20,10 +20,6 @@ namespace UnityEditor.ShaderGraph
             UpdateNodeAfterDeserialization();
         }
 
-        public override string documentationURL
-        {
-            get { return "https://github.com/Unity-Technologies/ShaderGraph/wiki/Integer-Node"; }
-        }
 
         public sealed override void UpdateNodeAfterDeserialization()
         {
@@ -60,12 +56,12 @@ namespace UnityEditor.ShaderGraph
             });
         }
 
-        public void GenerateNodeCode(ShaderGenerator visitor, GenerationMode generationMode)
+        public void GenerateNodeCode(ShaderStringBuilder sb, GraphContext graphContext, GenerationMode generationMode)
         {
             if (generationMode.IsPreview())
                 return;
 
-            visitor.AddShaderChunk(precision + " " + GetVariableNameForNode() + " = " + m_Value + ";", true);
+            sb.AppendLine(string.Format("$precision {0} = {1};", GetVariableNameForNode(), m_Value));
         }
 
         public override string GetVariableNameForSlot(int slotId)
@@ -82,7 +78,7 @@ namespace UnityEditor.ShaderGraph
             });
         }
 
-        public IShaderProperty AsShaderProperty()
+        public AbstractShaderProperty AsShaderProperty()
         {
             return new Vector1ShaderProperty { value = value, floatType = FloatType.Integer };
         }
