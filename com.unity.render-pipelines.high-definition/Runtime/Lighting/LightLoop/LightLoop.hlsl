@@ -50,14 +50,20 @@ void ApplyDebug(LightLoopContext context, PositionInputs posInput, BSDFData bsdf
                 if (_DirectionalShadowIndex >= 0)
                 {
                     DirectionalLightData light = _DirectionalLightDatas[_DirectionalShadowIndex];
-#if (SHADERPASS == SHADERPASS_FORWARD) || !defined(SCREEN_SPACE_SHADOWS)
 
-                    float3 L = -light.forward;
-                    shadow = GetDirectionalShadowAttenuation(context.shadowContext,
+#if defined(SCREEN_SPACE_SHADOWS) && !defined(_SURFACE_TYPE_TRANSPARENT)
+                    if(light.screenSpaceShadowIndex >= 0)
+                    {
+                        shadow = GetScreenSpaceShadow(posInput, light.screenSpaceShadowIndex);
+                    }
+                    else
+#else
+                    {
+                        float3 L = -light.forward;
+                        shadow = GetDirectionalShadowAttenuation(context.shadowContext,
                                                              posInput.positionSS, posInput.positionWS, GetNormalForShadowBias(bsdfData),
                                                              light.shadowIndex, L);
-#else
-                    shadow = GetScreenSpaceShadow(posInput, light.screenSpaceShadowIndex);
+                    }
 #endif
                 }
 

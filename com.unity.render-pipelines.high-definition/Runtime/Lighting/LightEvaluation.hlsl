@@ -139,11 +139,12 @@ float EvaluateShadow_Directional(LightLoopContext lightLoopContext, PositionInpu
 #ifndef LIGHT_EVALUATION_NO_SHADOWS
     float shadow     = 1.0;
     float shadowMask = 1.0;
+    float NdotL      = dot(N, -light.forward); // Disable contact shadow and shadow mask when facing away from light (i.e transmission)
 
 #ifdef SHADOWS_SHADOWMASK
     // shadowMaskSelector.x is -1 if there is no shadow mask
     // Note that we override shadow value (in case we don't have any dynamic shadow)
-    shadow = shadowMask = (light.shadowMaskSelector.x >= 0.0) ? dot(BUILTIN_DATA_SHADOW_MASK, light.shadowMaskSelector) : 1.0;
+    shadow = shadowMask = (light.shadowMaskSelector.x >= 0.0 && NdotL > 0.0) ? dot(BUILTIN_DATA_SHADOW_MASK, light.shadowMaskSelector) : 1.0;
 #endif
 
     if ((light.shadowIndex >= 0) && (light.shadowDimmer > 0))
@@ -179,7 +180,7 @@ float EvaluateShadow_Directional(LightLoopContext lightLoopContext, PositionInpu
 
     // Transparents have no contact shadow information
 #if !defined(_SURFACE_TYPE_TRANSPARENT) && !defined(LIGHT_EVALUATION_NO_CONTACT_SHADOWS)
-    shadow = min(shadow, GetContactShadow(lightLoopContext, light.contactShadowMask));
+    shadow = min(shadow, NdotL > 0.0 ? GetContactShadow(lightLoopContext, light.contactShadowMask) : 1.0);
 #endif
 
 #ifdef DEBUG_DISPLAY
@@ -237,6 +238,7 @@ void GetPunctualLightVectors(float3 positionWS, LightData light, out float3 L, o
 float4 EvaluateCookie_Punctual(LightLoopContext lightLoopContext, LightData light,
                                float3 lightToSample)
 {
+#ifndef LIGHT_EVALUATION_NO_COOKIE
     int lightType = light.lightType;
 
     // Translate and rotate 'positionWS' into the light space.
@@ -263,8 +265,33 @@ float4 EvaluateCookie_Punctual(LightLoopContext lightLoopContext, LightData ligh
 
         // Manually clamp to border (black).
         cookie.rgb = SampleCookie2D(lightLoopContext, positionNDC, light.cookieIndex, false);
-        cookie.a   = isInBounds ? 1 : 0;
+        cookie.a   = isInBounds ? 1.0 : 0.0;
     }
+
+#else
+
+    // When we disable cookie, we must still perform border attenuation for pyramid and box
+    // as by default we always bind a cookie white texture for them to mimic it.
+    float4 cookie = float4(1.0, 1.0, 1.0, 1.0);
+
+    int lightType = light.lightType;
+
+    if (lightType == GPULIGHTTYPE_PROJECTOR_PYRAMID || lightType == GPULIGHTTYPE_PROJECTOR_BOX)
+    { 
+        // Translate and rotate 'positionWS' into the light space.
+        // 'light.right' and 'light.up' are pre-scaled on CPU.
+        float3x3 lightToWorld = float3x3(light.right, light.up, light.forward);
+        float3 positionLS     = mul(lightToSample, transpose(lightToWorld));
+
+        // Perform orthographic or perspective projection.
+        float  perspectiveZ = (lightType != GPULIGHTTYPE_PROJECTOR_BOX) ? positionLS.z : 1.0;
+        float2 positionCS   = positionLS.xy / perspectiveZ;
+        bool   isInBounds   = Max3(abs(positionCS.x), abs(positionCS.y), 1.0 - positionLS.z) <= 1.0;
+
+        // Manually clamp to border (black).
+        cookie.a = isInBounds ? 1.0 : 0.0;
+    }
+#endif
 
     return cookie;
 }
@@ -294,7 +321,9 @@ float4 EvaluateLight_Punctual(LightLoopContext lightLoopContext, PositionInputs 
 #endif
 
 #ifndef LIGHT_EVALUATION_NO_COOKIE
-    // Projector lights always have cookies, so we can perform clipping inside the if().
+    // Projector lights (box, pyramid) always have cookies, so we can perform clipping inside the if().
+    // Thus why we don't disable the code here based on LIGHT_EVALUATION_NO_COOKIE but we do it
+    // inside the EvaluateCookie_Punctual call
     if (light.cookieIndex >= 0)
     {
         float3 lightToSample = posInput.positionWS - light.positionRWS;
@@ -315,10 +344,23 @@ float EvaluateShadow_Punctual(LightLoopContext lightLoopContext, PositionInputs 
     float shadow     = 1.0;
     float shadowMask = 1.0;
 
+    return color;
+}
+
+// distances = {d, d^2, 1/d, d_proj}, where d_proj = dot(lightToSample, light.forward).
+float EvaluateShadow_Punctual(LightLoopContext lightLoopContext, PositionInputs posInput,
+                              LightData light, BuiltinData builtinData, float3 N, float3 L, float4 distances)
+{
+#ifndef LIGHT_EVALUATION_NO_SHADOWS
+    float shadow     = 1.0;
+    float shadowMask = 1.0;
+    float NdotL      = dot(N, L); // Disable contact shadow and shadow mask when facing away from light (i.e transmission)
+
+
 #ifdef SHADOWS_SHADOWMASK
     // shadowMaskSelector.x is -1 if there is no shadow mask
     // Note that we override shadow value (in case we don't have any dynamic shadow)
-    shadow = shadowMask = (light.shadowMaskSelector.x >= 0.0) ? dot(BUILTIN_DATA_SHADOW_MASK, light.shadowMaskSelector) : 1.0;
+    shadow = shadowMask = (light.shadowMaskSelector.x >= 0.0 && NdotL > 0.0) ? dot(BUILTIN_DATA_SHADOW_MASK, light.shadowMaskSelector) : 1.0;
 #endif
 
     if ((light.shadowIndex >= 0) && (light.shadowDimmer > 0))
@@ -341,7 +383,11 @@ float EvaluateShadow_Punctual(LightLoopContext lightLoopContext, PositionInputs 
 
     // Transparents have no contact shadow information
 #if !defined(_SURFACE_TYPE_TRANSPARENT) && !defined(LIGHT_EVALUATION_NO_CONTACT_SHADOWS)
+<<<<<<< HEAD
     shadow = min(shadow, GetContactShadow(lightLoopContext, light.contactShadowMask));
+=======
+    shadow = min(shadow, NdotL > 0.0 ? GetContactShadow(lightLoopContext, light.contactShadowMask) : 1.0);
+>>>>>>> 861dd2dbfebbdb0a73ae5e444c9ec2ae639c35b1
 #endif
 
 #ifdef DEBUG_DISPLAY
