@@ -6,6 +6,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 {
     public class HDSimpleDenoiser
     {
+#if ENABLE_RAYTRACING
         ComputeShader m_SimpleDenoiserCS;
 
         SharedRTManager m_SharedRTManager;
@@ -97,5 +98,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             cmd.SetComputeTextureParam(m_SimpleDenoiserCS, m_KernelFilter, HDShaderIDs._DenoiseOutputTextureRW, outputSingal);
             cmd.DispatchCompute(m_SimpleDenoiserCS, m_KernelFilter, numTilesX, numTilesY, 1);
         }
+#endif
     }
 }

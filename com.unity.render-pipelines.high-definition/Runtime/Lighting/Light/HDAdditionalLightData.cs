@@ -387,11 +387,12 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             return m_WillRenderScreenSpaceShadow;
         }
 
+#if ENABLE_RAYTRACING
         public bool WillRenderRayTracedShadow()
         {
             return m_WillRenderRayTracedShadow;
         }
-
+#endif
 
         // This offset shift the position of the spotlight used to approximate the area light shadows. The offset is the minimum such that the full
         // area light shape is included in the cone spanned by the spot light. 

@@ -51,10 +51,12 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             m_ScreenSpaceShadowTextureArray = RTHandles.Alloc(Vector2.one, slices: numMaxShadows * TextureXR.slices, dimension:TextureDimension.Tex2DArray, filterMode: FilterMode.Point, colorFormat: GraphicsFormat.R16_SFloat, enableRandomWrite: true, useDynamicScale: true, useMipMap: false, name: "AreaShadowArrayBuffer");
         }
 
+#if ENABLE_RAYTRACING
         public RTHandleSystem.RTHandle GetIntegrationTexture()
         {
             return m_DenoiseBuffer0;
         }
+#endif
 
         public void ReleaseScreenSpaceShadows()
         {
@@ -489,6 +491,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 hdrp.PushFullScreenDebugTexture(hdCamera, cmd, m_DenoiseBuffer0, FullScreenDebugMode.ScreenSpaceShadows);
             }
         }
-    }
 #endif
+    }
 }
