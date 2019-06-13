@@ -71,7 +71,7 @@ namespace UnityEditor.Rendering.Experimental.LookDev
                 InternalEditorUtility.SaveToSerializedFileAndForget(new[] { currentContext }, path, true);
         }
 
-        [MenuItem("Window/Experimental/Look Dev", false, -1)]
+        [MenuItem("Window/Experimental/Look Dev", false, 10000)]
         public static void Open()
         {
             s_ViewDisplayer = EditorWindow.GetWindow<DisplayWindow>();
