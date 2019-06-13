@@ -31,8 +31,8 @@ namespace UnityEditor.Rendering.LookDev
     {
         void Repaint();
 
-        event Action<UnityEngine.Object> OnAddingEnvironment;
-        event Action<int> OnRemovingEnvironment;
+        //event Action<UnityEngine.Object> OnAddingEnvironment;
+        //event Action<int> OnRemovingEnvironment;
         event Action<EnvironmentLibrary> OnChangingEnvironmentLibrary;
     }
     
@@ -75,6 +75,11 @@ namespace UnityEditor.Rendering.LookDev
         VisualElement m_EnvironmentContainer;
         ListView m_EnvironmentList;
         EnvironmentElement m_EnvironmentInspector;
+        Label m_NoEnvironmentList;
+        Label m_NoObject1;
+        Label m_NoEnvironment1;
+        Label m_NoObject2;
+        Label m_NoEnvironment2;
 
         Image[] m_Views = new Image[2];
 
@@ -153,19 +158,19 @@ namespace UnityEditor.Rendering.LookDev
             remove => OnClosedInternal -= value;
         }
 
-        event Action<UnityEngine.Object> OnAddingEnvironmentInternal;
-        event Action<UnityEngine.Object> IEnvironmentDisplayer.OnAddingEnvironment
-        {
-            add => OnAddingEnvironmentInternal += value;
-            remove => OnAddingEnvironmentInternal -= value;
-        }
+        //event Action<UnityEngine.Object> OnAddingEnvironmentInternal;
+        //event Action<UnityEngine.Object> IEnvironmentDisplayer.OnAddingEnvironment
+        //{
+        //    add => OnAddingEnvironmentInternal += value;
+        //    remove => OnAddingEnvironmentInternal -= value;
+        //}
 
-        event Action<int> OnRemovingEnvironmentInternal;
-        event Action<int> IEnvironmentDisplayer.OnRemovingEnvironment
-        {
-            add => OnRemovingEnvironmentInternal += value;
-            remove => OnRemovingEnvironmentInternal -= value;
-        }
+        //event Action<int> OnRemovingEnvironmentInternal;
+        //event Action<int> IEnvironmentDisplayer.OnRemovingEnvironment
+        //{
+        //    add => OnRemovingEnvironmentInternal += value;
+        //    remove => OnRemovingEnvironmentInternal -= value;
+        //}
 
         event Action<EnvironmentLibrary> OnChangingEnvironmentLibraryInternal;
         event Action<EnvironmentLibrary> IEnvironmentDisplayer.OnChangingEnvironmentLibrary
@@ -214,7 +219,7 @@ namespace UnityEditor.Rendering.LookDev
                 CoreEditorUtils.LoadIcon(Style.k_IconFolder, "LookDevSideBySideVertical"),
                 CoreEditorUtils.LoadIcon(Style.k_IconFolder, "LookDevSideBySideHorizontal"),
                 CoreEditorUtils.LoadIcon(Style.k_IconFolder, "LookDevSplit"),
-                CoreEditorUtils.LoadIcon(Style.k_IconFolder, "LookDevZone"),
+                //CoreEditorUtils.LoadIcon(Style.k_IconFolder, "LookDevZone"),
                 });
             layoutRadio.RegisterCallback((ChangeEvent<int> evt)
                 => layout = (Layout)evt.newValue);
@@ -280,6 +285,23 @@ namespace UnityEditor.Rendering.LookDev
             m_Views[(int)ViewIndex.First].AddManipulator(gizmoManipulator); //must take event first to switch the firstOrCompositeManipulator
             m_Views[(int)ViewIndex.First].AddManipulator(firstOrCompositeManipulator);
             m_Views[(int)ViewIndex.Second].AddManipulator(secondManipulator);
+
+            m_NoObject1 = new Label("Drag'n'drop object here");
+            m_NoObject1.style.flexGrow = 1;
+            m_NoObject1.style.unityTextAlign = TextAnchor.MiddleCenter;
+            m_NoObject2 = new Label("Drag'n'drop object here");
+            m_NoObject2.style.flexGrow = 1;
+            m_NoObject2.style.unityTextAlign = TextAnchor.MiddleCenter;
+            m_NoEnvironment1 = new Label("Drag'n'drop environment from side panel here");
+            m_NoEnvironment1.style.flexGrow = 1;
+            m_NoEnvironment1.style.unityTextAlign = TextAnchor.MiddleCenter;
+            m_NoEnvironment2 = new Label("Drag'n'drop environment from side panel here");
+            m_NoEnvironment2.style.flexGrow = 1;
+            m_NoEnvironment2.style.unityTextAlign = TextAnchor.MiddleCenter;
+            m_Views[(int)ViewIndex.First].Add(m_NoObject1);
+            m_Views[(int)ViewIndex.First].Add(m_NoEnvironment1);
+            m_Views[(int)ViewIndex.Second].Add(m_NoObject2);
+            m_Views[(int)ViewIndex.Second].Add(m_NoEnvironment2);
         }
 
         void CreateDropAreas()
@@ -291,20 +313,24 @@ namespace UnityEditor.Rendering.LookDev
                     OnChangingObjectInViewInternal?.Invoke(obj as GameObject, ViewCompositionIndex.Composite, localPos);
                 else
                     OnChangingObjectInViewInternal?.Invoke(obj as GameObject, ViewCompositionIndex.First, localPos);
+                m_NoObject1.style.visibility = obj == null || obj.Equals(null) ? Visibility.Visible : Visibility.Hidden;
             });
-            new DropArea(new[] { typeof(GameObject) }, m_Views[(int)ViewIndex.Second], (obj, localPos)
-                => OnChangingObjectInViewInternal?.Invoke(obj as GameObject, ViewCompositionIndex.Second, localPos));
+            new DropArea(new[] { typeof(GameObject) }, m_Views[(int)ViewIndex.Second], (obj, localPos) =>
+            {
+                OnChangingObjectInViewInternal?.Invoke(obj as GameObject, ViewCompositionIndex.Second, localPos);
+                m_NoObject2.style.visibility = obj == null || obj.Equals(null) ? Visibility.Visible : Visibility.Hidden;
+            });
 
             // Material in view
-            new DropArea(new[] { typeof(GameObject) }, m_Views[(int)ViewIndex.First], (obj, localPos) =>
-            {
-                if (layout == Layout.CustomSplit || layout == Layout.CustomCircular)
-                    OnChangingMaterialInViewInternal?.Invoke(obj as Material, ViewCompositionIndex.Composite, localPos);
-                else
-                    OnChangingMaterialInViewInternal?.Invoke(obj as Material, ViewCompositionIndex.First, localPos);
-            });
-            new DropArea(new[] { typeof(Material) }, m_Views[(int)ViewIndex.Second], (obj, localPos)
-                => OnChangingMaterialInViewInternal?.Invoke(obj as Material, ViewCompositionIndex.Second, localPos));
+            //new DropArea(new[] { typeof(GameObject) }, m_Views[(int)ViewIndex.First], (obj, localPos) =>
+            //{
+            //    if (layout == Layout.CustomSplit || layout == Layout.CustomCircular)
+            //        OnChangingMaterialInViewInternal?.Invoke(obj as Material, ViewCompositionIndex.Composite, localPos);
+            //    else
+            //        OnChangingMaterialInViewInternal?.Invoke(obj as Material, ViewCompositionIndex.First, localPos);
+            //});
+            //new DropArea(new[] { typeof(Material) }, m_Views[(int)ViewIndex.Second], (obj, localPos)
+            //    => OnChangingMaterialInViewInternal?.Invoke(obj as Material, ViewCompositionIndex.Second, localPos));
 
             // Environment in view
             new DropArea(new[] { typeof(Environment), typeof(Cubemap) }, m_Views[(int)ViewIndex.First], (obj, localPos) =>
@@ -313,16 +339,20 @@ namespace UnityEditor.Rendering.LookDev
                     OnChangingEnvironmentInViewInternal?.Invoke(obj, ViewCompositionIndex.Composite, localPos);
                 else
                     OnChangingEnvironmentInViewInternal?.Invoke(obj, ViewCompositionIndex.First, localPos);
+                m_NoEnvironment1.style.visibility = obj == null || obj.Equals(null) ? Visibility.Visible : Visibility.Hidden;
             });
-            new DropArea(new[] { typeof(Environment), typeof(Cubemap) }, m_Views[(int)ViewIndex.Second], (obj, localPos)
-                => OnChangingEnvironmentInViewInternal?.Invoke(obj, ViewCompositionIndex.Second, localPos));
+            new DropArea(new[] { typeof(Environment), typeof(Cubemap) }, m_Views[(int)ViewIndex.Second], (obj, localPos) =>
+            {
+                OnChangingEnvironmentInViewInternal?.Invoke(obj, ViewCompositionIndex.Second, localPos);
+                m_NoEnvironment2.style.visibility = obj == null || obj.Equals(null) ? Visibility.Visible : Visibility.Hidden;
+            });
 
             // Environment in library
-            new DropArea(new[] { typeof(Environment), typeof(Cubemap) }, m_EnvironmentContainer, (obj, localPos) =>
-            {
-                //[TODO: check if this come from outside of library]
-                OnAddingEnvironmentInternal?.Invoke(obj);
-            });
+            //new DropArea(new[] { typeof(Environment), typeof(Cubemap) }, m_EnvironmentContainer, (obj, localPos) =>
+            //{
+            //    //[TODO: check if this come from outside of library]
+            //    OnAddingEnvironmentInternal?.Invoke(obj);
+            //});
             new DropArea(new[] { typeof(EnvironmentLibrary) }, m_EnvironmentContainer, (obj, localPos) =>
             {
                 OnChangingEnvironmentLibraryInternal?.Invoke(obj as EnvironmentLibrary);
@@ -409,8 +439,12 @@ namespace UnityEditor.Rendering.LookDev
             };
             m_EnvironmentList.onItemChosen += obj =>
                 EditorGUIUtility.PingObject(LookDev.currentContext.environmentLibrary[(int)obj]);
+            m_NoEnvironmentList = new Label("Drag'n'drop EnvironmentLibrary here");
+            m_NoEnvironmentList.style.flexGrow = 1;
+            m_NoEnvironmentList.style.unityTextAlign = TextAnchor.MiddleCenter;
             m_EnvironmentContainer.Add(m_EnvironmentInspector);
             m_EnvironmentContainer.Add(m_EnvironmentList);
+            m_EnvironmentContainer.Add(m_NoEnvironmentList);
 
             //add ability to unselect
             m_EnvironmentList.RegisterCallback<MouseDownEvent>(evt =>
@@ -442,6 +476,7 @@ namespace UnityEditor.Rendering.LookDev
                 .style.visibility = itemMax == 0
                     ? Visibility.Hidden
                     : Visibility.Visible;
+            m_NoEnvironmentList.style.display = itemMax == 0 ? DisplayStyle.Flex : DisplayStyle.None;
         }
 
         DraggingContext StartDragging(VisualElement item, Vector2 worldPosition)
@@ -626,6 +661,8 @@ namespace UnityEditor.Rendering.LookDev
                         if (!m_ViewContainer.ClassListContains(k_VerticalViewsClass))
                             m_ViewContainer.AddToClassList(k_FirstViewClass);
                     }
+                    for (int i = 0; i < 2; ++i)
+                        m_Views[i].style.display = DisplayStyle.Flex;
                     break;
                 case Layout.FullFirstView:
                 case Layout.CustomSplit:       //display composition on first rect
@@ -634,12 +671,16 @@ namespace UnityEditor.Rendering.LookDev
                         m_ViewContainer.AddToClassList(k_FirstViewClass);
                     if (m_ViewContainer.ClassListContains(k_SecondViewsClass))
                         m_ViewContainer.RemoveFromClassList(k_SecondViewsClass);
+                    m_Views[0].style.display = DisplayStyle.Flex;
+                    m_Views[1].style.display = DisplayStyle.None;
                     break;
                 case Layout.FullSecondView:
                     if (m_ViewContainer.ClassListContains(k_FirstViewClass))
                         m_ViewContainer.RemoveFromClassList(k_FirstViewClass);
                     if (!m_ViewContainer.ClassListContains(k_SecondViewsClass))
                         m_ViewContainer.AddToClassList(k_SecondViewsClass);
+                    m_Views[0].style.display = DisplayStyle.None;
+                    m_Views[1].style.display = DisplayStyle.Flex;
                     break;
                 default:
                     throw new ArgumentException("Unknown Layout");
@@ -663,6 +704,7 @@ namespace UnityEditor.Rendering.LookDev
                         m_MainContainer.RemoveFromClassList(k_ShowDebugPanelClass);
                     m_EnvironmentContainer.Q<EnvironmentElement>().style.visibility = Visibility.Hidden;
                     m_EnvironmentContainer.Q(className: "unity-base-slider--vertical").Q("unity-dragger").style.display = DisplayStyle.None;
+                    m_EnvironmentContainer.style.display = DisplayStyle.None;
                     break;
                 case SidePanel.Environment:
                     if (!m_MainContainer.ClassListContains(k_ShowEnvironmentPanelClass))
@@ -672,6 +714,7 @@ namespace UnityEditor.Rendering.LookDev
                     if (m_EnvironmentList.selectedIndex != -1)
                         m_EnvironmentContainer.Q<EnvironmentElement>().style.visibility = Visibility.Visible;
                     m_EnvironmentContainer.Q(className: "unity-base-slider--vertical").Q("unity-dragger").style.display = DisplayStyle.Flex;
+                    m_EnvironmentContainer.style.display = DisplayStyle.Flex;
                     break;
                 case SidePanel.Debug:
                     if (m_MainContainer.ClassListContains(k_ShowEnvironmentPanelClass))
@@ -680,6 +723,7 @@ namespace UnityEditor.Rendering.LookDev
                         m_MainContainer.AddToClassList(k_ShowDebugPanelClass);
                     m_EnvironmentContainer.Q<EnvironmentElement>().style.visibility = Visibility.Hidden;
                     m_EnvironmentContainer.Q(className: "unity-base-slider--vertical").Q("unity-dragger").style.display = DisplayStyle.None;
+                    m_EnvironmentContainer.style.display = DisplayStyle.None;
                     break;
                 default:
                     throw new ArgumentException("Unknown SidePanel");
