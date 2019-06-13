@@ -4,7 +4,7 @@ using UnityEngine.UIElements;
 using UnityEditor.UIElements;
 using System.Linq;
 
-namespace UnityEditor.Rendering.LookDev
+namespace UnityEditor.Rendering.Experimental.LookDev
 {
     //[CreateAssetMenu(fileName = "Environment", menuName = "LookDev/Environment", order = 1999)]
     public class Environment : ScriptableObject
@@ -46,10 +46,10 @@ namespace UnityEditor.Rendering.LookDev
                 return value;
             }
 
-            public static implicit operator UnityEngine.Rendering.LookDev.Shadow(Shadow shadow)
+            public static implicit operator UnityEngine.Rendering.Experimental.LookDev.Shadow(Shadow shadow)
                 => shadow == null
                 ? default
-                : new UnityEngine.Rendering.LookDev.Shadow()
+                : new UnityEngine.Rendering.Experimental.LookDev.Shadow()
                 {
                     cubemap = shadow.cubemap,
                     sunPosition = new Vector2(shadow.m_Longitude, shadow.m_Latitude),
@@ -64,10 +64,10 @@ namespace UnityEditor.Rendering.LookDev
             public float rotation = 0.0f;
             public float exposure = 1f;
             
-            public static implicit operator UnityEngine.Rendering.LookDev.Sky(Sky sky)
+            public static implicit operator UnityEngine.Rendering.Experimental.LookDev.Sky(Sky sky)
                 => sky == null
                 ? default
-                : new UnityEngine.Rendering.LookDev.Sky()
+                : new UnityEngine.Rendering.Experimental.LookDev.Sky()
                 {
                     cubemap = sky.cubemap,
                     longitudeOffset = sky.rotation,

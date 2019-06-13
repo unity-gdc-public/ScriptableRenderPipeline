@@ -3,7 +3,7 @@ using UnityEngine;
 using UnityEditor.ShortcutManagement;
 using UnityEngine.UIElements;
 
-namespace UnityEditor.Rendering.LookDev
+namespace UnityEditor.Rendering.Experimental.LookDev
 {
     class CameraController : Manipulator
     {

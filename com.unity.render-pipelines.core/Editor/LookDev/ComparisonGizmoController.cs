@@ -2,7 +2,7 @@ using System;
 using UnityEngine.UIElements;
 using UnityEngine;
 
-namespace UnityEditor.Rendering.LookDev
+namespace UnityEditor.Rendering.Experimental.LookDev
 {
     //TODO: clamps to always have both node on screen
     class ComparisonGizmoController : Manipulator

@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using UnityEngine.Rendering.LookDev;
+using UnityEngine.Rendering.Experimental.LookDev;
 
-namespace UnityEditor.Rendering.LookDev
+namespace UnityEditor.Rendering.Experimental.LookDev
 {
     //TODO: add undo support
     public class Stage : IDisposable

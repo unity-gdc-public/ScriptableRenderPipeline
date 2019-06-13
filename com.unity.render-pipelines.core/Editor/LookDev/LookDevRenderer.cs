@@ -1,9 +1,9 @@
 using System;
 using UnityEngine;
-using UnityEngine.Rendering.LookDev;
-using IDataProvider = UnityEngine.Rendering.LookDev.IDataProvider;
+using UnityEngine.Rendering.Experimental.LookDev;
+using IDataProvider = UnityEngine.Rendering.Experimental.LookDev.IDataProvider;
 
-namespace UnityEditor.Rendering.LookDev
+namespace UnityEditor.Rendering.Experimental.LookDev
 {
     public class RenderingData
     {

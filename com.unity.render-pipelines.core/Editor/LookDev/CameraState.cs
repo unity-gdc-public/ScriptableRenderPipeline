@@ -1,7 +1,7 @@
 using UnityEditor.AnimatedValues;
 using UnityEngine;
 
-namespace UnityEditor.Rendering.LookDev
+namespace UnityEditor.Rendering.Experimental.LookDev
 {
     public interface ICameraUpdater
     {

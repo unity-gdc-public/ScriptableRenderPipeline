@@ -1,11 +1,11 @@
 using UnityEngine.Rendering;
-using UnityEngine.Rendering.LookDev;
+using UnityEngine.Rendering.Experimental.LookDev;
 
 using UnityEditor.UIElements;
 using UnityEditorInternal;
 using UnityEngine;
 
-namespace UnityEditor.Rendering.LookDev
+namespace UnityEditor.Rendering.Experimental.LookDev
 {
     /// <summary>
     /// Main entry point for scripting LookDev

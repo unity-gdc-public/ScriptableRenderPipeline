@@ -588,7 +588,7 @@ namespace UnityEditor.Rendering
 
         #region IconAndSkin
 
-        public enum Skin
+        internal enum Skin
         {
             Auto,
             Personnal,
@@ -621,7 +621,7 @@ namespace UnityEditor.Rendering
         }
 
         /// <summary>Get the skin currently in use</summary>
-        public static Skin currentSkin
+        static Skin currentSkin
             => GetInternalSkinIndex() == 0 ? Skin.Personnal : Skin.Professional;
 
 
@@ -636,7 +636,7 @@ namespace UnityEditor.Rendering
         /// <param name="name">Icon name without suffix, prefix or extention</param>
         /// <param name="extention">[Optional] Extention of file (png per default)</param>
         /// <param name="skin">[Optional] Load icon for this skin (Auto per default take current skin)</param>
-        public static Texture2D LoadIcon(string path, string name, string extention = ".png", Skin skin = Skin.Auto)
+        internal static Texture2D LoadIcon(string path, string name, string extention = ".png", Skin skin = Skin.Auto)
         {
             if (String.IsNullOrEmpty(path) || String.IsNullOrEmpty(name))
                 return null;

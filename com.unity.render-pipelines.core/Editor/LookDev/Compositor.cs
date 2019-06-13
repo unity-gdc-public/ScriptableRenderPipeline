@@ -1,8 +1,8 @@
 using System;
 using UnityEngine;
-using IDataProvider = UnityEngine.Rendering.LookDev.IDataProvider;
+using IDataProvider = UnityEngine.Rendering.Experimental.LookDev.IDataProvider;
 
-namespace UnityEditor.Rendering.LookDev
+namespace UnityEditor.Rendering.Experimental.LookDev
 {
     enum ShadowCompositionPass
     {

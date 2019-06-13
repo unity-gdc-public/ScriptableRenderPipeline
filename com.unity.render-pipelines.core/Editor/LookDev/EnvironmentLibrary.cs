@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using UnityEngine.UIElements;
 using System.Linq;
 
-namespace UnityEditor.Rendering.LookDev
+namespace UnityEditor.Rendering.Experimental.LookDev
 {
     [CreateAssetMenu(fileName = "EnvironmentLibrary", menuName = "LookDev/EnvironmentLibrary", order = 2000)]
     public class EnvironmentLibrary : ScriptableObject

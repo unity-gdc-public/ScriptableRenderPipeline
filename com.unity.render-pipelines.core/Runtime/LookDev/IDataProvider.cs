@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace UnityEngine.Rendering.LookDev
+namespace UnityEngine.Rendering.Experimental.LookDev
 {
 
     //IMPORTANT: LookDev is still experimental. Use it at your own risk.
