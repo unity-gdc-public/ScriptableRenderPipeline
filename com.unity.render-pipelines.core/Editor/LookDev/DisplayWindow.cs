@@ -376,15 +376,16 @@ namespace UnityEditor.Rendering.Experimental.LookDev
 
 
             //[TODO: finish]
-            Toggle greyBalls = new Toggle("Grey balls");
-            greyBalls.SetValueWithoutNotify(LookDev.currentContext.GetViewContent(LookDev.currentContext.layout.lastFocusedView).debug.greyBalls);
-            greyBalls.RegisterValueChangedCallback(evt =>
-            {
-                LookDev.currentContext.GetViewContent(LookDev.currentContext.layout.lastFocusedView).debug.greyBalls = evt.newValue;
-            });
-            m_DebugContainer.Add(greyBalls);
+            //Toggle greyBalls = new Toggle("Grey balls");
+            //greyBalls.SetValueWithoutNotify(LookDev.currentContext.GetViewContent(LookDev.currentContext.layout.lastFocusedView).debug.greyBalls);
+            //greyBalls.RegisterValueChangedCallback(evt =>
+            //{
+            //    LookDev.currentContext.GetViewContent(LookDev.currentContext.layout.lastFocusedView).debug.greyBalls = evt.newValue;
+            //});
+            //m_DebugContainer.Add(greyBalls);
 
             //[TODO: debug why list sometimes empty on resource reloading]
+            //[TODO: display only per view]
             List<string> list = new List<string>(LookDev.dataProvider?.supportedDebugModes ?? Enumerable.Empty<string>());
             if (list.Count == 0)
                 Debug.LogError("FixMe: No entry provided for debug modes");
