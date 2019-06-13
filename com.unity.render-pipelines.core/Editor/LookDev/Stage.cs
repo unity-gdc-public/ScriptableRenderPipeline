@@ -287,7 +287,6 @@ namespace UnityEditor.Rendering.LookDev
             Environment environment = m_Contexts.GetViewContent(index).environment;
             provider.UpdateSky(stage.camera,
                 environment?.sky,
-                environment?.shadow,
                 stage.runtimeInterface);
         }
         

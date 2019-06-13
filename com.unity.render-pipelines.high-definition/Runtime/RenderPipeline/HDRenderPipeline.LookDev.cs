@@ -52,7 +52,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             //volumeGO.hideFlags = HideFlags.None;
         }
 
-        void IDataProvider.UpdateSky(Camera camera, Sky sky, Shadow shadow, StageRuntimeInterface SRI)
+        void IDataProvider.UpdateSky(Camera camera, Sky sky, StageRuntimeInterface SRI)
         {
             //[TODO: add rotation and intensity]
             LookDevDataForHDRP data = (LookDevDataForHDRP)SRI.SRPData;

@@ -17,7 +17,7 @@ namespace UnityEngine.Rendering.LookDev
         /// <param name="sky">The new Sky informations</param>
         /// <param name="shadow">The new Shadow information</param>
         /// <param name="stage">Access element of the LookDev's scene</param>
-        void UpdateSky(Camera camera, Sky sky, Shadow shadow, StageRuntimeInterface stage);
+        void UpdateSky(Camera camera, Sky sky, StageRuntimeInterface stage);
 
         /// <summary>Notify the LookDev about what debug view mode are available in this SRP</summary>
         /// <returns>The list of the mode, None is not required.</returns>
