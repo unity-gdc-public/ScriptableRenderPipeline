@@ -32,6 +32,7 @@ TEXTURE2D_X(_SsrClearCoatMaskTexture);
 // Output Textures for the spatial filtering
 RW_TEXTURE2D_X(float4, _RaytracingReflectionTexture);
 int _SpatialFilterRadius;
+int _RaytracingDenoiseRadius;
 
 [numthreads(RAYTRACING_REFLECTION_TILE_SIZE, RAYTRACING_REFLECTION_TILE_SIZE, 1)]
 void REFLECTION_INTEGRATION_UPSCALE(uint3 dispatchThreadId : SV_DispatchThreadID, uint2 groupThreadId : SV_GroupThreadID, uint2 groupId : SV_GroupID)
@@ -171,6 +172,6 @@ void REFLECTION_INTEGRATION_UPSCALE(uint3 dispatchThreadId : SV_DispatchThreadID
     }
     else
     {
-        _RaytracingReflectionTexture[COORD_TEXTURE2D_X(targetCoord)] = float4((resultSum.xyz / resultSum.w), roughness);
+        _RaytracingReflectionTexture[COORD_TEXTURE2D_X(targetCoord)] = float4((resultSum.xyz / resultSum.w),  _RaytracingDenoiseRadius > 0 ? roughness : 1.0);
     }
 }
