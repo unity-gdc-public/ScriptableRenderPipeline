@@ -6,7 +6,7 @@ using System.Linq;
 
 namespace UnityEditor.Rendering.LookDev
 {
-    [CreateAssetMenu(fileName = "Environment", menuName = "LookDev/Environment", order = 1)]
+    //[CreateAssetMenu(fileName = "Environment", menuName = "LookDev/Environment", order = 1999)]
     public class Environment : ScriptableObject
     {
         //[TODO: check if the shadow/sky split worth the indirection]

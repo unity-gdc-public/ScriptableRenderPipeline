@@ -7,7 +7,7 @@ using System.Linq;
 
 namespace UnityEditor.Rendering.LookDev
 {
-    [CreateAssetMenu(fileName = "EnvironmentLibrary", menuName = "LookDev/EnvironmentLibrary", order = 1)]
+    [CreateAssetMenu(fileName = "EnvironmentLibrary", menuName = "LookDev/EnvironmentLibrary", order = 2000)]
     public class EnvironmentLibrary : ScriptableObject
     {
         [field: SerializeField]
