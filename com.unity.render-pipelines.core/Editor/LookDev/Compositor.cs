@@ -78,7 +78,6 @@ namespace UnityEditor.Rendering.Experimental.LookDev
         IViewDisplayer m_Displayer;
         Context m_Contexts;
         RenderTextureCache m_RenderTextures = new RenderTextureCache();
-        StageCache m_Stages;
 
         Renderer m_Renderer = new Renderer();
         RenderingData[] m_RenderDataCache;
@@ -116,12 +115,11 @@ namespace UnityEditor.Rendering.Experimental.LookDev
 
         void RenderDocAcquisitionRequested()
             => m_RenderDocAcquisitionRequested = true;
-
+        
         void CleanUp()
         {
             m_Displayer.OnRenderDocAcquisitionTriggered -= RenderDocAcquisitionRequested;
             EditorApplication.update -= Render;
-            m_Stages?.Dispose();
         }
         public void Dispose()
         {

@@ -21,7 +21,7 @@ namespace UnityEditor.Rendering.Experimental.LookDev
         event Action<IMouseEvent> OnMouseEventInView;
 
         event Action<GameObject, ViewCompositionIndex, Vector2> OnChangingObjectInView;
-        event Action<Material, ViewCompositionIndex, Vector2> OnChangingMaterialInView;
+        //event Action<Material, ViewCompositionIndex, Vector2> OnChangingMaterialInView;
         event Action<UnityEngine.Object, ViewCompositionIndex, Vector2> OnChangingEnvironmentInView;
         
         event Action OnClosed;
@@ -137,12 +137,12 @@ namespace UnityEditor.Rendering.Experimental.LookDev
             remove => OnChangingObjectInViewInternal -= value;
         }
 
-        event Action<Material, ViewCompositionIndex, Vector2> OnChangingMaterialInViewInternal;
-        event Action<Material, ViewCompositionIndex, Vector2> IViewDisplayer.OnChangingMaterialInView
-        {
-            add => OnChangingMaterialInViewInternal += value;
-            remove => OnChangingMaterialInViewInternal -= value;
-        }
+        //event Action<Material, ViewCompositionIndex, Vector2> OnChangingMaterialInViewInternal;
+        //event Action<Material, ViewCompositionIndex, Vector2> IViewDisplayer.OnChangingMaterialInView
+        //{
+        //    add => OnChangingMaterialInViewInternal += value;
+        //    remove => OnChangingMaterialInViewInternal -= value;
+        //}
 
         event Action<UnityEngine.Object, ViewCompositionIndex, Vector2> OnChangingEnvironmentInViewInternal;
         event Action<UnityEngine.Object, ViewCompositionIndex, Vector2> IViewDisplayer.OnChangingEnvironmentInView
@@ -289,19 +289,15 @@ namespace UnityEditor.Rendering.Experimental.LookDev
             m_NoObject1 = new Label("Drag'n'drop object here");
             m_NoObject1.style.flexGrow = 1;
             m_NoObject1.style.unityTextAlign = TextAnchor.MiddleCenter;
-            m_NoObject1.style.visibility = LookDev.currentContext.GetViewContent(ViewIndex.First).viewedInstanceInPreview == null ? Visibility.Visible: Visibility.Hidden;
             m_NoObject2 = new Label("Drag'n'drop object here");
             m_NoObject2.style.flexGrow = 1;
             m_NoObject2.style.unityTextAlign = TextAnchor.MiddleCenter;
-            m_NoObject2.style.visibility = LookDev.currentContext.GetViewContent(ViewIndex.Second).viewedInstanceInPreview == null ? Visibility.Visible : Visibility.Hidden;
             m_NoEnvironment1 = new Label("Drag'n'drop environment from side panel here");
             m_NoEnvironment1.style.flexGrow = 1;
             m_NoEnvironment1.style.unityTextAlign = TextAnchor.MiddleCenter;
-            m_NoEnvironment1.style.visibility = LookDev.currentContext.GetViewContent(ViewIndex.First).environment == null ? Visibility.Visible : Visibility.Hidden;
             m_NoEnvironment2 = new Label("Drag'n'drop environment from side panel here");
             m_NoEnvironment2.style.flexGrow = 1;
             m_NoEnvironment2.style.unityTextAlign = TextAnchor.MiddleCenter;
-            m_NoEnvironment2.style.visibility = LookDev.currentContext.GetViewContent(ViewIndex.Second).environment == null ? Visibility.Visible : Visibility.Hidden;
             m_Views[(int)ViewIndex.First].Add(m_NoObject1);
             m_Views[(int)ViewIndex.First].Add(m_NoEnvironment1);
             m_Views[(int)ViewIndex.Second].Add(m_NoObject2);
@@ -388,7 +384,7 @@ namespace UnityEditor.Rendering.Experimental.LookDev
             //[TODO: display only per view]
             List<string> list = new List<string>(LookDev.dataProvider?.supportedDebugModes ?? Enumerable.Empty<string>());
             if (list.Count == 0)
-                Debug.LogError("FixMe: No entry provided for debug modes");
+                Debug.LogWarning("DebugMode are wrongly reset on resource loading. Close and reopen the windows.");
             list.Insert(0, "None");
             PopupField<string> debugView = new PopupField<string>("Debug view mode", list, 0);
             debugView.RegisterValueChangedCallback(evt
@@ -652,6 +648,11 @@ namespace UnityEditor.Rendering.Experimental.LookDev
 
         void ApplyLayout(Layout value)
         {
+            m_NoObject1.style.visibility = LookDev.currentContext.GetViewContent(ViewIndex.First).hasViewedObject ? Visibility.Hidden : Visibility.Visible;
+            m_NoObject2.style.visibility = LookDev.currentContext.GetViewContent(ViewIndex.Second).hasViewedObject ? Visibility.Hidden : Visibility.Visible;
+            m_NoEnvironment1.style.visibility = LookDev.currentContext.GetViewContent(ViewIndex.First).hasEnvironment ? Visibility.Hidden : Visibility.Visible;
+            m_NoEnvironment2.style.visibility = LookDev.currentContext.GetViewContent(ViewIndex.Second).hasEnvironment ? Visibility.Hidden : Visibility.Visible;
+
             switch (value)
             {
                 case Layout.HorizontalSplit:
@@ -700,7 +701,7 @@ namespace UnityEditor.Rendering.Experimental.LookDev
 
         void ApplySidePanelChange(SidePanel sidePanel)
         {
-            switch(sidePanel)
+            switch (sidePanel)
             {
                 case SidePanel.None:
                     if (m_MainContainer.ClassListContains(k_ShowEnvironmentPanelClass))

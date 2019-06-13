@@ -140,6 +140,12 @@ namespace UnityEditor.Rendering.Experimental.LookDev
         [SerializeField]
         string environmentGUID = ""; //Empty GUID
 
+        /// <summary>
+        /// Check if an Environment is registered for this view.
+        /// The result will be accurate even if the Environment have not been reloaded yet.
+        /// </summary>
+        public bool hasEnvironment => !String.IsNullOrEmpty(environmentGUID);
+
         /// <summary>The currently used Environment</summary>
         public Environment environment { get; private set; }
         
@@ -151,6 +157,14 @@ namespace UnityEditor.Rendering.Experimental.LookDev
         // So, only use it when reloading from script update.
         [SerializeField]
         int viewedObjecHierarchytInstanceID;
+
+        /// <summary>
+        /// Check if an Environment is registered for this view.
+        /// The result will be accurate even if the object have not been reloaded yet.
+        /// </summary>
+        public bool hasViewedObject =>
+            !String.IsNullOrEmpty(viewedObjectAssetGUID)
+            || viewedObjecHierarchytInstanceID != 0;
 
         /// <summary>Reference to the object given for instantiation.</summary>
         public GameObject viewedObjectReference { get; private set; }
@@ -284,14 +298,14 @@ namespace UnityEditor.Rendering.Experimental.LookDev
     [System.Serializable]
     public class DebugContext
     {
-        /// <summary>Display the debug grey balls</summary>
-        public bool greyBalls;
+        ///// <summary>Display the debug grey balls</summary>
+        //public bool greyBalls;
         
-        [SerializeField]
-        string colorChartGUID = ""; //Empty GUID
+        //[SerializeField]
+        //string colorChartGUID = ""; //Empty GUID
         
-        /// <summary>The currently used color chart</summary>
-        public Texture2D colorChart { get; private set; }
+        ///// <summary>The currently used color chart</summary>
+        //public Texture2D colorChart { get; private set; }
 
 
     }
