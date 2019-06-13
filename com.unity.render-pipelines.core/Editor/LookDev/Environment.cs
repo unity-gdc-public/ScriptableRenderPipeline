@@ -172,10 +172,11 @@ namespace UnityEditor.Rendering.LookDev
                 latlong.image = GetLatLongThumbnailTexture();
             skyCubemapField.SetValueWithoutNotify(environment.sky.cubemap);
             skyRotationOffset.SetValueWithoutNotify(environment.sky.rotation);
-            shadowCubemapField.SetValueWithoutNotify(environment.shadow.cubemap);
-            shadowSunLatitudeField.SetValueWithoutNotify(environment.shadow.latitude);
-            shadowSunLongitudeField.SetValueWithoutNotify(environment.shadow.longitude);
-            shadowColor.SetValueWithoutNotify(environment.shadow.color);
+            //[TODO: reenable when shadow composition will be finished]
+            //shadowCubemapField.SetValueWithoutNotify(environment.shadow.cubemap);
+            //shadowSunLatitudeField.SetValueWithoutNotify(environment.shadow.latitude);
+            //shadowSunLongitudeField.SetValueWithoutNotify(environment.shadow.longitude);
+            //shadowColor.SetValueWithoutNotify(environment.shadow.color);
         }
 
         public void Bind(Environment environment, Image deportedLatlong)
@@ -274,44 +275,45 @@ namespace UnityEditor.Rendering.LookDev
             style.marginLeft = 3;
             style.unityFontStyleAndWeight = FontStyle.Bold;
             inspector.Add(skyFoldout);
+
+            //[TODO: reenable when shadow composition will be finished]
+            //Foldout shadowFoldout = new Foldout()
+            //{
+            //    text = "Shadow"
+            //};
+            //shadowCubemapField = new ObjectField("Sky w/o Sun");
+            //shadowCubemapField.allowSceneObjects = false;
+            //shadowCubemapField.objectType = typeof(Cubemap);
+            //shadowCubemapField.RegisterValueChangedCallback(evt
+            //    => RegisterChange(ref environment.shadow.cubemap, evt.newValue as Cubemap, updatePreview: true));
+            //shadowFoldout.Add(shadowCubemapField);
+
+            //shadowColor = new ColorField("Color");
+            //shadowColor.RegisterValueChangedCallback(evt
+            //    => RegisterChange(ref environment.shadow.color, evt.newValue));
+            //shadowFoldout.Add(shadowColor);
+
+            //shadowSunLatitudeField = new FloatSliderField("Sun Latitude", -90f, 90f, 5);
+            //shadowSunLatitudeField.RegisterValueChangedCallback(evt
+            //    => RegisterChange(ref environment.shadow.m_Latitude, Environment.Shadow.ClampLatitude(evt.newValue), shadowSunLatitudeField));
+            //shadowFoldout.Add(shadowSunLatitudeField);
             
-            Foldout shadowFoldout = new Foldout()
-            {
-                text = "Shadow"
-            };
-            shadowCubemapField = new ObjectField("Sky w/o Sun");
-            shadowCubemapField.allowSceneObjects = false;
-            shadowCubemapField.objectType = typeof(Cubemap);
-            shadowCubemapField.RegisterValueChangedCallback(evt
-                => RegisterChange(ref environment.shadow.cubemap, evt.newValue as Cubemap, updatePreview: true));
-            shadowFoldout.Add(shadowCubemapField);
+            //shadowSunLongitudeField = new FloatSliderField("Sun Longitude", 0f, 359.999f, 5);
+            //shadowSunLongitudeField.RegisterValueChangedCallback(evt
+            //    => RegisterChange(ref environment.shadow.m_Longitude, Environment.Shadow.ClampLongitude(evt.newValue), shadowSunLongitudeField));
+            //shadowFoldout.Add(shadowSunLongitudeField);
 
-            shadowColor = new ColorField("Color");
-            shadowColor.RegisterValueChangedCallback(evt
-                => RegisterChange(ref environment.shadow.color, evt.newValue));
-            shadowFoldout.Add(shadowColor);
+            //Button sunToBrightess = new Button(()
+            //    => { /* [TODO] */ })
+            //{
+            //    text = "Sun position to brightest"
+            //};
+            //shadowFoldout.Add(sunToBrightess);
 
-            shadowSunLatitudeField = new FloatSliderField("Sun Latitude", -90f, 90f, 5);
-            shadowSunLatitudeField.RegisterValueChangedCallback(evt
-                => RegisterChange(ref environment.shadow.m_Latitude, Environment.Shadow.ClampLatitude(evt.newValue), shadowSunLatitudeField));
-            shadowFoldout.Add(shadowSunLatitudeField);
-            
-            shadowSunLongitudeField = new FloatSliderField("Sun Longitude", 0f, 359.999f, 5);
-            shadowSunLongitudeField.RegisterValueChangedCallback(evt
-                => RegisterChange(ref environment.shadow.m_Longitude, Environment.Shadow.ClampLongitude(evt.newValue), shadowSunLongitudeField));
-            shadowFoldout.Add(shadowSunLongitudeField);
-
-            Button sunToBrightess = new Button(()
-                => { /* [TODO] */ })
-            {
-                text = "Sun position to brightest"
-            };
-            shadowFoldout.Add(sunToBrightess);
-
-            style = shadowFoldout.Q<Toggle>().style;
-            style.marginLeft = 3;
-            style.unityFontStyleAndWeight = FontStyle.Bold;
-            inspector.Add(shadowFoldout);
+            //style = shadowFoldout.Q<Toggle>().style;
+            //style.marginLeft = 3;
+            //style.unityFontStyleAndWeight = FontStyle.Bold;
+            //inspector.Add(shadowFoldout);
 
             return inspector;
         }
