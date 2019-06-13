@@ -203,7 +203,6 @@ namespace UnityEditor.Rendering.LookDev
                 if (SRI != null)
                     SRI.SRPData = null;
                 SRI = null;
-                Clear(persistent: true);
                 EditorSceneManager.ClosePreviewScene(m_PreviewScene);
                 
                 disposedValue = true;
