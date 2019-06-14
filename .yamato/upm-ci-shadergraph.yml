@@ -7,7 +7,7 @@ platforms:
     flavor: m1.large
   - name: OSX
     type: Unity::metal::macmini
-    image: slough-ops/macos-10.14-xcode
+    image: slough-ops/macos-10.14-base
     flavor: m1.mac
 testplatforms:
   - name: Standalone
