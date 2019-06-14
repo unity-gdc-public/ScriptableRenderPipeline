@@ -6,8 +6,8 @@ platforms:
     image: sdet/gamecode_win10:latest
     flavor: m1.large
   - name: OSX
-    type: Unity::VM::osx
-    image: buildfarm/mac:stable
+    type: Unity::metal::macmini
+    image: slough-ops/macos-10.14-base
     flavor: m1.mac
 testplatforms:
   - name: Standalone
