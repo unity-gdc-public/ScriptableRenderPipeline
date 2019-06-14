@@ -44,7 +44,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
          RTHandle directionBuffer, bool rayBinning, LayerMask layerMask, float maxRayLength, RTHandle outputBuffer, bool disableSpecularLighting = false, bool halfResolution = false)
         {
             ComputeShader rayBinningCS = m_Asset.renderPipelineRayTracingResources.rayBinningCS;
-            RaytracingShader gBufferRaytracingRT = m_Asset.renderPipelineRayTracingResources.gBufferRaytracingRT;
+            RayTracingShader gBufferRaytracingRT = m_Asset.renderPipelineRayTracingResources.gBufferRaytracingRT;
             ComputeShader deferredRaytracingCS = m_Asset.renderPipelineRayTracingResources.deferredRaytracingCS;
 
             // Texture dimensions
@@ -95,43 +95,43 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             }
 
             // Define the shader pass to use for the reflection pass
-            cmd.SetRaytracingShaderPass(gBufferRaytracingRT, "GBufferDXR");
+            cmd.SetRayTracingShaderPass(gBufferRaytracingRT, "GBufferDXR");
 
             if(rayBinning)
             {
                 cmd.SetGlobalBuffer(HDShaderIDs._RayBinResult, m_RayBinResult);
                 cmd.SetGlobalBuffer(HDShaderIDs._RayBinSizeResult, m_RayBinSizeResult);
-                cmd.SetRaytracingIntParam(gBufferRaytracingRT, HDShaderIDs._RayBinTileCountX, numTilesRayBinX);
+                cmd.SetRayTracingIntParam(gBufferRaytracingRT, HDShaderIDs._RayBinTileCountX, numTilesRayBinX);
             }
 
             // Grab the acceleration structures and the light cluster to use
-            RaytracingAccelerationStructure accelerationStructure = m_RayTracingManager.RequestAccelerationStructure(layerMask);
+            RayTracingAccelerationStructure accelerationStructure = m_RayTracingManager.RequestAccelerationStructure(layerMask);
             HDRaytracingLightCluster lightCluster = m_RayTracingManager.RequestLightCluster(layerMask);
 
             // Set the acceleration structure for the pass
-            cmd.SetRaytracingAccelerationStructure(gBufferRaytracingRT, HDShaderIDs._RaytracingAccelerationStructureName, accelerationStructure);
+            cmd.SetRayTracingAccelerationStructure(gBufferRaytracingRT, HDShaderIDs._RaytracingAccelerationStructureName, accelerationStructure);
 
             // Bind the textures required for the ray launching
-            cmd.SetRaytracingTextureParam(gBufferRaytracingRT, HDShaderIDs._DepthTexture, m_SharedRTManager.GetDepthStencilBuffer());
-            cmd.SetRaytracingTextureParam(gBufferRaytracingRT, HDShaderIDs._NormalBufferTexture, m_SharedRTManager.GetNormalBuffer());
-            cmd.SetRaytracingTextureParam(gBufferRaytracingRT, HDShaderIDs._RaytracingDirectionBuffer, directionBuffer);
+            cmd.SetRayTracingTextureParam(gBufferRaytracingRT, HDShaderIDs._DepthTexture, m_SharedRTManager.GetDepthStencilBuffer());
+            cmd.SetRayTracingTextureParam(gBufferRaytracingRT, HDShaderIDs._NormalBufferTexture, m_SharedRTManager.GetNormalBuffer());
+            cmd.SetRayTracingTextureParam(gBufferRaytracingRT, HDShaderIDs._RaytracingDirectionBuffer, directionBuffer);
 
             // Compute the pixel spread value
             float pixelSpreadAngle = hdCamera.camera.fieldOfView * (Mathf.PI / 180.0f) / Mathf.Min(hdCamera.actualWidth, hdCamera.actualHeight);
             cmd.SetGlobalFloat(HDShaderIDs._RaytracingPixelSpreadAngle, pixelSpreadAngle);
 
             // Additional ray launch values
-            cmd.SetRaytracingFloatParams(gBufferRaytracingRT, HDShaderIDs._RaytracingRayBias, rtEnvironment.rayBias);
-            cmd.SetRaytracingFloatParams(gBufferRaytracingRT, HDShaderIDs._RaytracingRayMaxLength, maxRayLength);
+            cmd.SetRayTracingFloatParams(gBufferRaytracingRT, HDShaderIDs._RaytracingRayBias, rtEnvironment.rayBias);
+            cmd.SetRayTracingFloatParams(gBufferRaytracingRT, HDShaderIDs._RaytracingRayMaxLength, maxRayLength);
 
             // Bind the output textures
-            cmd.SetRaytracingTextureParam(gBufferRaytracingRT, HDShaderIDs._GBufferTextureRW[0], m_RaytracingGBufferManager.GetBuffer(0));
-            cmd.SetRaytracingTextureParam(gBufferRaytracingRT, HDShaderIDs._GBufferTextureRW[1], m_RaytracingGBufferManager.GetBuffer(1));
-            cmd.SetRaytracingTextureParam(gBufferRaytracingRT, HDShaderIDs._GBufferTextureRW[2], m_RaytracingGBufferManager.GetBuffer(2));
-            cmd.SetRaytracingTextureParam(gBufferRaytracingRT, HDShaderIDs._GBufferTextureRW[3], m_RaytracingGBufferManager.GetBuffer(3));
+            cmd.SetRayTracingTextureParam(gBufferRaytracingRT, HDShaderIDs._GBufferTextureRW[0], m_RaytracingGBufferManager.GetBuffer(0));
+            cmd.SetRayTracingTextureParam(gBufferRaytracingRT, HDShaderIDs._GBufferTextureRW[1], m_RaytracingGBufferManager.GetBuffer(1));
+            cmd.SetRayTracingTextureParam(gBufferRaytracingRT, HDShaderIDs._GBufferTextureRW[2], m_RaytracingGBufferManager.GetBuffer(2));
+            cmd.SetRayTracingTextureParam(gBufferRaytracingRT, HDShaderIDs._GBufferTextureRW[3], m_RaytracingGBufferManager.GetBuffer(3));
             // cmd.SetRaytracingTextureParam(gBufferRaytracingRT, rayGenGBuffer, HDShaderIDs._GBufferTextureRW[4], m_LocalGBufferManager.GetBuffer(4));
             // cmd.SetRaytracingTextureParam(gBufferRaytracingRT, rayGenGBuffer, HDShaderIDs._GBufferTextureRW[5], m_LocalGBufferManager.GetBuffer(5));
-            cmd.SetRaytracingTextureParam(gBufferRaytracingRT, HDShaderIDs._RaytracingDistanceBuffer, m_RaytracingDistanceBuffer);
+            cmd.SetRayTracingTextureParam(gBufferRaytracingRT, HDShaderIDs._RaytracingDistanceBuffer, m_RaytracingDistanceBuffer);
 
             // Compute the actual resolution that is needed base on the quality
             uint widthResolution = (uint)hdCamera.actualWidth;
@@ -148,7 +148,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             }
             else
             {
-                cmd.SetRaytracingIntParams(gBufferRaytracingRT, "_RaytracingHalfResolution", halfResolution? 1 : 0);
+                cmd.SetRayTracingIntParams(gBufferRaytracingRT, "_RaytracingHalfResolution", halfResolution? 1 : 0);
                 cmd.DispatchRays(gBufferRaytracingRT, m_RayGenGBuffer, widthResolution, heightResolution, 1);
             }
 
