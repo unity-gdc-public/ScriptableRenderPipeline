@@ -226,16 +226,16 @@ namespace UnityEngine.Rendering.LWRP
 
             if (m_UseStructuredBuffer)
             {
-                NativeArray<ShadowShaderData> shadowBufferData = new NativeArray<ShadowShaderData>(shadowLightsCount, Allocator.Temp);
+                NativeArray<ShaderData.ShadowData> shadowBufferData = new NativeArray<ShaderData.ShadowData>(shadowLightsCount, Allocator.Temp);
                 for (int i = 0; i < shadowLightsCount; ++i)
                 {
-                    ShadowShaderData data;
+                    ShaderData.ShadowData data;
                     data.worldToShadowMatrix = m_AdditionalLightSlices[i].shadowTransform;
                     data.shadowStrength = m_AdditionalLightsShadowStrength[i];
                     shadowBufferData[i] = data;
                 }
 
-                var shadowBuffer = RenderingUtils.GetShadowDataBuffer(shadowLightsCount);
+                var shadowBuffer = ShaderData.instance.GetShadowDataBuffer(shadowLightsCount);
                 shadowBuffer.SetData(shadowBufferData);
                 cmd.SetGlobalBuffer(m_AdditionalShadowsBufferId, shadowBuffer);
                 shadowBufferData.Dispose();

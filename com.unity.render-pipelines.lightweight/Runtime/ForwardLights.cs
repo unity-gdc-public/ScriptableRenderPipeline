@@ -46,6 +46,7 @@ namespace UnityEngine.Rendering.LWRP
 
             LightConstantBuffer._MainLightPosition = Shader.PropertyToID("_MainLightPosition");
             LightConstantBuffer._MainLightColor = Shader.PropertyToID("_MainLightColor");
+            LightConstantBuffer._AdditionalLightsCount = Shader.PropertyToID("_AdditionalLightsCount");
 
             if (m_UseStructuredBuffer)
             {
@@ -53,7 +54,6 @@ namespace UnityEngine.Rendering.LWRP
             }
             else
             {
-                LightConstantBuffer._AdditionalLightsCount = Shader.PropertyToID("_AdditionalLightsCount");
                 LightConstantBuffer._AdditionalLightsPosition = Shader.PropertyToID("_AdditionalLightsPosition");
                 LightConstantBuffer._AdditionalLightsColor = Shader.PropertyToID("_AdditionalLightsColor");
                 LightConstantBuffer._AdditionalLightsAttenuation = Shader.PropertyToID("_AdditionalLightsAttenuation");
@@ -223,13 +223,13 @@ namespace UnityEngine.Rendering.LWRP
             {
                 if (m_UseStructuredBuffer)
                 {
-                    NativeArray<LightShaderData> additionalLightsData = new NativeArray<LightShaderData>(additionalLightsCount, Allocator.Temp);
+                    NativeArray<ShaderData.LightData> additionalLightsData = new NativeArray<ShaderData.LightData>(additionalLightsCount, Allocator.Temp);
                     for (int i = 0, lightIter = 0; i < lights.Length && lightIter < maxAdditionalLightsCount; ++i)
                     {
                         VisibleLight light = lights[i];
                         if (lightData.mainLightIndex != i && light.lightType != LightType.Directional)
                         {
-                            LightShaderData data;
+                            ShaderData.LightData data;
                             InitializeLightConstants(lights, i,
                                 out data.position, out data.color, out data.attenuation,
                                 out data.spotDirection, out data.occlusionProbeChannels);
@@ -238,7 +238,7 @@ namespace UnityEngine.Rendering.LWRP
                         }
                     }
 
-                    var lightBuffer = RenderingUtils.GetLightDataBuffer(additionalLightsCount);
+                    var lightBuffer = ShaderData.instance.GetLightDataBuffer(additionalLightsCount);
                     lightBuffer.SetData(additionalLightsData);
                     cmd.SetGlobalBuffer(m_AdditionalLightsBufferId, lightBuffer);
                     additionalLightsData.Dispose();
