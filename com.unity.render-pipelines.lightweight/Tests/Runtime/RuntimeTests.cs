@@ -37,9 +37,13 @@ class RuntimeTests
         Camera camera = go.AddComponent<Camera>();
         RenderPipelineAsset prevAsset = GraphicsSettings.renderPipelineAsset;
         LightweightRenderPipelineAsset asset = ScriptableObject.CreateInstance<LightweightRenderPipelineAsset>();
+        Debug.Log("Before Setting render Pipeline");
         GraphicsSettings.renderPipelineAsset = asset;
+        Debug.Log("Before Camera Render");
         camera.Render();
+        Debug.Log("After Camera Render (Before Yield)");
         yield return null;
+        Debug.Log("After Camera Render (After Yield)");
 
         Assert.AreEqual("LightweightPipeline", Shader.globalRenderPipeline, "Wrong render pipeline shader tag.");
 

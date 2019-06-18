@@ -95,6 +95,7 @@ namespace UnityEngine.Rendering.LWRP
                 QualitySettings.antiAliasing = asset.msaaSampleCount;
 
             Shader.globalRenderPipeline = "LightweightPipeline";
+            Debug.Log("Pipeline Construct");
 
             Lightmapping.SetDelegate(lightsDelegate);
 
@@ -107,6 +108,7 @@ namespace UnityEngine.Rendering.LWRP
         {
             base.Dispose(disposing);
             Shader.globalRenderPipeline = "";
+            Debug.Log("Pipeline Diposal");
             SupportedRenderingFeatures.active = new SupportedRenderingFeatures();
 
 #if UNITY_EDITOR
