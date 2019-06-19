@@ -1,4 +1,3 @@
-using System.Runtime.InteropServices;
 using UnityEngine.Experimental.GlobalIllumination;
 using Unity.Collections;
 
@@ -21,6 +20,7 @@ namespace UnityEngine.Rendering.LWRP
         }
         
         int m_AdditionalLightsBufferId;
+        int m_AdditionalLightsIndicesId;
 
         const string k_SetupLightConstants = "Setup Light Constants";
         MixedLightingSetup m_MixedLightingSetup;
@@ -51,6 +51,7 @@ namespace UnityEngine.Rendering.LWRP
             if (m_UseStructuredBuffer)
             {
                 m_AdditionalLightsBufferId = Shader.PropertyToID("_AdditionalLightsBuffer");
+                m_AdditionalLightsIndicesId = Shader.PropertyToID("_AdditionalLightsIndices");
             }
             else
             {
@@ -76,7 +77,7 @@ namespace UnityEngine.Rendering.LWRP
             int additionalLightsCount = renderingData.lightData.additionalLightsCount;
             bool additionalLightsPerVertex = renderingData.lightData.shadeAdditionalLightsPerVertex;
             CommandBuffer cmd = CommandBufferPool.Get(k_SetupLightConstants);
-            SetupShaderLightConstants(cmd, ref renderingData.lightData);
+            SetupShaderLightConstants(cmd, renderingData.cullResults, ref renderingData.lightData);
 
             CoreUtils.SetKeyword(cmd, ShaderKeywordStrings.AdditionalLightsVertex,
                 additionalLightsCount > 0 && additionalLightsPerVertex);
@@ -195,14 +196,14 @@ namespace UnityEngine.Rendering.LWRP
             }
         }
 
-        void SetupShaderLightConstants(CommandBuffer cmd, ref LightData lightData)
+        void SetupShaderLightConstants(CommandBuffer cmd, CullingResults cullResults, ref LightData lightData)
         {
             m_MixedLightingSetup = MixedLightingSetup.None;
 
             // Main light has an optimized shader path for main light. This will benefit games that only care about a single light.
             // Lightweight pipeline also supports only a single shadow light, if available it will be the main light.
             SetupMainLightConstants(cmd, ref lightData);
-            SetupAdditionalLightConstants(cmd, ref lightData);
+            SetupAdditionalLightConstants(cmd, cullResults, ref lightData);
         }
 
         void SetupMainLightConstants(CommandBuffer cmd, ref LightData lightData)
@@ -214,7 +215,7 @@ namespace UnityEngine.Rendering.LWRP
             cmd.SetGlobalVector(LightConstantBuffer._MainLightColor, lightColor);
         }
 
-        void SetupAdditionalLightConstants(CommandBuffer cmd, ref LightData lightData)
+        void SetupAdditionalLightConstants(CommandBuffer cmd, CullingResults cullResults, ref LightData lightData)
         {
             var lights = lightData.visibleLights;
             int additionalLightsCount = lightData.additionalLightsCount;
@@ -238,9 +239,15 @@ namespace UnityEngine.Rendering.LWRP
                         }
                     }
 
-                    var lightBuffer = ShaderData.instance.GetLightDataBuffer(additionalLightsCount);
-                    lightBuffer.SetData(additionalLightsData);
-                    cmd.SetGlobalBuffer(m_AdditionalLightsBufferId, lightBuffer);
+                    var lightDataBuffer = ShaderData.instance.GetLightDataBuffer(additionalLightsCount);
+                    lightDataBuffer.SetData(additionalLightsData);
+
+                    int lightIndices = cullResults.lightAndReflectionProbeIndexCount;
+                    var lightIndicesBuffer = ShaderData.instance.GetLightIndicesBuffer(lightIndices);
+                    
+                    cmd.SetGlobalBuffer(m_AdditionalLightsBufferId, lightDataBuffer);
+                    cmd.SetGlobalBuffer(m_AdditionalLightsIndicesId, lightIndicesBuffer);
+
                     additionalLightsData.Dispose();
                 }
                 else
@@ -310,6 +317,13 @@ namespace UnityEngine.Rendering.LWRP
                 perObjectLightIndexMap[i] = -1;
 
             cullResults.SetLightIndexMap(perObjectLightIndexMap);
+
+            if (m_UseStructuredBuffer)
+            {
+                int lightIndices = cullResults.lightAndReflectionProbeIndexCount;
+                cullResults.FillLightAndReflectionProbeIndices(ShaderData.instance.GetLightIndicesBuffer(lightIndices));
+            }
+            
             perObjectLightIndexMap.Dispose();
         }
     }

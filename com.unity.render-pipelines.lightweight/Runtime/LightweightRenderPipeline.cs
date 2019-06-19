@@ -4,7 +4,6 @@ using Unity.Collections;
 using UnityEditor;
 using UnityEditor.Rendering.LWRP;
 #endif
-using UnityEngine.Rendering.PostProcessing;
 using UnityEngine.Experimental.GlobalIllumination;
 using Lightmapping = UnityEngine.Experimental.GlobalIllumination.Lightmapping;
 
@@ -55,7 +54,7 @@ namespace UnityEngine.Rendering.LWRP
         // This uses unity_4LightIndices to store an array of 4 light indices
         public static int maxPerObjectLights
         {
-            get => 4;
+            get => 8;
         }
 
         // Light data is stored in a constant buffer (uniform array)

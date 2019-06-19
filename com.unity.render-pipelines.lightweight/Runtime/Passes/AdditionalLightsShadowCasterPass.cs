@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Runtime.InteropServices;
 using Unity.Collections;
 
 namespace UnityEngine.Rendering.LWRP
@@ -19,6 +18,7 @@ namespace UnityEngine.Rendering.LWRP
         }
 
         public static int m_AdditionalShadowsBufferId;
+        public static int m_AdditionalShadowsIndicesId;
         bool m_UseStructuredBuffer;
 
         const int k_ShadowmapBufferBits = 16;
@@ -32,6 +32,7 @@ namespace UnityEngine.Rendering.LWRP
         ShadowSliceData[] m_AdditionalLightSlices;
         float[] m_AdditionalLightsShadowStrength;
         List<int> m_AdditionalShadowCastingLightIndices = new List<int>();
+        List<int> m_AdditionalShadowCastingLightIndicesMap = new List<int>();
         const string m_ProfilerTag = "Render Additional Shadows";
 
         public AdditionalLightsShadowCasterPass(RenderPassEvent evt)
@@ -53,6 +54,7 @@ namespace UnityEngine.Rendering.LWRP
             m_AdditionalLightsShadowmap.Init("_AdditionalLightsShadowmapTexture");
 
             m_AdditionalShadowsBufferId = Shader.PropertyToID("_AdditionalShadowsBuffer");
+            m_AdditionalShadowsIndicesId = Shader.PropertyToID("_AdditionalShadowsIndices");
             m_UseStructuredBuffer = RenderingUtils.useStructuredBuffer;
         }
 
@@ -75,12 +77,21 @@ namespace UnityEngine.Rendering.LWRP
                     continue;
 
                 VisibleLight shadowLight = visibleLights[i];
+                if (shadowLight.lightType == LightType.Directional)
+                    continue;
+
                 Light light = shadowLight.light;
 
-                if (shadowLight.lightType == LightType.Spot && light != null && light.shadows != LightShadows.None)
+                if (shadowLight.lightType == LightType.Spot && light != null &&
+                    light.shadows != LightShadows.None &&
+                    renderingData.cullResults.GetShadowCasterBounds(i, out bounds))
                 {
-                    if (renderingData.cullResults.GetShadowCasterBounds(i, out bounds))
-                        m_AdditionalShadowCastingLightIndices.Add(i);
+                    m_AdditionalShadowCastingLightIndicesMap.Add(m_AdditionalShadowCastingLightIndices.Count);
+                    m_AdditionalShadowCastingLightIndices.Add(i);
+                }
+                else
+                {
+                    m_AdditionalShadowCastingLightIndicesMap.Add(-1);
                 }
             }
 
@@ -157,6 +168,7 @@ namespace UnityEngine.Rendering.LWRP
         void Clear()
         {
             m_AdditionalShadowCastingLightIndices.Clear();
+            m_AdditionalShadowCastingLightIndicesMap.Clear();
             m_AdditionalLightsShadowmapTexture = null;
 
             for (int i = 0; i < m_AdditionalLightShadowMatrices.Length; ++i)
@@ -237,7 +249,13 @@ namespace UnityEngine.Rendering.LWRP
 
                 var shadowBuffer = ShaderData.instance.GetShadowDataBuffer(shadowLightsCount);
                 shadowBuffer.SetData(shadowBufferData);
+
+                var shadowIndicesMapBuffer =
+                    ShaderData.instance.GetShadowIndicesBuffer(m_AdditionalShadowCastingLightIndicesMap.Count);
+                shadowIndicesMapBuffer.SetData(m_AdditionalShadowCastingLightIndicesMap);
+
                 cmd.SetGlobalBuffer(m_AdditionalShadowsBufferId, shadowBuffer);
+                cmd.SetGlobalBuffer(m_AdditionalShadowsIndicesId, shadowIndicesMapBuffer);
                 shadowBufferData.Dispose();
             }
             else

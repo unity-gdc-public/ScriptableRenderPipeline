@@ -47,6 +47,7 @@ struct ShadowShaderData
     float shadowStrength;
 };
 StructuredBuffer<ShadowShaderData> _AdditionalShadowsBuffer;
+StructuredBuffer<int> _AdditionalShadowsIndices;
 #else
 float4x4    _AdditionalLightsWorldToShadow[MAX_VISIBLE_LIGHTS];
 half        _AdditionalShadowStrength[MAX_VISIBLE_LIGHTS];
@@ -216,7 +217,13 @@ half AdditionalLightRealtimeShadow(int lightIndex, float3 positionWS)
     ShadowSamplingData shadowSamplingData = GetAdditionalLightShadowSamplingData();
 
 #if USE_STRUCTURED_BUFFER_FOR_LIGHT_DATA
-    float4 shadowCoord = mul(_AdditionalShadowsBuffer[lightIndex].worldToShadowMatrix, float4(positionWS, 1.0));
+    int shadowIndex = _AdditionalShadowsIndices[lightIndex];
+
+    if (shadowIndex < 0)
+        return 1.0h;
+
+    float4 shadowCoord = mul(_AdditionalShadowsBuffer[shadowIndex].worldToShadowMatrix, float4(positionWS, 1.0));
+
 #else
     float4 shadowCoord = mul(_AdditionalLightsWorldToShadow[lightIndex], float4(positionWS, 1.0));
 #endif
