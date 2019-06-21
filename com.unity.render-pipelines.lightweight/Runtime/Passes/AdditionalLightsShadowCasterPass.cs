@@ -28,7 +28,6 @@ namespace UnityEngine.Rendering.LWRP
         int m_ShadowmapWidth;
         int m_ShadowmapHeight;
 
-        Matrix4x4[] m_AdditionalLightShadowMatrices;
         ShadowSliceData[] m_AdditionalLightSlices;
         float[] m_AdditionalLightsShadowStrength;
         List<int> m_AdditionalShadowCastingLightIndices = new List<int>();
@@ -40,7 +39,6 @@ namespace UnityEngine.Rendering.LWRP
             renderPassEvent = evt;
 
             int maxLights = LightweightRenderPipeline.maxVisibleAdditionalLights;
-            m_AdditionalLightShadowMatrices = new Matrix4x4[maxLights];
             m_AdditionalLightSlices = new ShadowSliceData[maxLights];
             m_AdditionalLightsShadowStrength = new float[maxLights];
 
@@ -76,26 +74,6 @@ namespace UnityEngine.Rendering.LWRP
             {
                 if (IsValidShadowCastingLight(ref renderingData.lightData, i))
                     shadowCastingLightsCount++;
-                //if (i == renderingData.lightData.mainLightIndex)
-                //    continue;
-
-                //VisibleLight shadowLight = visibleLights[i];
-                //if (shadowLight.lightType == LightType.Directional)
-                //    continue;
-
-                //Light light = shadowLight.light;
-
-                //if (shadowLight.lightType == LightType.Spot && light != null &&
-                //    light.shadows != LightShadows.None &&
-                //    renderingData.cullResults.GetShadowCasterBounds(i, out bounds))
-                //{
-                //    m_AdditionalShadowCastingLightIndicesMap.Add(m_AdditionalShadowCastingLightIndices.Count);
-                //    m_AdditionalShadowCastingLightIndices.Add(i);
-                //}
-                //else
-                //{
-                //    m_AdditionalShadowCastingLightIndicesMap.Add(-1);
-                //}
             }
 
             if (shadowCastingLightsCount == 0)
@@ -181,9 +159,6 @@ namespace UnityEngine.Rendering.LWRP
             m_AdditionalShadowCastingLightIndicesMap.Clear();
             m_AdditionalLightsShadowmapTexture = null;
 
-            for (int i = 0; i < m_AdditionalLightShadowMatrices.Length; ++i)
-                m_AdditionalLightShadowMatrices[i] = Matrix4x4.identity;
-
             for (int i = 0; i < m_AdditionalLightSlices.Length; ++i)
                 m_AdditionalLightSlices[i].Clear();
 
@@ -235,10 +210,8 @@ namespace UnityEngine.Rendering.LWRP
 
         void SetupAdditionalLightsShadowReceiverConstants(CommandBuffer cmd, ref ShadowData shadowData)
         {
-            int shadowLightsCount = m_AdditionalLightSlices.Length;
-            for (int i = 0; i < shadowLightsCount; ++i)
-                m_AdditionalLightShadowMatrices[i] = m_AdditionalLightSlices[i].shadowTransform;
-
+            int shadowLightsCount = m_AdditionalShadowCastingLightIndices.Count;
+            
             float invShadowAtlasWidth = 1.0f / shadowData.additionalLightsShadowmapWidth;
             float invShadowAtlasHeight = 1.0f / shadowData.additionalLightsShadowmapHeight;
             float invHalfShadowAtlasWidth = 0.5f * invShadowAtlasWidth;
@@ -260,8 +233,7 @@ namespace UnityEngine.Rendering.LWRP
                 var shadowBuffer = ShaderData.instance.GetShadowDataBuffer(shadowLightsCount);
                 shadowBuffer.SetData(shadowBufferData);
 
-                var shadowIndicesMapBuffer =
-                    ShaderData.instance.GetShadowIndicesBuffer(m_AdditionalShadowCastingLightIndicesMap.Count);
+                var shadowIndicesMapBuffer = ShaderData.instance.GetShadowIndicesBuffer(m_AdditionalShadowCastingLightIndicesMap.Count);
                 shadowIndicesMapBuffer.SetData(m_AdditionalShadowCastingLightIndicesMap);
 
                 cmd.SetGlobalBuffer(m_AdditionalShadowsBufferId, shadowBuffer);
@@ -270,8 +242,14 @@ namespace UnityEngine.Rendering.LWRP
             }
             else
             {
-                cmd.SetGlobalMatrixArray(AdditionalShadowsConstantBuffer._AdditionalLightsWorldToShadow, m_AdditionalLightShadowMatrices);
+                NativeArray<Matrix4x4> additionalLightShadowMatrices = new NativeArray<Matrix4x4>(m_AdditionalLightSlices.Length, Allocator.Temp);
+                for (int i = 0; i < shadowLightsCount; ++i)
+                    additionalLightShadowMatrices[i] = m_AdditionalLightSlices[i].shadowTransform;
+
+                cmd.SetGlobalMatrixArray(AdditionalShadowsConstantBuffer._AdditionalLightsWorldToShadow, additionalLightShadowMatrices.ToArray());
                 cmd.SetGlobalFloatArray(AdditionalShadowsConstantBuffer._AdditionalShadowStrength, m_AdditionalLightsShadowStrength);
+
+                additionalLightShadowMatrices.Dispose();
             }
 
             cmd.SetGlobalVector(AdditionalShadowsConstantBuffer._AdditionalShadowOffset0, new Vector4(-invHalfShadowAtlasWidth, -invHalfShadowAtlasHeight, 0.0f, 0.0f));
