@@ -71,31 +71,33 @@ namespace UnityEngine.Rendering.LWRP
             Bounds bounds;
             var visibleLights = renderingData.lightData.visibleLights;
             int additionalLightsCount = renderingData.lightData.additionalLightsCount;
+            int shadowCastingLightsCount = 0;
             for (int i = 0; i < visibleLights.Length && m_AdditionalShadowCastingLightIndices.Count < additionalLightsCount; ++i)
             {
-                if (i == renderingData.lightData.mainLightIndex)
-                    continue;
+                if (IsValidShadowCastingLight(ref renderingData.lightData, i))
+                    shadowCastingLightsCount++;
+                //if (i == renderingData.lightData.mainLightIndex)
+                //    continue;
 
-                VisibleLight shadowLight = visibleLights[i];
-                if (shadowLight.lightType == LightType.Directional)
-                    continue;
+                //VisibleLight shadowLight = visibleLights[i];
+                //if (shadowLight.lightType == LightType.Directional)
+                //    continue;
 
-                Light light = shadowLight.light;
+                //Light light = shadowLight.light;
 
-                if (shadowLight.lightType == LightType.Spot && light != null &&
-                    light.shadows != LightShadows.None &&
-                    renderingData.cullResults.GetShadowCasterBounds(i, out bounds))
-                {
-                    m_AdditionalShadowCastingLightIndicesMap.Add(m_AdditionalShadowCastingLightIndices.Count);
-                    m_AdditionalShadowCastingLightIndices.Add(i);
-                }
-                else
-                {
-                    m_AdditionalShadowCastingLightIndicesMap.Add(-1);
-                }
+                //if (shadowLight.lightType == LightType.Spot && light != null &&
+                //    light.shadows != LightShadows.None &&
+                //    renderingData.cullResults.GetShadowCasterBounds(i, out bounds))
+                //{
+                //    m_AdditionalShadowCastingLightIndicesMap.Add(m_AdditionalShadowCastingLightIndices.Count);
+                //    m_AdditionalShadowCastingLightIndices.Add(i);
+                //}
+                //else
+                //{
+                //    m_AdditionalShadowCastingLightIndicesMap.Add(-1);
+                //}
             }
 
-            int shadowCastingLightsCount = m_AdditionalShadowCastingLightIndices.Count;
             if (shadowCastingLightsCount == 0)
                 return false;
 
@@ -107,33 +109,40 @@ namespace UnityEngine.Rendering.LWRP
 
             bool anyShadows = false;
             int shadowSlicesPerRow = (atlasWidth / sliceResolution);
-            for (int i = 0; i < shadowCastingLightsCount; ++i)
+            for (int i = 0; i < visibleLights.Length && m_AdditionalShadowCastingLightIndices.Count < additionalLightsCount; ++i)
             {
-                int shadowLightIndex = m_AdditionalShadowCastingLightIndices[i];
-                VisibleLight shadowLight = visibleLights[shadowLightIndex];
-
-                // Currently Only Spot Lights are supported in additional lights
-                Debug.Assert(shadowLight.lightType == LightType.Spot);
-                Matrix4x4 shadowTransform;
-                bool success = ShadowUtils.ExtractSpotLightMatrix(ref renderingData.cullResults, ref renderingData.shadowData,
-                    shadowLightIndex, out shadowTransform, out m_AdditionalLightSlices[i].viewMatrix, out m_AdditionalLightSlices[i].projectionMatrix);
-
-                if (success)
+                if (IsValidShadowCastingLight(ref renderingData.lightData, i))
                 {
-                    // TODO: We need to pass bias and scale list to shader to be able to support multiple
-                    // shadow casting additional lights.
-                    m_AdditionalLightSlices[i].offsetX = (i % shadowSlicesPerRow) * sliceResolution;
-                    m_AdditionalLightSlices[i].offsetY = (i / shadowSlicesPerRow) * sliceResolution;
-                    m_AdditionalLightSlices[i].resolution = sliceResolution;
-                    m_AdditionalLightSlices[i].shadowTransform = shadowTransform;
+                    VisibleLight shadowLight = visibleLights[i];
 
-                    m_AdditionalLightsShadowStrength[i] = shadowLight.light.shadowStrength;
-                    anyShadows = true;
+                    if (renderingData.cullResults.GetShadowCasterBounds(i, out bounds))
+                    {
+                        // Currently Only Spot Lights are supported in additional lights
+                        Debug.Assert(shadowLight.lightType == LightType.Spot);
+                        Matrix4x4 shadowTransform;
+                        bool success = ShadowUtils.ExtractSpotLightMatrix(ref renderingData.cullResults,
+                            ref renderingData.shadowData,
+                            i, out shadowTransform, out m_AdditionalLightSlices[i].viewMatrix,
+                            out m_AdditionalLightSlices[i].projectionMatrix);
+
+                        if (success)
+                        {
+                            // TODO: We need to pass bias and scale list to shader to be able to support multiple
+                            // shadow casting additional lights.
+                            m_AdditionalLightSlices[i].offsetX = (i % shadowSlicesPerRow) * sliceResolution;
+                            m_AdditionalLightSlices[i].offsetY = (i / shadowSlicesPerRow) * sliceResolution;
+                            m_AdditionalLightSlices[i].resolution = sliceResolution;
+                            m_AdditionalLightSlices[i].shadowTransform = shadowTransform;
+
+                            m_AdditionalLightsShadowStrength[i] = shadowLight.light.shadowStrength;
+                            anyShadows = true;
+                            m_AdditionalShadowCastingLightIndicesMap.Add(m_AdditionalShadowCastingLightIndices.Count);
+                            m_AdditionalShadowCastingLightIndices.Add(i);
+                            continue;
+                        }
+                    }
                 }
-                else
-                {
-                    m_AdditionalShadowCastingLightIndices.RemoveAt(i--);
-                }
+                m_AdditionalShadowCastingLightIndicesMap.Add(-1);
             }
 
             return anyShadows;
@@ -270,6 +279,20 @@ namespace UnityEngine.Rendering.LWRP
             cmd.SetGlobalVector(AdditionalShadowsConstantBuffer._AdditionalShadowOffset3, new Vector4(invHalfShadowAtlasWidth, invHalfShadowAtlasHeight, 0.0f, 0.0f));
             cmd.SetGlobalVector(AdditionalShadowsConstantBuffer._AdditionalShadowmapSize, new Vector4(invShadowAtlasWidth, invShadowAtlasHeight,
                 shadowData.additionalLightsShadowmapWidth, shadowData.additionalLightsShadowmapHeight));
+        }
+
+        bool IsValidShadowCastingLight(ref LightData lightData, int i)
+        {
+            if (i == lightData.mainLightIndex)
+                return false;
+
+            VisibleLight shadowLight = lightData.visibleLights[i];
+            if (shadowLight.lightType == LightType.Directional)
+                return false;
+
+            Light light = shadowLight.light;
+
+            return (shadowLight.lightType == LightType.Spot) && light != null && light.shadows != LightShadows.None;
         }
     }
 }
