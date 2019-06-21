@@ -46,17 +46,10 @@ namespace UnityEngine.Rendering.LWRP
 
         public void Dispose()
         {
-            if (m_LightDataBuffer != null)
-            {
-                m_LightDataBuffer.Dispose();
-                m_LightDataBuffer = null;
-            }
-
-            if (m_ShadowDataBuffer != null)
-            {
-                m_ShadowDataBuffer.Dispose();
-                m_ShadowDataBuffer = null;
-            }
+            DisposeBuffer(ref m_LightDataBuffer);
+            DisposeBuffer(ref m_LightIndicesBuffer);
+            DisposeBuffer(ref m_ShadowDataBuffer);
+            DisposeBuffer(ref m_ShadowIndicesBuffer);
         }
 
         internal ComputeBuffer GetLightDataBuffer(int size)
@@ -92,6 +85,15 @@ namespace UnityEngine.Rendering.LWRP
             }
 
             return buffer;
+        }
+
+        void DisposeBuffer(ref ComputeBuffer buffer)
+        {
+            if (buffer != null)
+            {
+                buffer.Dispose();
+                buffer = null;
+            }
         }
     }
 }
