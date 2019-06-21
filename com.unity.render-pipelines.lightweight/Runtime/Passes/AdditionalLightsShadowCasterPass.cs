@@ -190,25 +190,26 @@ namespace UnityEngine.Rendering.LWRP
                     additionalLightHasSoftShadows |= shadowLight.light.shadows == LightShadows.Soft;
                 }
 
-                SetupAdditionalLightsShadowReceiverConstants(cmd, ref shadowData);
+                // We share soft shadow settings for main light and additional lights to save keywords.
+                // So we check here if pipeline supports soft shadows and either main light or any additional light has soft shadows
+                // to enable the keyword.
+                // TODO: In PC and Consoles we can upload shadow data per light and branch on shader. That will be more likely way faster.
+                bool mainLightHasSoftShadows = shadowData.supportsMainLightShadows &&
+                                               lightData.mainLightIndex != -1 &&
+                                               visibleLights[lightData.mainLightIndex].light.shadows == LightShadows.Soft;
+
+                bool softShadows = shadowData.supportsSoftShadows && (mainLightHasSoftShadows || additionalLightHasSoftShadows);
+                CoreUtils.SetKeyword(cmd, ShaderKeywordStrings.AdditionalLightShadows, true);
+                CoreUtils.SetKeyword(cmd, ShaderKeywordStrings.SoftShadows, softShadows);
+
+                SetupAdditionalLightsShadowReceiverConstants(cmd, ref shadowData, softShadows);
             }
 
-            // We share soft shadow settings for main light and additional lights to save keywords.
-            // So we check here if pipeline supports soft shadows and either main light or any additional light has soft shadows
-            // to enable the keyword.
-            // TODO: In PC and Consoles we can upload shadow data per light and branch on shader. That will be more likely way faster.
-            bool mainLightHasSoftShadows = shadowData.supportsMainLightShadows &&
-                                          lightData.mainLightIndex != -1 &&
-                                          visibleLights[lightData.mainLightIndex].light.shadows == LightShadows.Soft;
-
-            bool softShadows = shadowData.supportsSoftShadows && (mainLightHasSoftShadows || additionalLightHasSoftShadows);
-            CoreUtils.SetKeyword(cmd, ShaderKeywordStrings.AdditionalLightShadows, true);
-            CoreUtils.SetKeyword(cmd, ShaderKeywordStrings.SoftShadows, softShadows);
             context.ExecuteCommandBuffer(cmd);
             CommandBufferPool.Release(cmd);
         }
 
-        void SetupAdditionalLightsShadowReceiverConstants(CommandBuffer cmd, ref ShadowData shadowData)
+        void SetupAdditionalLightsShadowReceiverConstants(CommandBuffer cmd, ref ShadowData shadowData, bool softShadows)
         {
             int shadowLightsCount = m_AdditionalShadowCastingLightIndices.Count;
             
@@ -252,12 +253,22 @@ namespace UnityEngine.Rendering.LWRP
                 additionalLightShadowMatrices.Dispose();
             }
 
-            cmd.SetGlobalVector(AdditionalShadowsConstantBuffer._AdditionalShadowOffset0, new Vector4(-invHalfShadowAtlasWidth, -invHalfShadowAtlasHeight, 0.0f, 0.0f));
-            cmd.SetGlobalVector(AdditionalShadowsConstantBuffer._AdditionalShadowOffset1, new Vector4(invHalfShadowAtlasWidth, -invHalfShadowAtlasHeight, 0.0f, 0.0f));
-            cmd.SetGlobalVector(AdditionalShadowsConstantBuffer._AdditionalShadowOffset2, new Vector4(-invHalfShadowAtlasWidth, invHalfShadowAtlasHeight, 0.0f, 0.0f));
-            cmd.SetGlobalVector(AdditionalShadowsConstantBuffer._AdditionalShadowOffset3, new Vector4(invHalfShadowAtlasWidth, invHalfShadowAtlasHeight, 0.0f, 0.0f));
-            cmd.SetGlobalVector(AdditionalShadowsConstantBuffer._AdditionalShadowmapSize, new Vector4(invShadowAtlasWidth, invShadowAtlasHeight,
-                shadowData.additionalLightsShadowmapWidth, shadowData.additionalLightsShadowmapHeight));
+            if (softShadows)
+            {
+                // Currently only used when SHADER_API_MOBILE
+                cmd.SetGlobalVector(AdditionalShadowsConstantBuffer._AdditionalShadowOffset0,
+                    new Vector4(-invHalfShadowAtlasWidth, -invHalfShadowAtlasHeight, 0.0f, 0.0f));
+                cmd.SetGlobalVector(AdditionalShadowsConstantBuffer._AdditionalShadowOffset1,
+                    new Vector4(invHalfShadowAtlasWidth, -invHalfShadowAtlasHeight, 0.0f, 0.0f));
+                cmd.SetGlobalVector(AdditionalShadowsConstantBuffer._AdditionalShadowOffset2,
+                    new Vector4(-invHalfShadowAtlasWidth, invHalfShadowAtlasHeight, 0.0f, 0.0f));
+                cmd.SetGlobalVector(AdditionalShadowsConstantBuffer._AdditionalShadowOffset3,
+                    new Vector4(invHalfShadowAtlasWidth, invHalfShadowAtlasHeight, 0.0f, 0.0f));
+
+                // Currently only used when !SHADER_API_MOBILE
+                cmd.SetGlobalVector(AdditionalShadowsConstantBuffer._AdditionalShadowmapSize, new Vector4(invShadowAtlasWidth, invShadowAtlasHeight,
+                    shadowData.additionalLightsShadowmapWidth, shadowData.additionalLightsShadowmapHeight));
+            }
         }
 
         bool IsValidShadowCastingLight(ref LightData lightData, int i)

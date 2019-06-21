@@ -170,17 +170,19 @@ namespace UnityEngine.Rendering.LWRP
                         ref settings, m_CascadeSlices[cascadeIndex].projectionMatrix, m_CascadeSlices[cascadeIndex].viewMatrix);
                 }
 
-                    SetupMainLightShadowReceiverConstants(cmd, ref shadowData, shadowLight);
+                bool softShadows = shadowLight.light.shadows == LightShadows.Soft && shadowData.supportsSoftShadows;
+                CoreUtils.SetKeyword(cmd, ShaderKeywordStrings.MainLightShadows, true);
+                CoreUtils.SetKeyword(cmd, ShaderKeywordStrings.MainLightShadowCascades, shadowData.mainLightShadowCascadesCount > 1);
+                CoreUtils.SetKeyword(cmd, ShaderKeywordStrings.SoftShadows, softShadows);
+
+                SetupMainLightShadowReceiverConstants(cmd, shadowLight, softShadows);
             }
 
-            CoreUtils.SetKeyword(cmd, ShaderKeywordStrings.MainLightShadows, true);
-            CoreUtils.SetKeyword(cmd, ShaderKeywordStrings.MainLightShadowCascades, shadowData.mainLightShadowCascadesCount > 1);
-            CoreUtils.SetKeyword(cmd, ShaderKeywordStrings.SoftShadows, shadowLight.light.shadows == LightShadows.Soft && shadowData.supportsSoftShadows);
             context.ExecuteCommandBuffer(cmd);
             CommandBufferPool.Release(cmd);
         }
 
-        void SetupMainLightShadowReceiverConstants(CommandBuffer cmd, ref ShadowData shadowData, VisibleLight shadowLight)
+        void SetupMainLightShadowReceiverConstants(CommandBuffer cmd, VisibleLight shadowLight, bool softShadows)
         {
             Light light = shadowLight.light;
 
@@ -203,20 +205,41 @@ namespace UnityEngine.Rendering.LWRP
             cmd.SetGlobalTexture(m_MainLightShadowmap.id, m_MainLightShadowmapTexture);
             cmd.SetGlobalMatrixArray(MainLightShadowConstantBuffer._WorldToShadow, m_MainLightShadowMatrices);
             cmd.SetGlobalVector(MainLightShadowConstantBuffer._ShadowData, new Vector4(light.shadowStrength, 0.0f, 0.0f, 0.0f));
-            cmd.SetGlobalVector(MainLightShadowConstantBuffer._CascadeShadowSplitSpheres0, m_CascadeSplitDistances[0]);
-            cmd.SetGlobalVector(MainLightShadowConstantBuffer._CascadeShadowSplitSpheres1, m_CascadeSplitDistances[1]);
-            cmd.SetGlobalVector(MainLightShadowConstantBuffer._CascadeShadowSplitSpheres2, m_CascadeSplitDistances[2]);
-            cmd.SetGlobalVector(MainLightShadowConstantBuffer._CascadeShadowSplitSpheres3, m_CascadeSplitDistances[3]);
-            cmd.SetGlobalVector(MainLightShadowConstantBuffer._CascadeShadowSplitSphereRadii, new Vector4(m_CascadeSplitDistances[0].w * m_CascadeSplitDistances[0].w,
-                m_CascadeSplitDistances[1].w * m_CascadeSplitDistances[1].w,
-                m_CascadeSplitDistances[2].w * m_CascadeSplitDistances[2].w,
-                m_CascadeSplitDistances[3].w * m_CascadeSplitDistances[3].w));
-            cmd.SetGlobalVector(MainLightShadowConstantBuffer._ShadowOffset0, new Vector4(-invHalfShadowAtlasWidth, -invHalfShadowAtlasHeight, 0.0f, 0.0f));
-            cmd.SetGlobalVector(MainLightShadowConstantBuffer._ShadowOffset1, new Vector4(invHalfShadowAtlasWidth, -invHalfShadowAtlasHeight, 0.0f, 0.0f));
-            cmd.SetGlobalVector(MainLightShadowConstantBuffer._ShadowOffset2, new Vector4(-invHalfShadowAtlasWidth, invHalfShadowAtlasHeight, 0.0f, 0.0f));
-            cmd.SetGlobalVector(MainLightShadowConstantBuffer._ShadowOffset3, new Vector4(invHalfShadowAtlasWidth, invHalfShadowAtlasHeight, 0.0f, 0.0f));
-            cmd.SetGlobalVector(MainLightShadowConstantBuffer._ShadowmapSize, new Vector4(invShadowAtlasWidth, invShadowAtlasHeight,
-                m_ShadowmapWidth, m_ShadowmapHeight));
+
+            if (m_ShadowCasterCascadesCount > 1)
+            {
+                cmd.SetGlobalVector(MainLightShadowConstantBuffer._CascadeShadowSplitSpheres0,
+                    m_CascadeSplitDistances[0]);
+                cmd.SetGlobalVector(MainLightShadowConstantBuffer._CascadeShadowSplitSpheres1,
+                    m_CascadeSplitDistances[1]);
+                cmd.SetGlobalVector(MainLightShadowConstantBuffer._CascadeShadowSplitSpheres2,
+                    m_CascadeSplitDistances[2]);
+                cmd.SetGlobalVector(MainLightShadowConstantBuffer._CascadeShadowSplitSpheres3,
+                    m_CascadeSplitDistances[3]);
+                cmd.SetGlobalVector(MainLightShadowConstantBuffer._CascadeShadowSplitSphereRadii, new Vector4(
+                    m_CascadeSplitDistances[0].w * m_CascadeSplitDistances[0].w,
+                    m_CascadeSplitDistances[1].w * m_CascadeSplitDistances[1].w,
+                    m_CascadeSplitDistances[2].w * m_CascadeSplitDistances[2].w,
+                    m_CascadeSplitDistances[3].w * m_CascadeSplitDistances[3].w));
+            }
+
+            if (softShadows)
+            {
+                // Currently only used when SHADER_API_MOBILE
+                cmd.SetGlobalVector(MainLightShadowConstantBuffer._ShadowOffset0,
+                    new Vector4(-invHalfShadowAtlasWidth, -invHalfShadowAtlasHeight, 0.0f, 0.0f));
+                cmd.SetGlobalVector(MainLightShadowConstantBuffer._ShadowOffset1,
+                    new Vector4(invHalfShadowAtlasWidth, -invHalfShadowAtlasHeight, 0.0f, 0.0f));
+                cmd.SetGlobalVector(MainLightShadowConstantBuffer._ShadowOffset2,
+                    new Vector4(-invHalfShadowAtlasWidth, invHalfShadowAtlasHeight, 0.0f, 0.0f));
+                cmd.SetGlobalVector(MainLightShadowConstantBuffer._ShadowOffset3,
+                    new Vector4(invHalfShadowAtlasWidth, invHalfShadowAtlasHeight, 0.0f, 0.0f));
+
+                // Currently only used when !SHADER_API_MOBILE
+                cmd.SetGlobalVector(MainLightShadowConstantBuffer._ShadowmapSize, new Vector4(invShadowAtlasWidth,
+                    invShadowAtlasHeight,
+                    m_ShadowmapWidth, m_ShadowmapHeight));
+            }
         }
     };
 }
