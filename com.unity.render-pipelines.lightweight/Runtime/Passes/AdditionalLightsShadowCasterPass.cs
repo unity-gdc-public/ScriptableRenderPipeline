@@ -72,7 +72,7 @@ namespace UnityEngine.Rendering.LWRP
             var visibleLights = renderingData.lightData.visibleLights;
             int additionalLightsCount = renderingData.lightData.additionalLightsCount;
             int shadowCastingLightsCount = 0;
-            for (int i = 0; i < visibleLights.Length && m_AdditionalShadowCastingLightIndices.Count < additionalLightsCount; ++i)
+            for (int i = 0; i < visibleLights.Length && shadowCastingLightsCount < additionalLightsCount; ++i)
             {
                 if (IsValidShadowCastingLight(ref renderingData.lightData, i))
                     shadowCastingLightsCount++;
@@ -111,6 +111,7 @@ namespace UnityEngine.Rendering.LWRP
             int shadowSlicesPerRow = (atlasWidth / sliceResolution);
             for (int i = 0; i < visibleLights.Length && m_AdditionalShadowCastingLightIndices.Count < additionalLightsCount; ++i)
             {
+                int shadowCasterIndex = m_AdditionalShadowCastingLightIndices.Count;
                 if (IsValidShadowCastingLight(ref renderingData.lightData, i))
                 {
                     VisibleLight shadowLight = visibleLights[i];
@@ -122,22 +123,22 @@ namespace UnityEngine.Rendering.LWRP
                         Matrix4x4 shadowTransform;
                         bool success = ShadowUtils.ExtractSpotLightMatrix(ref renderingData.cullResults,
                             ref renderingData.shadowData,
-                            i, out shadowTransform, out m_AdditionalLightSlices[i].viewMatrix,
-                            out m_AdditionalLightSlices[i].projectionMatrix);
+                            i, out shadowTransform, out m_AdditionalLightSlices[shadowCasterIndex].viewMatrix,
+                            out m_AdditionalLightSlices[shadowCasterIndex].projectionMatrix);
 
                         if (success)
                         {
                             // TODO: We need to pass bias and scale list to shader to be able to support multiple
                             // shadow casting additional lights.
-                            m_AdditionalLightSlices[i].offsetX = (i % shadowSlicesPerRow) * sliceResolution;
-                            m_AdditionalLightSlices[i].offsetY = (i / shadowSlicesPerRow) * sliceResolution;
-                            m_AdditionalLightSlices[i].resolution = sliceResolution;
-                            m_AdditionalLightSlices[i].shadowTransform = shadowTransform;
+                            m_AdditionalLightSlices[shadowCasterIndex].offsetX = (shadowCasterIndex % shadowSlicesPerRow) * sliceResolution;
+                            m_AdditionalLightSlices[shadowCasterIndex].offsetY = (shadowCasterIndex / shadowSlicesPerRow) * sliceResolution;
+                            m_AdditionalLightSlices[shadowCasterIndex].resolution = sliceResolution;
+                            m_AdditionalLightSlices[shadowCasterIndex].shadowTransform = shadowTransform;
 
-                            m_AdditionalLightsShadowStrength[i] = shadowLight.light.shadowStrength;
-                            anyShadows = true;
-                            m_AdditionalShadowCastingLightIndicesMap.Add(m_AdditionalShadowCastingLightIndices.Count);
+                            m_AdditionalLightsShadowStrength[shadowCasterIndex] = shadowLight.light.shadowStrength;
+                            m_AdditionalShadowCastingLightIndicesMap.Add(shadowCasterIndex);
                             m_AdditionalShadowCastingLightIndices.Add(i);
+                            anyShadows = true;
                             continue;
                         }
                     }
