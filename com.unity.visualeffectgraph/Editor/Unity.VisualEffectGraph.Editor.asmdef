@@ -1,9 +1,10 @@
 {
     "name": "Unity.VisualEffectGraph.Editor",
     "references": [
-        "GUID:d04eb9c554ad44ceab303cecf0c0cf82",
-        "GUID:f06555f75b070af458a003d92f9efb00",
-        "Unity.RenderPipelines.HighDefinition.Runtime"
+        "Unity.VisualEffectGraph.Runtime",
+        "Unity.Timeline",
+        "Unity.RenderPipelines.HighDefinition.Runtime",
+        "Unity.ShaderGraph.Editor"
     ],
     "includePlatforms": [
         "Editor"
@@ -34,6 +35,11 @@
             "name": "com.unity.render-pipelines.universal",
             "expression": "1.0.0",
             "define": "VFX_HAS_UNIVERSAL"
+        },
+        {
+            "name": "com.unity.shadergraph",
+            "expression": "1.0.0",
+            "define": "VFX_HAS_SG"
         }
     ]
 }
