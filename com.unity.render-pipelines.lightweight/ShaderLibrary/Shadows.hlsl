@@ -223,12 +223,11 @@ half AdditionalLightRealtimeShadow(int lightIndex, float3 positionWS)
         return 1.0h;
 
     float4 shadowCoord = mul(_AdditionalShadowsBuffer[shadowIndex].worldToShadowMatrix, float4(positionWS, 1.0));
-
+    half shadowStrength = GetAdditionalLightShadowStrenth(shadowIndex);
 #else
     float4 shadowCoord = mul(_AdditionalLightsWorldToShadow[lightIndex], float4(positionWS, 1.0));
-#endif
-
     half shadowStrength = GetAdditionalLightShadowStrenth(lightIndex);
+#endif
 
     return SampleShadowmap(shadowCoord, TEXTURE2D_ARGS(_AdditionalLightsShadowmapTexture, sampler_AdditionalLightsShadowmapTexture), shadowSamplingData, shadowStrength, true);
 #endif

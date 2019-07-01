@@ -66,7 +66,6 @@ namespace UnityEngine.Rendering.LWRP
             m_ShadowmapWidth = renderingData.shadowData.additionalLightsShadowmapWidth;
             m_ShadowmapHeight = renderingData.shadowData.additionalLightsShadowmapHeight;
 
-            Bounds bounds;
             var visibleLights = renderingData.lightData.visibleLights;
             int additionalLightsCount = renderingData.lightData.additionalLightsCount;
             int shadowCastingLightsCount = 0;
@@ -94,7 +93,7 @@ namespace UnityEngine.Rendering.LWRP
                 {
                     VisibleLight shadowLight = visibleLights[i];
 
-                    if (renderingData.cullResults.GetShadowCasterBounds(i, out bounds))
+                    if (renderingData.cullResults.GetShadowCasterBounds(i, out var bounds))
                     {
                         // Currently Only Spot Lights are supported in additional lights
                         Debug.Assert(shadowLight.lightType == LightType.Spot);
@@ -114,7 +113,7 @@ namespace UnityEngine.Rendering.LWRP
                             m_AdditionalLightSlices[shadowCasterIndex].shadowTransform = shadowTransform;
 
                             m_AdditionalLightsShadowStrength[shadowCasterIndex] = shadowLight.light.shadowStrength;
-                            m_AdditionalShadowCastingLightIndicesMap.Add(shadowCasterIndex);
+                            m_AdditionalShadowCastingLightIndicesMap.Add(m_AdditionalShadowCastingLightIndices.Count);
                             m_AdditionalShadowCastingLightIndices.Add(i);
                             anyShadows = true;
                             continue;
@@ -174,19 +173,25 @@ namespace UnityEngine.Rendering.LWRP
             CommandBuffer cmd = CommandBufferPool.Get(m_ProfilerTag);
             using (new ProfilingSample(cmd, m_ProfilerTag))
             {
-                for (int i = 0; i < m_AdditionalShadowCastingLightIndices.Count; ++i)
+                int shadowSlicesCount = m_AdditionalShadowCastingLightIndices.Count;
+                for (int i = 0; i < shadowSlicesCount; ++i)
                 {
+                    // Index of the VisibleLight
                     int shadowLightIndex = m_AdditionalShadowCastingLightIndices[i];
                     VisibleLight shadowLight = visibleLights[shadowLightIndex];
 
-                    if (m_AdditionalShadowCastingLightIndices.Count > 1)
-                        ShadowUtils.ApplySliceTransform(ref m_AdditionalLightSlices[i], m_ShadowmapWidth, m_ShadowmapHeight);
+                    // We generate only shadow slice data for lights that render in the shadowmap
+                    // Therefore we use i as index instead of shadowLightIndex
+                    ref ShadowSliceData shadowSliceData = ref m_AdditionalLightSlices[i];
 
-                        var settings = new ShadowDrawingSettings(cullResults, shadowLightIndex);
-                        Vector4 shadowBias = ShadowUtils.GetShadowBias(ref shadowLight, shadowLightIndex,
-                            ref shadowData, m_AdditionalLightSlices[i].projectionMatrix, m_AdditionalLightSlices[i].resolution);
-                        ShadowUtils.SetupShadowCasterConstantBuffer(cmd, ref shadowLight, shadowBias);
-                    ShadowUtils.RenderShadowSlice(cmd, ref context, ref m_AdditionalLightSlices[i], ref settings, m_AdditionalLightSlices[i].projectionMatrix, m_AdditionalLightSlices[i].viewMatrix);
+                    if (m_AdditionalShadowCastingLightIndices.Count > 1)
+                        ShadowUtils.ApplySliceTransform(ref shadowSliceData, m_ShadowmapWidth, m_ShadowmapHeight);
+
+                    var settings = new ShadowDrawingSettings(cullResults, shadowLightIndex);
+                    Vector4 shadowBias = ShadowUtils.GetShadowBias(ref shadowLight, shadowLightIndex,
+                        ref shadowData, shadowSliceData.projectionMatrix, shadowSliceData.resolution);
+                    ShadowUtils.SetupShadowCasterConstantBuffer(cmd, ref shadowLight, shadowBias);
+                    ShadowUtils.RenderShadowSlice(cmd, ref context, ref shadowSliceData, ref settings);
                     additionalLightHasSoftShadows |= shadowLight.light.shadows == LightShadows.Soft;
                 }
 
@@ -235,7 +240,8 @@ namespace UnityEngine.Rendering.LWRP
                 shadowBuffer.SetData(shadowBufferData);
 
                 var shadowIndicesMapBuffer = ShaderData.instance.GetShadowIndicesBuffer(m_AdditionalShadowCastingLightIndicesMap.Count);
-                shadowIndicesMapBuffer.SetData(m_AdditionalShadowCastingLightIndicesMap);
+                shadowIndicesMapBuffer.SetData(m_AdditionalShadowCastingLightIndicesMap, 0, 0,
+                    m_AdditionalShadowCastingLightIndicesMap.Count);
 
                 cmd.SetGlobalBuffer(m_AdditionalShadowsBufferId, shadowBuffer);
                 cmd.SetGlobalBuffer(m_AdditionalShadowsIndicesId, shadowIndicesMapBuffer);
