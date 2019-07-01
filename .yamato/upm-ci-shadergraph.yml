@@ -41,13 +41,14 @@ projects:
     # - brew install python
     # - /usr/local/bin/brew install pip
     # {% endif %}
-    - git clone git@github.cds.internal.unity3d.com:unity/utr.git TestProjects/{{ project.folder }}/utr
-    - pip install unity-downloader-cli --extra-index-url https://artifactory.eu-cph-1.unityops.net/api/pypi/common-python/simple
-    - cd TestProjects/{{ project.folder }} && unity-downloader-cli -b {{ editor.version }} -c editor --wait --published
+    - scp ScriptableRenderPipeline bokken@\$BOKKEN_DEVICE_IP:~/ScriptableRenderPipeline
+    - ssh bokken@\$BOKKEN_DEVICE_IP 'git clone git@github.cds.internal.unity3d.com:unity/utr.git TestProjects/{{ project.folder }}/utr'
+    - ssh bokken@\$BOKKEN_DEVICE_IP 'pip install unity-downloader-cli --extra-index-url https://artifactory.eu-cph-1.unityops.net/api/pypi/common-python/simple'
+    - ssh bokken@\$BOKKEN_DEVICE_IP 'cd TestProjects/{{ project.folder }} && unity-downloader-cli -b {{ editor.version }} -c editor --wait --published'
     {% if testplatform.name == "Standalone" %}
-    - cd TestProjects/{{ project.folder }} && utr/utr {{ testplatform.args }}{{ platform.name }} --testproject=. --editor-location=.Editor –playergraphicsapi=metal --artifacts_path=upm-ci~/test-results
+    - ssh bokken@\$BOKKEN_DEVICE_IP 'cd TestProjects/{{ project.folder }} && utr/utr {{ testplatform.args }}{{ platform.name }} --testproject=. --editor-location=.Editor –playergraphicsapi=metal --artifacts_path=upm-ci~/test-results'
     {% else %}
-    - cd TestProjects/{{ project.folder }} && utr/utr {{ testplatform.args }} --testproject=. --editor-location=.Editor –playergraphicsapi=metal --artifacts_path=upm-ci~/test-results
+    - ssh bokken@\$BOKKEN_DEVICE_IP 'cd TestProjects/{{ project.folder }} && utr/utr {{ testplatform.args }} --testproject=. --editor-location=.Editor –playergraphicsapi=metal --artifacts_path=upm-ci~/test-results'
     {% endif %}      
   artifacts:
     logs:
