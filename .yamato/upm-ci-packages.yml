@@ -27,9 +27,9 @@ all_package_ci:
     image: package-ci/win10:stable
     flavor: m1.large
   commands:
+  - npm install git+ssh://git@gitlab.cds.internal.unity3d.com:upm-packages/project-templates/upm-template-utils.git#performance-package -g --no-progress
   {% for project in projects %}
   {% for editor in editors %}
-  - npm install git+ssh://git@gitlab.cds.internal.unity3d.com:upm-packages/project-templates/upm-template-utils.git#performance-package -g --no-progress
   - cd {{ project.packagename }} && upm-ci package pack
   - cd {{ project.packagename }} && upm-ci package test --unity-version {{ editor.version }}
   {% endfor %}
