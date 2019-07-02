@@ -23,9 +23,9 @@ projects:
 all_package_ci:
   name: Pack and test all packages
   agent:
-    type: Unity::VM
-    image: package-ci/win10:stable
-    flavor: m1.large
+    type: Unity::VM::osx
+    image: buildfarm/mac:stable
+    flavor: m1.mac
   commands:
   - npm install git+ssh://git@gitlab.cds.internal.unity3d.com:upm-packages/project-templates/upm-template-utils.git#performance-package -g --no-progress
   {% for project in projects %}
@@ -43,9 +43,9 @@ all_package_ci:
 publish:
   name: Publish all packages
   agent:
-    type: Unity::VM
-    image: package-ci/win10:stable
-    flavor: m1.large
+    type: Unity::VM::osx
+    image: buildfarm/mac:stable
+    flavor: m1.mac
   commands:
   {% for project in projects %}
   {% for editor in editors %}
