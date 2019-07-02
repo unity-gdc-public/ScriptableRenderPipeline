@@ -3865,6 +3865,14 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             VFXCameraBufferTypes neededVFXBuffers = VFXManager.IsCameraBufferNeeded(hdCamera.camera);
             needNormalBuffer |= (neededVFXBuffers & VFXCameraBufferTypes.Normal) != 0;
             needDepthBuffer |= (neededVFXBuffers & VFXCameraBufferTypes.Depth) != 0;
+            #if ENABLE_RAYTRACING
+            HDRaytracingEnvironment rtEnv = m_RayTracingManager.CurrentEnvironment();
+            if (rtEnv != null)
+            {
+                needNormalBuffer = true;
+                needDepthBuffer = true;
+            }
+            #endif
 
             // Here if needed for this particular camera, we allocate history buffers.
             // Only one is needed here because the main buffer used for rendering is separate.
@@ -3874,7 +3882,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 RTHandle mainNormalBuffer = m_SharedRTManager.GetNormalBuffer();
                 RTHandle Allocator(string id, int frameIndex, RTHandleSystem rtHandleSystem)
                 {
-                    return rtHandleSystem.Alloc(Vector2.one, colorFormat: mainNormalBuffer.rt.graphicsFormat, enableRandomWrite: mainNormalBuffer.rt.enableRandomWrite, name: $"Normal History Buffer"
+                    return rtHandleSystem.Alloc(Vector2.one, TextureXR.slices, colorFormat: mainNormalBuffer.rt.graphicsFormat, dimension: TextureXR.dimension, enableRandomWrite: mainNormalBuffer.rt.enableRandomWrite, name: $"Normal History Buffer"
                     );
                 }
 
@@ -3887,7 +3895,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 RTHandle mainDepthBuffer = m_SharedRTManager.GetDepthTexture();
                 RTHandle Allocator(string id, int frameIndex, RTHandleSystem rtHandleSystem)
                 {
-                    return rtHandleSystem.Alloc(Vector2.one, colorFormat: mainDepthBuffer.rt.graphicsFormat, enableRandomWrite: mainDepthBuffer.rt.enableRandomWrite, name: $"Depth History Buffer"
+                    return rtHandleSystem.Alloc(Vector2.one, TextureXR.slices, colorFormat: mainDepthBuffer.rt.graphicsFormat, dimension: TextureXR.dimension, enableRandomWrite: mainDepthBuffer.rt.enableRandomWrite, name: $"Depth History Buffer"
                     );
                 }
 

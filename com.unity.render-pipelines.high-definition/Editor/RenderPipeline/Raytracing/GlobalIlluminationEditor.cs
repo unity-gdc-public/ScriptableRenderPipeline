@@ -20,7 +20,10 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         SerializedDataParameter m_NumBounces;
 
         SerializedDataParameter m_EnableFilter;
-        SerializedDataParameter m_FilterRadius;
+        SerializedDataParameter m_DiffuseDenoiser;
+        SerializedDataParameter m_FilterRadiusFirst;
+        SerializedDataParameter m_FilterRadiusSecond;
+        SerializedDataParameter m_FilterSampleCount;
 
         public override void OnEnable()
         {
@@ -38,7 +41,10 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             m_NumBounces = Unpack(o.Find(x => x.numBounces));
 
             m_EnableFilter = Unpack(o.Find(x => x.enableFilter));
-            m_FilterRadius = Unpack(o.Find(x => x.filterRadius));
+            m_DiffuseDenoiser = Unpack(o.Find(x => x.diffuseDenoiser));
+            m_FilterRadiusFirst = Unpack(o.Find(x => x.filterRadiusFirst));
+            m_FilterRadiusSecond = Unpack(o.Find(x => x.filterRadiusSecond));
+            m_FilterSampleCount = Unpack(o.Find(x => x.filterSampleCount));
         }
 
         public override void OnInspectorGUI()
@@ -77,7 +83,10 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 }
 
                 PropertyField(m_EnableFilter);
-                PropertyField(m_FilterRadius);
+                PropertyField(m_DiffuseDenoiser);
+                PropertyField(m_FilterRadiusFirst);
+                PropertyField(m_FilterRadiusSecond);
+                PropertyField(m_FilterSampleCount);
                 EditorGUI.indentLevel--;
             }
 #endif

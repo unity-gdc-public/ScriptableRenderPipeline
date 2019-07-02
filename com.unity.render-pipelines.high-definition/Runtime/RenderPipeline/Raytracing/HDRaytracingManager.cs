@@ -102,6 +102,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         // Denoisers
         HDSimpleDenoiser m_SimpleDenoiser = new HDSimpleDenoiser();
+        HDDiffuseDenoiser m_DiffuseDenoiser = new HDDiffuseDenoiser();
 
         // Ray-count manager data
         RayCountManager m_RayCountManager = new RayCountManager();
@@ -137,6 +138,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             // Init the simple denoiser
             m_SimpleDenoiser.Init(rayTracingResources, m_SharedRTManager);
+            m_DiffuseDenoiser.Init(rpResources, rayTracingResources, m_SharedRTManager);
 
             // Init the ray count manager
             m_RayCountManager.Init(rayTracingResources, currentDebugDisplaySettings);
@@ -175,7 +177,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             m_SubScenes.Clear();
 
             m_SimpleDenoiser.Release();
-
+            m_DiffuseDenoiser.Release();
             m_RayCountManager.Release();
         }
 
@@ -725,6 +727,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public HDSimpleDenoiser GetSimpleDenoiser()
         {
             return m_SimpleDenoiser;
+        }
+
+        public HDDiffuseDenoiser GetDiffuseDenoiser()
+        {
+            return m_DiffuseDenoiser;
         }
 
         public HDRenderPipeline GetRenderPipeline()

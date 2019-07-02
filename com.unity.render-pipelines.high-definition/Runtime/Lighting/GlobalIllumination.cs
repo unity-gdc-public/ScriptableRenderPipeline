@@ -27,7 +27,16 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         [Tooltip("Enable Filtering on the raytraced GI.")]
         public BoolParameter enableFilter = new BoolParameter(false);
 
-        [Tooltip("Controls the length of GI rays.")]
-        public ClampedIntParameter filterRadius = new ClampedIntParameter(16, 1, 32);
+        [Tooltip("Use the diffuse denoiser instead of the simple one.")]
+        public BoolParameter diffuseDenoiser = new BoolParameter(false);
+
+        [Tooltip("Controls the radius of GI filtering (First Pass).")]
+        public ClampedFloatParameter filterRadiusFirst = new ClampedFloatParameter(0.5f, 0.001f, 6.0f);
+
+        [Tooltip("Controls the radius of GI filtering (Second Pass).")]
+        public ClampedFloatParameter filterRadiusSecond = new ClampedFloatParameter(1.0f, 0.001f, 6.0f);
+
+        [Tooltip("Controls the number of samples used for filtering.")]
+        public ClampedIntParameter filterSampleCount = new ClampedIntParameter(16, 1, 64);
     }
 }

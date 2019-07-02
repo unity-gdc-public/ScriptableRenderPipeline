@@ -10,6 +10,14 @@ uint2 ScramblingValue(uint i, uint j)
     return clamp((uint2)(_ScramblingTexture[uint2(i, j)] * 256.0f), uint2(0,0), uint2(255, 255));
 }
 
+float2 GetRaytracingNoiseSampleRG(uint sampleIndex)
+{
+    // Make sure arguments are in the right range
+    sampleIndex = sampleIndex % 256;
+
+    return _OwenScrambledRGTexture[uint2(sampleIndex, 0)].xy;
+}
+
 float2 GetRaytracingNoiseSampleRG(uint sampleIndex, uint2 scramblingValue)
 {
     // Make sure arguments are in the right range

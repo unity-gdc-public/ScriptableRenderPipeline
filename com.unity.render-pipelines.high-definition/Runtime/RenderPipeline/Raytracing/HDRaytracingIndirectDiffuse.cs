@@ -323,13 +323,28 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             if(settings.enableFilter.value)
             {
-                // Grab the history buffer
-                RTHandleSystem.RTHandle indirectDiffuseHistory = hdCamera.GetCurrentFrameRT((int)HDCameraFrameHistoryType.RaytracedIndirectDiffuse)
+                // Grab the high frequency history buffer
+                RTHandleSystem.RTHandle indirectDiffuseHistoryHF = hdCamera.GetCurrentFrameRT((int)HDCameraFrameHistoryType.RaytracedIndirectDiffuse)
                     ?? hdCamera.AllocHistoryFrameRT((int)HDCameraFrameHistoryType.RaytracedIndirectDiffuse, IndirectDiffuseHistoryBufferAllocatorFunction, 1);
 
-                HDSimpleDenoiser simpleDenoiser = m_RayTracingManager.GetSimpleDenoiser();
-                simpleDenoiser.DenoiseBuffer(cmd, hdCamera, m_IDIntermediateBuffer0, indirectDiffuseHistory, m_IDIntermediateBuffer1, settings.filterRadius.value, singleChannel: false);
-                HDUtils.BlitCameraTexture(cmd, m_IDIntermediateBuffer1, m_IDIntermediateBuffer0);
+                // Grab the low frequency history buffer
+                RTHandleSystem.RTHandle indirectDiffuseHistoryLF = hdCamera.GetCurrentFrameRT((int)HDCameraFrameHistoryType.RaytracedIndirectDiffuse)
+                    ?? hdCamera.AllocHistoryFrameRT((int)HDCameraFrameHistoryType.RaytracedIndirectDiffuse, IndirectDiffuseHistoryBufferAllocatorFunction, 2);
+
+
+                if (settings.diffuseDenoiser.value)
+                {
+                    // Apply the simple denoiser
+                    HDDiffuseDenoiser diffuseDenoiser = m_RaytracingManager.GetDiffuseDenoiser();
+                    diffuseDenoiser.DenoiseBuffer(cmd, hdCamera, m_IDIntermediateBuffer0, indirectDiffuseHistoryHF, m_IDIntermediateBuffer1, settings.filterRadiusFirst.value, settings.filterSampleCount.value, singleChannel: false, useNormal: true);
+                    diffuseDenoiser.DenoiseBuffer(cmd, hdCamera, m_IDIntermediateBuffer1, indirectDiffuseHistoryLF, m_IDIntermediateBuffer0, settings.filterRadiusSecond.value, settings.filterSampleCount.value, singleChannel: false, useNormal: true);
+                }
+                else
+                {
+                    HDSimpleDenoiser simpleDenoiser = m_RayTracingManager.GetSimpleDenoiser();
+                    simpleDenoiser.DenoiseBuffer(cmd, hdCamera, m_IDIntermediateBuffer0, indirectDiffuseHistoryHF, m_IDIntermediateBuffer1, settings.filterRadius.value, singleChannel: false);
+                    HDUtils.BlitCameraTexture(cmd, m_IDIntermediateBuffer1, m_IDIntermediateBuffer0);
+                }
             }
         }
     }

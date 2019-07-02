@@ -17,9 +17,11 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
         SerializedDataParameter m_EnableRaytracing;
         SerializedDataParameter m_RayLength;
-        SerializedDataParameter m_EnableFilter;
         SerializedDataParameter m_NumSamples;
+        SerializedDataParameter m_EnableFilter;
+        SerializedDataParameter m_DiffuseDenoiser;
         SerializedDataParameter m_FilterRadius;
+        SerializedDataParameter m_FilterSampleCount;
 
         public override void OnEnable()
         {
@@ -35,9 +37,11 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
             m_EnableRaytracing = Unpack(o.Find(x => x.enableRaytracing));
             m_RayLength = Unpack(o.Find(x => x.rayLength));
-            m_EnableFilter = Unpack(o.Find(x => x.enableFilter));
             m_NumSamples = Unpack(o.Find(x => x.numSamples));
+            m_EnableFilter = Unpack(o.Find(x => x.enableFilter));
+            m_DiffuseDenoiser = Unpack(o.Find(x => x.diffuseDenoiser));
             m_FilterRadius = Unpack(o.Find(x => x.filterRadius));
+            m_FilterSampleCount = Unpack(o.Find(x => x.filterSampleCount));
         }
 
         public override void OnInspectorGUI()
@@ -64,9 +68,11 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             {
                 EditorGUI.indentLevel++;
                 PropertyField(m_RayLength);
-                PropertyField(m_EnableFilter);
                 PropertyField(m_NumSamples);
+                PropertyField(m_EnableFilter);
+                PropertyField(m_DiffuseDenoiser);
                 PropertyField(m_FilterRadius);
+                PropertyField(m_FilterSampleCount);
                 EditorGUI.indentLevel--;
             }
 #endif

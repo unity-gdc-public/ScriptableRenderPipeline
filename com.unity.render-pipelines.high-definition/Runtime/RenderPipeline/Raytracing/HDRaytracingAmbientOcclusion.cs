@@ -135,9 +135,17 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     RTHandleSystem.RTHandle ambientOcclusionHistory = hdCamera.GetCurrentFrameRT((int)HDCameraFrameHistoryType.RaytracedAmbientOcclusion)
                         ?? hdCamera.AllocHistoryFrameRT((int)HDCameraFrameHistoryType.RaytracedAmbientOcclusion, AmbientOcclusionHistoryBufferAllocatorFunction, 1);
 
-                    // Apply the simple denoiser
-                    HDSimpleDenoiser simpleDenoiser = m_RaytracingManager.GetSimpleDenoiser();
-                    simpleDenoiser.DenoiseBuffer(cmd, hdCamera, m_IntermediateBuffer, ambientOcclusionHistory, outputTexture, aoSettings.filterRadius.value, singleChannel: true);
+                    if(aoSettings.diffuseDenoiser.value)
+                    {
+                        // Apply the simple denoiser
+                        HDDiffuseDenoiser diffuseDenoiser = m_RaytracingManager.GetDiffuseDenoiser();
+                        diffuseDenoiser.DenoiseBuffer(cmd, hdCamera, m_IntermediateBuffer, ambientOcclusionHistory, outputTexture, aoSettings.filterRadius.value, aoSettings.filterSampleCount.value);
+                    }
+                    else
+                    {
+                        HDSimpleDenoiser simpleDenoiser = m_RaytracingManager.GetSimpleDenoiser();
+                        simpleDenoiser.DenoiseBuffer(cmd, hdCamera, m_IntermediateBuffer, ambientOcclusionHistory, outputTexture, (int)aoSettings.filterRadius.value, singleChannel: true);
+                    }
                 }
                 else
                 {

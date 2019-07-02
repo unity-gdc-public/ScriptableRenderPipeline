@@ -26,6 +26,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             // View-projection matrix from the previous frame (non-jittered)
             public Matrix4x4 prevViewProjMatrix;
+            public Matrix4x4 prevInvViewProjMatrix;
             public Matrix4x4 prevViewProjMatrixNoCameraTrans;
 
             // Utility matrix (used by sky) to map screen position to WS view direction
@@ -481,6 +482,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 {
                     viewConstants.prevWorldSpaceCameraPos = cameraPosition;
                     viewConstants.prevViewProjMatrix = gpuVP;
+                    viewConstants.prevInvViewProjMatrix = viewConstants.prevViewProjMatrix.inverse;
                 }
                 else
                 {
@@ -506,6 +508,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 Vector3 cameraDisplacement = viewConstants.worldSpaceCameraPos - viewConstants.prevWorldSpaceCameraPos;
                 viewConstants.prevWorldSpaceCameraPos -= viewConstants.worldSpaceCameraPos; // Make it relative w.r.t. the curr cam pos
                 viewConstants.prevViewProjMatrix *= Matrix4x4.Translate(cameraDisplacement); // Now prevViewProjMatrix correctly transforms this frame's camera-relative positionWS
+                viewConstants.prevInvViewProjMatrix = viewConstants.prevViewProjMatrix.inverse;
             }
             else
             {
@@ -808,6 +811,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             cmd.SetGlobalMatrix(HDShaderIDs._InvViewProjMatrix,         mainViewConstants.invViewProjMatrix);
             cmd.SetGlobalMatrix(HDShaderIDs._NonJitteredViewProjMatrix, mainViewConstants.nonJitteredViewProjMatrix);
             cmd.SetGlobalMatrix(HDShaderIDs._PrevViewProjMatrix,        mainViewConstants.prevViewProjMatrix);
+            cmd.SetGlobalMatrix(HDShaderIDs._PrevInvViewProjMatrix,     mainViewConstants.prevInvViewProjMatrix);
             cmd.SetGlobalMatrix(HDShaderIDs._CameraViewProjMatrix,      mainViewConstants.viewProjMatrix);
             cmd.SetGlobalVector(HDShaderIDs._WorldSpaceCameraPos,       mainViewConstants.worldSpaceCameraPos);
             cmd.SetGlobalVector(HDShaderIDs._PrevCamPosRWS,             mainViewConstants.prevWorldSpaceCameraPos);
