@@ -58,16 +58,6 @@ namespace UnityEditor.VFX.SG
                 }
                 public readonly List<int> activeSlots;
             }
-
-            internal readonly static PassInfo[] unlitPassInfo = new PassInfo[]
-            {
-                new PassInfo("ShadowCaster",new FunctionInfo(new List<int>(new int[]{UnlitMasterNode.AlphaSlotId,UnlitMasterNode.AlphaThresholdSlotId})),new FunctionInfo(new List<int>(new int[]{UnlitMasterNode.PositionSlotId }))),
-                new PassInfo("SceneSelectionPass",new FunctionInfo(new List<int>(new int[]{UnlitMasterNode.AlphaSlotId,UnlitMasterNode.AlphaThresholdSlotId})),new FunctionInfo(new List<int>(new int[]{UnlitMasterNode.PositionSlotId }))),
-                new PassInfo("DepthForwardOnly",new FunctionInfo(new List<int>(new int[]{UnlitMasterNode.AlphaSlotId,UnlitMasterNode.AlphaThresholdSlotId})),new FunctionInfo(new List<int>(new int[]{UnlitMasterNode.PositionSlotId }))),
-                new PassInfo("MotionVectors",new FunctionInfo(new List<int>(new int[]{UnlitMasterNode.AlphaSlotId,UnlitMasterNode.AlphaThresholdSlotId})),new FunctionInfo(new List<int>(new int[]{UnlitMasterNode.PositionSlotId }))),
-                new PassInfo("ForwardOnly",new FunctionInfo(new List<int>(new int[]{UnlitMasterNode.AlphaSlotId,UnlitMasterNode.AlphaThresholdSlotId,UnlitMasterNode.ColorSlotId})),new FunctionInfo(new List<int>(new int[]{UnlitMasterNode.PositionSlotId }))),
-                new PassInfo("META",new FunctionInfo(new List<int>(new int[]{UnlitMasterNode.AlphaSlotId,UnlitMasterNode.AlphaThresholdSlotId,UnlitMasterNode.ColorSlotId})),new FunctionInfo(new List<int>(new int[]{UnlitMasterNode.PositionSlotId }))),
-            };
         }
 
         public static Graph LoadShaderGraph(Shader shader)
@@ -278,7 +268,7 @@ struct ParticleMeshToPS
 
         static readonly Dictionary<System.Type, PipelineInfo> s_PipelineInfos = new Dictionary<Type, PipelineInfo>();
 
-        internal static void RegisterPipeline(Type pipelineAssetType,PipelineInfo info)
+        internal static void RegisterPipeline(Type pipelineAssetType, PipelineInfo info)
         {
             s_PipelineInfos[pipelineAssetType] = info;
         }
@@ -298,7 +288,10 @@ struct ParticleMeshToPS
                 get;
             }
 
-            internal void ReplaceCBuffer(PassPart pass,ref VFXInfos vfxInfos)
+            internal abstract string vertexReturnType { get; }
+            internal abstract string vertexInputType { get; }
+
+            internal void ReplaceCBuffer(PassPart pass, ref VFXInfos vfxInfos)
             {
                 //Replace CBUFFER and TEXTURE bindings by the one from the VFX
                 int cBuffer = pass.IndexOfLineMatching(@"CBUFFER_START");
@@ -320,6 +313,8 @@ struct ParticleMeshToPS
                     pass.InsertShaderCode(cBuffer, vfxInfos.parameters);
                 }
             }
+
+            internal abstract string GetParticleVertexFunctionBottom(IEnumerable<string> enumerable,string originalVertexFunc);
         }
 
         internal static string GenerateShader(Shader shaderGraph, ref VFXInfos vfxInfos)
@@ -342,7 +337,7 @@ struct ParticleMeshToPS
                 masterNodeInfo.prepare(graph, guiVariables, defines);
 
             int cptLine = 0;
-            foreach( var include in pipelineInfos.GetSpecificIncludes())
+            foreach (var include in pipelineInfos.GetSpecificIncludes())
             {
                 document.InsertShaderLine(cptLine++, include);
             }
@@ -357,7 +352,7 @@ struct ParticleMeshToPS
                 if (currentPass == -1)
                     continue;
 
-                GeneratePass(vfxInfos, graph, pipelineInfos,guiVariables, defines, varyingAttributes, pass, currentPass, ref masterNodeInfo);
+                GeneratePass(vfxInfos, graph, pipelineInfos, guiVariables, defines, varyingAttributes, pass, currentPass, ref masterNodeInfo);
             }
             foreach (var define in defines)
                 document.InsertShaderCode(0, string.Format("#define {0} {1}", define.Key, define.Value));
@@ -367,24 +362,31 @@ struct ParticleMeshToPS
             return document.ToString(false).Replace("\r", "");
         }
 
-        private static void GeneratePass(VFXInfos vfxInfos, Graph graph, PipelineInfo pipelineInfos,Dictionary<string, string> guiVariables, Dictionary<string, int> defines, List<VaryingAttribute> varyingAttributes, PassPart pass, int currentPass, ref MasterNodeInfo masterNodeInfo)
+        private static void GeneratePass(VFXInfos vfxInfos, Graph graph, PipelineInfo pipelineInfos, Dictionary<string, string> guiVariables, Dictionary<string, int> defines, List<VaryingAttribute> varyingAttributes, PassPart pass, int currentPass, ref MasterNodeInfo masterNodeInfo)
         {
             pass.InsertShaderCode(0, GenerateVaryingVFXAttribute(graph, vfxInfos, varyingAttributes));
 
-            foreach( var include in pipelineInfos.GetPerPassSpecificIncludes())
+            foreach (var include in pipelineInfos.GetPerPassSpecificIncludes())
             {
                 pass.InsertShaderLine(-1, include);
             }
 
+            int pragmaVertexIndex = pass.IndexOfLineMatching(@"\s*#pragma\s+vertex\s+");
+
+            string vertexFunctionName = "Vert";
+            if ( pragmaVertexIndex != 1)
+                vertexFunctionName = pass.shaderCode[pragmaVertexIndex].Split(new char[] { ' ' },StringSplitOptions.RemoveEmptyEntries).Last().Trim();
+
+            pass.shaderCode.RemoveAt(pragmaVertexIndex);
+
             var sb = new StringBuilder();
-            GenerateParticleVert(graph, vfxInfos, sb, currentPass, varyingAttributes);
+            GenerateParticleVert(graph, vfxInfos, pipelineInfos, sb, currentPass, varyingAttributes, vertexFunctionName);
             pass.InsertShaderCode(-1, sb.ToString());
-            pass.RemoveShaderCodeContaining("#pragma vertex Vert");
 
             pipelineInfos.ModifyPass(pass, ref vfxInfos, varyingAttributes, graph.graphData);
         }
 
-        private static void GenerateParticleVert(Graph graph,VFXInfos vfxInfos, StringBuilder shader, int currentPass, List<VaryingAttribute> varyingAttributes)
+        private static void GenerateParticleVert(Graph graph, VFXInfos vfxInfos, PipelineInfo pipelineInfos, StringBuilder shader, int currentPass, List<VaryingAttribute> varyingAttributes,string shaderFunctionName)
         {
             // ParticleVert will replace the standard HDRP Vert function as vertex function
 
@@ -402,7 +404,7 @@ struct ParticleMeshToPS
             functionRegistry.builder.currentNode = null;
 
             sb.Append(sg.ToString());
-            shader.Append(s_GenerateVertex[vfxInfos.renderingType](vfxInfos));
+            shader.Append(s_GenerateVertex[vfxInfos.renderingType](pipelineInfos.vertexReturnType, pipelineInfos.vertexInputType));
             shader.Append("    " + vfxInfos.loadAttributes.Replace("\n", "\n    "));
 
             shader.AppendLine(@"
@@ -421,45 +423,13 @@ struct ParticleMeshToPS
 
             shader.AppendLine(@"
     float4x4 elementToVFX = GetElementToVFXMatrix(axisX,axisY,axisZ,float3(angleX,angleY,angleZ),float3(pivotX,pivotY,pivotZ),size3,position);
-    float3 objectPos = inputMesh.positionOS;
 ");
 
-            // add shader code to compute Position if any
-            shader.AppendLine(sb.ToString());
-            // add shader code to take new objectPos into account if the position slot is linked to something
-            var slot = graph.passes[currentPass].vertex.slots.FirstOrDefault(t => t.shaderOutputName == "Position");
-            if (slot != null)
-            {
-                var foundEdges = graph.graphData.GetEdges(slot.slotReference).ToArray();
-                if (foundEdges.Any())
-                {
-                    shader.AppendFormat("objectPos = {0};\n", graph.graphData.outputNode.GetSlotValue(slot.id, GenerationMode.ForReals));
-                }
-            }
-
-            // override the positionOS with the particle position and call the standard Vert function
-            shader.Append(@"float3 particlePos = mul(elementToVFX,float4(objectPos,1)).xyz;
-    inputMesh.positionOS = particlePos;
-    PackedVaryingsType result = Vert(inputMesh);
-");
-
-            //transfer modified attributes in the vfx output as varyings
-            foreach (var varyingAttribute in varyingAttributes)
-            {
-                shader.AppendFormat(@"
-    result.vparticle.{0} = {0};", varyingAttribute.name);
-            }
-
-            // transfer particle ID
-            shader.Append(@"
-    result.vmesh.particleID = inputMesh.particleID; // transmit the instanceID to the pixel shader through the varyings
-    return result;
-}
-");
-            shader.AppendLine("#pragma vertex ParticleVert");
+            shader.Append(pipelineInfos.GetParticleVertexFunctionBottom(varyingAttributes.Select(t => t.name), shaderFunctionName));
+            shader.AppendLine("\n#pragma vertex ParticleVert");
         }
 
-        delegate string GenerateVertexPartDelegate(VFXInfos vfxInfos);
+        delegate string GenerateVertexPartDelegate(string returnType, string inputType);
 
         static readonly Dictionary<VFXTaskType, GenerateVertexPartDelegate> s_GenerateVertex = new Dictionary<VFXTaskType, GenerateVertexPartDelegate>
         {
@@ -469,25 +439,21 @@ struct ParticleMeshToPS
             { VFXTaskType.ParticleOctagonOutput,GenerateVertexPartOct },
         };
 
-        private static string GenerateVertexPartMesh(VFXInfos vfxInfos)
+        private static string GenerateVertexPartMesh(string returnType,string inputType)
         {
-            return @"
-
-PackedVaryingsType ParticleVert(AttributesMesh inputMesh)
+            return returnType + @" ParticleVert("+ inputType + @" inputMesh)
 {
     uint index = inputMesh.particleID;
 ";
         }
 
-        private static string GenerateVertexPartQuad(VFXInfos vfxInfos)
+        private static string GenerateVertexPartQuad(string returnType, string inputType)
         {
-            return @"
-
-PackedVaryingsType ParticleVert(uint id : SV_VertexID,uint instID : SV_InstanceID)
+            return returnType + @" ParticleVert(uint id : SV_VertexID,uint instID : SV_InstanceID)
 {
 	uint particleID = (id >> 2) + instID * 2048;
     uint index = particleID;
-    AttributesMesh inputMesh = (AttributesMesh)0;
+    "+ inputType + @" inputMesh = ("+ inputType + @")0;
     float2 uv;
     uv.x = float(id & 1);
 	uv.y = float((id & 2) >> 1);
@@ -499,15 +465,13 @@ PackedVaryingsType ParticleVert(uint id : SV_VertexID,uint instID : SV_InstanceI
 ";
         }
 
-        private static string GenerateVertexPartTri(VFXInfos vfxInfos)
+        private static string GenerateVertexPartTri(string returnType, string inputType)
         {
-            return @"
-
-PackedVaryingsType ParticleVert(uint id : SV_VertexID)
+            return returnType + @" ParticleVert(uint id : SV_VertexID)
 {
 	uint particleID = id / 3;
     uint index = particleID;
-    AttributesMesh inputMesh = (AttributesMesh)0;
+    " + inputType + @" inputMesh = (" + inputType + @")0;
 	const float2 kOffsets[] = {
 		float2(-0.5f, 	-0.288675129413604736328125f),
 		float2(0.0f, 	0.57735025882720947265625f),
@@ -524,15 +488,13 @@ PackedVaryingsType ParticleVert(uint id : SV_VertexID)
 ";
         }
 
-        private static string GenerateVertexPartOct(VFXInfos vfxInfos)
+        private static string GenerateVertexPartOct(string returnType, string inputType)
         {
-            return @"
-
-PackedVaryingsType ParticleVert(uint id : SV_VertexID,uint instID : SV_InstanceID)
+            return returnType + @" ParticleVert(uint id : SV_VertexID,uint instID : SV_InstanceID)
 {
 	uint particleID = (id >> 3) + instID * 1024;
     uint index = particleID;
-    AttributesMesh inputMesh = (AttributesMesh)0;
+    " + inputType + @" inputMesh = (" + inputType + @")0;
 	const float2 kUvs[8] = 
 	{
 		float2(-0.5f,	0.0f),
