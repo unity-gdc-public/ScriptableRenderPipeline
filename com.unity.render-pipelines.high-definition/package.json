@@ -6,8 +6,8 @@
 	"unityRelease": "0a3",
     "displayName": "High Definition RP",
     "dependencies": {
-        "com.unity.render-pipelines.core": "7.0.0",
-        "com.unity.shadergraph": "7.0.0",
+        "com.unity.render-pipelines.core": "7.0.0-preview",
+        "com.unity.shadergraph": "7.0.0-preview",
 		"com.unity.visualeffectgraph": "7.0.0-preview",
 		"com.unity.ugui" : "1.0.0"
     },
