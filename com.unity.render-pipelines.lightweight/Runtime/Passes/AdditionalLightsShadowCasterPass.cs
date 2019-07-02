@@ -28,8 +28,8 @@ namespace UnityEngine.Rendering.LWRP
         int m_ShadowmapWidth;
         int m_ShadowmapHeight;
 
-        ShadowSliceData[] m_AdditionalLightSlices;
-        float[] m_AdditionalLightsShadowStrength;
+        ShadowSliceData[] m_AdditionalLightSlices = null;
+        List<float> m_AdditionalLightsShadowStrength = new List<float>();
         List<int> m_AdditionalShadowCastingLightIndices = new List<int>();
         List<int> m_AdditionalShadowCastingLightIndicesMap = new List<int>();
         const string m_ProfilerTag = "Render Additional Shadows";
@@ -37,10 +37,6 @@ namespace UnityEngine.Rendering.LWRP
         public AdditionalLightsShadowCasterPass(RenderPassEvent evt)
         {
             renderPassEvent = evt;
-
-            int maxLights = LightweightRenderPipeline.maxVisibleAdditionalLights;
-            m_AdditionalLightSlices = new ShadowSliceData[maxLights];
-            m_AdditionalLightsShadowStrength = new float[maxLights];
 
             AdditionalShadowsConstantBuffer._AdditionalLightsWorldToShadow = Shader.PropertyToID("_AdditionalLightsWorldToShadow");
             AdditionalShadowsConstantBuffer._AdditionalShadowStrength = Shader.PropertyToID("_AdditionalShadowStrength");
@@ -78,6 +74,9 @@ namespace UnityEngine.Rendering.LWRP
             if (shadowCastingLightsCount == 0)
                 return false;
 
+            if (m_AdditionalLightSlices == null || m_AdditionalLightSlices.Length < shadowCastingLightsCount)
+                m_AdditionalLightSlices = new ShadowSliceData[shadowCastingLightsCount];
+
             // TODO: Add support to point light shadows. We make a simplification here that only works
             // for spot lights and with max spot shadows per pass.
             int atlasWidth = renderingData.shadowData.additionalLightsShadowmapWidth;
@@ -112,7 +111,7 @@ namespace UnityEngine.Rendering.LWRP
                             m_AdditionalLightSlices[shadowCasterIndex].resolution = sliceResolution;
                             m_AdditionalLightSlices[shadowCasterIndex].shadowTransform = shadowTransform;
 
-                            m_AdditionalLightsShadowStrength[shadowCasterIndex] = shadowLight.light.shadowStrength;
+                            m_AdditionalLightsShadowStrength.Add(shadowLight.light.shadowStrength);
                             m_AdditionalShadowCastingLightIndicesMap.Add(m_AdditionalShadowCastingLightIndices.Count);
                             m_AdditionalShadowCastingLightIndices.Add(i);
                             anyShadows = true;
@@ -154,15 +153,10 @@ namespace UnityEngine.Rendering.LWRP
 
         void Clear()
         {
+            m_AdditionalLightsShadowStrength.Clear();
             m_AdditionalShadowCastingLightIndices.Clear();
             m_AdditionalShadowCastingLightIndicesMap.Clear();
             m_AdditionalLightsShadowmapTexture = null;
-
-            for (int i = 0; i < m_AdditionalLightSlices.Length; ++i)
-                m_AdditionalLightSlices[i].Clear();
-
-            for (int i = 0; i < m_AdditionalLightsShadowStrength.Length; ++i)
-                m_AdditionalLightsShadowStrength[i] = 0.0f;
         }
 
         void RenderAdditionalShadowmapAtlas(ref ScriptableRenderContext context, ref CullingResults cullResults, ref LightData lightData, ref ShadowData shadowData)
