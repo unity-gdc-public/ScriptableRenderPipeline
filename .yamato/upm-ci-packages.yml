@@ -30,8 +30,8 @@ all_package_ci:
   - npm install git+ssh://git@gitlab.cds.internal.unity3d.com:upm-packages/project-templates/upm-template-utils.git#performance-package -g --no-progress
   {% for project in projects %}
   {% for editor in editors %}
-  - cd {{ project.packagename }} && upm-ci package pack --package-path .
-  - cd {{ project.packagename }} && upm-ci package test --unity-version {{ editor.version }} --package-path .
+  - upm-ci package pack --package-path {{ project.packagename }}
+  - upm-ci package test --unity-version {{ editor.version }} --package-path {{ project.packagename }}
   {% endfor %}
   {% endfor %}
   artifacts:
