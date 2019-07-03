@@ -6,6 +6,6 @@
 	"unityRelease": "0a3",
     "displayName": "Shader Graph",
     "dependencies": {
-        "com.unity.render-pipelines.core": "7.0.0-preview"
+        "com.unity.render-pipelines.core": "file:../../../com.unity.render-pipelines.core"
     }
 }
