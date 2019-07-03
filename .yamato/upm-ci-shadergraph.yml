@@ -47,9 +47,9 @@ projects:
     - ssh -i ~/.ssh/id_rsa_macmini -o "StrictHostKeyChecking=no" bokken@$BOKKEN_DEVICE_IP 'ssh-agent bash -c 'ssh-add ~/.ssh/id_rsa_macmini; git clone git@github.cds.internal.unity3d.com:unity/utr.git TestProjects/{{ project.folder }}/utr''
     - ssh -i ~/.ssh/id_rsa_macmini -o "StrictHostKeyChecking=no" bokken@$BOKKEN_DEVICE_IP '/Users/bokken/Library/Python/3.7/bin/unity-downloader-cli -b {{ editor.version }} -c editor --wait --published'
     {% if testplatform.name == "Standalone" %}
-    - ssh -i ~/.ssh/id_rsa_macmini -o "StrictHostKeyChecking=no" bokken@$BOKKEN_DEVICE_IP '~/ScriptableRenderPipeline/TestProjects/{{ project.folder }}/utr {{ testplatform.args }}{{ platform.name }} --testproject=. --editor-location=.Editor -playergraphicsapi=metal --artifacts_path=upm-ci~/test-results'
+    - ssh -i ~/.ssh/id_rsa_macmini -o "StrictHostKeyChecking=no" bokken@$BOKKEN_DEVICE_IP 'cd ~/ScriptableRenderPipeline/TestProjects/{{ project.folder }}/utr && utr {{ testplatform.args }}{{ platform.name }} --testproject=. --editor-location=.Editor -playergraphicsapi=metal --artifacts_path=upm-ci~/test-results'
     {% else %}
-    - ssh -i ~/.ssh/id_rsa_macmini -o "StrictHostKeyChecking=no" bokken@$BOKKEN_DEVICE_IP '~/ScriptableRenderPipeline/TestProjects/{{ project.folder }}/utr {{ testplatform.args }} --testproject=. --editor-location=.Editor -playergraphicsapi=metal --artifacts_path=upm-ci~/test-results'
+    - ssh -i ~/.ssh/id_rsa_macmini -o "StrictHostKeyChecking=no" bokken@$BOKKEN_DEVICE_IP '~/ScriptableRenderPipeline/TestProjects/{{ project.folder }}/utr && utr {{ testplatform.args }} --testproject=. --editor-location=.Editor -playergraphicsapi=metal --artifacts_path=upm-ci~/test-results'
     {% endif %}      
   artifacts:
     logs:
