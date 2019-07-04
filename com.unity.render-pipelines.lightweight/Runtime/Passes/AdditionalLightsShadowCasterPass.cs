@@ -69,6 +69,8 @@ namespace UnityEngine.Rendering.LWRP
                 m_AdditionalLightSlices = new ShadowSliceData[additionalLightsCount];
 
             int shadowCastingLightsCount = 0;
+
+            // Loops through all visible lights and cache the valid shadow caster ones. 
             for (int i = 0; i < visibleLights.Length && shadowCastingLightsCount < additionalLightsCount; ++i)
             {
                 if (IsValidShadowCastingLight(ref renderingData.lightData, i))
@@ -94,6 +96,8 @@ namespace UnityEngine.Rendering.LWRP
                         }
                     }
                 }
+
+                // -1 means this light doesn't cast shadows so there's no shadow casted slot in the shadowmap atlas
                 m_AdditionalShadowCastingLightIndicesMap.Add(-1);
             }
 
@@ -107,11 +111,25 @@ namespace UnityEngine.Rendering.LWRP
             int sliceResolution = ShadowUtils.GetMaxTileResolutionInAtlas(atlasWidth, atlasHeight, shadowCastingLightsCount);
 
             int shadowSlicesPerRow = (atlasWidth / sliceResolution);
+            float oneOverAtlasWidth = 1.0f / m_ShadowmapWidth;
+            float oneOverAtlasHeight = 1.0f / m_ShadowmapHeight;
+
+            // We bake scale and bias to each shadowmap in the atlas in the matrix.
+            // saves some instructions in shader.
             for (int i = 0; i < shadowCastingLightsCount; ++i)
             {
                 m_AdditionalLightSlices[i].offsetX = (i % shadowSlicesPerRow) * sliceResolution;
                 m_AdditionalLightSlices[i].offsetY = (i / shadowSlicesPerRow) * sliceResolution;
                 m_AdditionalLightSlices[i].resolution = sliceResolution;
+
+                Matrix4x4 sliceTransform = Matrix4x4.identity;
+                sliceTransform.m00 = sliceResolution * oneOverAtlasWidth;
+                sliceTransform.m11 = sliceResolution * oneOverAtlasHeight;
+                sliceTransform.m03 = m_AdditionalLightSlices[i].offsetX * oneOverAtlasWidth;
+                sliceTransform.m13 = m_AdditionalLightSlices[i].offsetY * oneOverAtlasHeight;
+
+                // Apply shadow slice scale and offset
+                m_AdditionalLightSlices[i].shadowTransform = sliceTransform * m_AdditionalLightSlices[i].shadowTransform;
             }
 
             return true;
@@ -166,12 +184,7 @@ namespace UnityEngine.Rendering.LWRP
                     int shadowLightIndex = m_AdditionalShadowCastingLightIndices[i];
                     VisibleLight shadowLight = visibleLights[shadowLightIndex];
 
-                    // We generate only shadow slice data for lights that render in the shadowmap
-                    // Therefore we use i as index instead of shadowLightIndex
-                    ref ShadowSliceData shadowSliceData = ref m_AdditionalLightSlices[i];
-
-                    if (m_AdditionalShadowCastingLightIndices.Count > 1)
-                        ShadowUtils.ApplySliceTransform(ref shadowSliceData, m_ShadowmapWidth, m_ShadowmapHeight);
+                    ShadowSliceData shadowSliceData = m_AdditionalLightSlices[i];
 
                     var settings = new ShadowDrawingSettings(cullResults, shadowLightIndex);
                     Vector4 shadowBias = ShadowUtils.GetShadowBias(ref shadowLight, shadowLightIndex,
