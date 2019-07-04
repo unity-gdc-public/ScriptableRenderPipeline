@@ -64,57 +64,32 @@ namespace UnityEngine.Rendering.LWRP
 
             var visibleLights = renderingData.lightData.visibleLights;
             int additionalLightsCount = renderingData.lightData.additionalLightsCount;
+
+            if (m_AdditionalLightSlices == null || m_AdditionalLightSlices.Length < additionalLightsCount)
+                m_AdditionalLightSlices = new ShadowSliceData[additionalLightsCount];
+
             int shadowCastingLightsCount = 0;
             for (int i = 0; i < visibleLights.Length && shadowCastingLightsCount < additionalLightsCount; ++i)
             {
-                if (IsValidShadowCastingLight(ref renderingData.lightData, i))
-                    shadowCastingLightsCount++;
-            }
-
-            if (shadowCastingLightsCount == 0)
-                return false;
-
-            if (m_AdditionalLightSlices == null || m_AdditionalLightSlices.Length < shadowCastingLightsCount)
-                m_AdditionalLightSlices = new ShadowSliceData[shadowCastingLightsCount];
-
-            // TODO: Add support to point light shadows. We make a simplification here that only works
-            // for spot lights and with max spot shadows per pass.
-            int atlasWidth = renderingData.shadowData.additionalLightsShadowmapWidth;
-            int atlasHeight = renderingData.shadowData.additionalLightsShadowmapHeight;
-            int sliceResolution = ShadowUtils.GetMaxTileResolutionInAtlas(atlasWidth, atlasHeight, shadowCastingLightsCount);
-
-            bool anyShadows = false;
-            int shadowSlicesPerRow = (atlasWidth / sliceResolution);
-            for (int i = 0; i < visibleLights.Length && m_AdditionalShadowCastingLightIndices.Count < additionalLightsCount; ++i)
-            {
-                int shadowCasterIndex = m_AdditionalShadowCastingLightIndices.Count;
                 if (IsValidShadowCastingLight(ref renderingData.lightData, i))
                 {
                     VisibleLight shadowLight = visibleLights[i];
 
                     if (renderingData.cullResults.GetShadowCasterBounds(i, out var bounds))
                     {
-                        // Currently Only Spot Lights are supported in additional lights
-                        Debug.Assert(shadowLight.lightType == LightType.Spot);
-                        Matrix4x4 shadowTransform;
                         bool success = ShadowUtils.ExtractSpotLightMatrix(ref renderingData.cullResults,
                             ref renderingData.shadowData,
-                            i, out shadowTransform, out m_AdditionalLightSlices[shadowCasterIndex].viewMatrix,
-                            out m_AdditionalLightSlices[shadowCasterIndex].projectionMatrix);
+                            i,
+                            out m_AdditionalLightSlices[shadowCastingLightsCount].shadowTransform,
+                            out m_AdditionalLightSlices[shadowCastingLightsCount].viewMatrix,
+                            out m_AdditionalLightSlices[shadowCastingLightsCount].projectionMatrix);
 
                         if (success)
                         {
-                            // TODO: We need to pass bias and scale list to shader to be able to support multiple
-                            // shadow casting additional lights.
-                            m_AdditionalLightSlices[shadowCasterIndex].offsetX = (shadowCasterIndex % shadowSlicesPerRow) * sliceResolution;
-                            m_AdditionalLightSlices[shadowCasterIndex].offsetY = (shadowCasterIndex / shadowSlicesPerRow) * sliceResolution;
-                            m_AdditionalLightSlices[shadowCasterIndex].resolution = sliceResolution;
-                            m_AdditionalLightSlices[shadowCasterIndex].shadowTransform = shadowTransform;
-
                             m_AdditionalLightsShadowStrength.Add(shadowLight.light.shadowStrength);
-                            m_AdditionalShadowCastingLightIndicesMap.Add(m_AdditionalShadowCastingLightIndices.Count);
+                            m_AdditionalShadowCastingLightIndicesMap.Add(shadowCastingLightsCount);
                             m_AdditionalShadowCastingLightIndices.Add(i);
-                            anyShadows = true;
+                            shadowCastingLightsCount++;
                             continue;
                         }
                     }
@@ -122,7 +97,24 @@ namespace UnityEngine.Rendering.LWRP
                 m_AdditionalShadowCastingLightIndicesMap.Add(-1);
             }
 
-            return anyShadows;
+            if (shadowCastingLightsCount == 0)
+                return false;
+
+            // TODO: Add support to point light shadows. We make a simplification here that only works
+            // for spot lights and with max spot shadows per pass.
+            int atlasWidth = renderingData.shadowData.additionalLightsShadowmapWidth;
+            int atlasHeight = renderingData.shadowData.additionalLightsShadowmapHeight;
+            int sliceResolution = ShadowUtils.GetMaxTileResolutionInAtlas(atlasWidth, atlasHeight, shadowCastingLightsCount);
+
+            int shadowSlicesPerRow = (atlasWidth / sliceResolution);
+            for (int i = 0; i < shadowCastingLightsCount; ++i)
+            {
+                m_AdditionalLightSlices[i].offsetX = (i % shadowSlicesPerRow) * sliceResolution;
+                m_AdditionalLightSlices[i].offsetY = (i / shadowSlicesPerRow) * sliceResolution;
+                m_AdditionalLightSlices[i].resolution = sliceResolution;
+            }
+
+            return true;
         }
 
         public override void Configure(CommandBuffer cmd, RenderTextureDescriptor cameraTextureDescriptor)
