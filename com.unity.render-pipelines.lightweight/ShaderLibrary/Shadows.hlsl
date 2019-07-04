@@ -213,21 +213,28 @@ half AdditionalLightRealtimeShadow(int lightIndex, float3 positionWS)
 {
 #if !defined(_ADDITIONAL_LIGHT_SHADOWS) || defined(_RECEIVE_SHADOWS_OFF)
     return 1.0h;
-#else
+#endif
+
     ShadowSamplingData shadowSamplingData = GetAdditionalLightShadowSamplingData();
 
 #if USE_STRUCTURED_BUFFER_FOR_LIGHT_DATA
-    int shadowIndex = _AdditionalShadowsIndices[lightIndex];
+    lightIndex = _AdditionalShadowsIndices[lightIndex];
 
-    if (shadowIndex < 0)
-        return 1.0h;
+    [flatten]
+    if (lightIndex < 0)
+    {
+        return 1.0;
+    }
+    else
+    {
+        half shadowStrength = GetAdditionalLightShadowStrenth(lightIndex);
+        float4 shadowCoord = mul(_AdditionalShadowsBuffer[lightIndex].worldToShadowMatrix, float4(positionWS, 1.0));
 
-    float4 shadowCoord = mul(_AdditionalShadowsBuffer[shadowIndex].worldToShadowMatrix, float4(positionWS, 1.0));
-    half shadowStrength = GetAdditionalLightShadowStrenth(shadowIndex);
+        return SampleShadowmap(shadowCoord, TEXTURE2D_ARGS(_AdditionalLightsShadowmapTexture, sampler_AdditionalLightsShadowmapTexture), shadowSamplingData, shadowStrength, true);
+    }
 #else
     float4 shadowCoord = mul(_AdditionalLightsWorldToShadow[lightIndex], float4(positionWS, 1.0));
     half shadowStrength = GetAdditionalLightShadowStrenth(lightIndex);
-#endif
 
     return SampleShadowmap(shadowCoord, TEXTURE2D_ARGS(_AdditionalLightsShadowmapTexture, sampler_AdditionalLightsShadowmapTexture), shadowSamplingData, shadowStrength, true);
 #endif
