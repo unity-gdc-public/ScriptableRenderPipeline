@@ -218,8 +218,11 @@ namespace UnityEditor.VFX.SG
             nameRange.start = 0;
             nameRange.length = 0;
             int startIndex = totalRange.start;
-            foreach (var charac in statement.Take(totalRange.end).Skip(totalRange.start))
+
+
+            for(int cpt = totalRange.start; cpt < totalRange.end; ++cpt)
             {
+                char charac = statement[cpt];
                 if (!char.IsWhiteSpace(charac))
                     break;
                 ++startIndex;
@@ -230,8 +233,10 @@ namespace UnityEditor.VFX.SG
 
             int localEndIndex = startIndex + 1;
 
-            foreach (var charac in statement.Take(totalRange.end).Skip(localEndIndex))
+
+            for (int cpt = localEndIndex; cpt < totalRange.end; ++cpt)
             {
+                char charac = statement[cpt];
                 if (char.IsWhiteSpace(charac) || charac == '{' || charac == '"' || charac == '[')
                     break;
                 ++localEndIndex;
@@ -242,15 +247,15 @@ namespace UnityEditor.VFX.SG
 
             nameRange.start = startIndex;
             nameRange.length = localEndIndex - startIndex;
-            string name = statement.Substring(nameRange.start, nameRange.length);
 
             //This is a comment line starting with two slashes : skip the line
             if (nameRange.length >= 2 && statement[startIndex] == '/' && statement[startIndex + 1] == '/')
             {
                 int lineStartIndex = localEndIndex+1;
                 int lineEndIndex = lineStartIndex;
-                foreach (var charac in statement.Take(totalRange.end).Skip(lineStartIndex))
+                for (int cpt = lineStartIndex; cpt < totalRange.end; ++cpt)
                 {
+                    char charac = statement[cpt];
                     lineEndIndex++;
                     if (charac == '\n')
                         break;
@@ -276,8 +281,9 @@ namespace UnityEditor.VFX.SG
             int valueEndIndex = valueStartIndex;
             int dataStartIndex = 0;
 
-            foreach ( var charac in statement.Take(totalRange.end).Skip(valueStartIndex))
+            for (int cpt = valueStartIndex; cpt < totalRange.end; ++cpt)
             {
+                char charac = statement[cpt];
                 if (singleLine && (charac == '\n' || charac == '\r' ))
                     break;
                 valueEndIndex++;
@@ -388,15 +394,17 @@ namespace UnityEditor.VFX.SG
                 int startLine = 0;
                 do
                 {
-                    foreach (var charac in document.Take(totalRange.end).Skip(nextLine))
+                    for (int cpt = nextLine; cpt < totalRange.end; ++cpt)
                     {
+                        char charac = document[cpt];
                         nextLine++;
                         if (charac == '\n')
                             break;
                     }
                     startLine = nextLine;
-                    foreach (var charac in document.Take(totalRange.end).Skip(nextLine))
+                    for (int cpt = nextLine; cpt < totalRange.end; ++cpt)
                     {
+                        char charac = document[cpt];
                         if (!char.IsWhiteSpace(charac))
                             break;
 
@@ -404,9 +412,9 @@ namespace UnityEditor.VFX.SG
                     }
 
                     endLine = startLine + 1;
-
-                    foreach (var charac in document.Take(totalRange.end).Skip(endLine))
+                    for (int cpt = endLine; cpt < totalRange.end; ++cpt)
                     {
+                        char charac = document[cpt];
                         if (char.IsWhiteSpace(charac))
                             break;
                         endLine++;
@@ -418,8 +426,9 @@ namespace UnityEditor.VFX.SG
                         break;
                     }
                     nextLine = endLine;
-                    foreach (var charac in document.Take(totalRange.end).Skip(nextLine))
+                    for (int cpt = nextLine; cpt < totalRange.end; ++cpt)
                     {
+                        char charac = document[cpt];
                         if (charac == '\n')
                             break;
                         nextLine++;
@@ -505,8 +514,10 @@ namespace UnityEditor.VFX.SG
 
             while(pos < param.end)
             {
-                foreach (char charac in document.Skip(pos).Take(param.length))
+
+                for (int cpt = pos; cpt < pos + param.length; ++cpt)
                 {
+                    char charac = document[cpt];
                     if (!char.IsWhiteSpace(charac))
                         break;
                     ++pos;
@@ -516,8 +527,9 @@ namespace UnityEditor.VFX.SG
                 if (document[pos] == '"')
                     pos++;
                 int startSentence = pos;
-                foreach (char charac in document.Skip(pos).Take(param.length))
+                for (int cpt = pos; cpt < pos + param.length; ++cpt)
                 {
+                    char charac = document[cpt];
                     if (char.IsWhiteSpace(charac) || charac == '=')
                         break;
                     ++pos;
@@ -530,8 +542,10 @@ namespace UnityEditor.VFX.SG
                 {
                     key = document.Substring(startSentence, endSentence - startSentence);
 
-                    foreach (char charac in document.Skip(pos).Take(param.length))
+
+                    for (int cpt = pos; cpt < pos + param.length; ++cpt)
                     {
+                        char charac = document[cpt];
                         ++pos;
                         if (charac == '=' )
                             break;

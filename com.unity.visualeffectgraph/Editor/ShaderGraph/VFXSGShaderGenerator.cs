@@ -10,6 +10,7 @@ using UnityEditor.VFX;
 using UnityEditor.Graphing.Util;
 using UnityEditor.Graphing;
 using UnityEngine;
+using UnityEngine.Profiling;
 
 using UnlitMasterNode = UnityEditor.ShaderGraph.UnlitMasterNode;
 using UnityEngine.Rendering;
@@ -321,20 +322,24 @@ struct ParticleMeshToPS
         {
             PipelineInfo pipelineInfos;
             MasterNodeInfo masterNodeInfo;
+            Profiler.BeginSample("GenerateShader.LoadShaderGraph");
             Graph graph = LoadShaderGraph(shaderGraph, out pipelineInfos, out masterNodeInfo);
+            Profiler.EndSample();
             if (graph == null) return null;
 
+            Profiler.BeginSample("GenerateShader.ShaderDocument.Parse");
             ShaderDocument document = new ShaderDocument();
             document.Parse(graph.shaderCode);
+            Profiler.EndSample();
 
             var defines = new Dictionary<string, int>();
 
-
-
             var guiVariables = pipelineInfos.GetDefaultShaderVariables();
 
+            Profiler.BeginSample("GenerateShader.Prepare");
             if (masterNodeInfo.prepare != null)
                 masterNodeInfo.prepare(graph, guiVariables, defines);
+            Profiler.EndSample();
 
             int cptLine = 0;
             foreach (var include in pipelineInfos.GetSpecificIncludes())
@@ -352,7 +357,9 @@ struct ParticleMeshToPS
                 if (currentPass == -1)
                     continue;
 
+                Profiler.BeginSample("GenerateShader.Prepare:"+pass.name);
                 GeneratePass(vfxInfos, graph, pipelineInfos, guiVariables, defines, varyingAttributes, pass, currentPass, ref masterNodeInfo);
+                Profiler.EndSample();
             }
             foreach (var define in defines)
                 document.InsertShaderCode(0, string.Format("#define {0} {1}", define.Key, define.Value));

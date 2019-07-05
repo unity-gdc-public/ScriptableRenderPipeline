@@ -7,6 +7,7 @@ using UnityEngine;
 using UnityEngine.VFX;
 
 using System.Text.RegularExpressions;
+using UnityEngine.Rendering;
 
 namespace UnityEditor.VFX
 {
@@ -456,7 +457,9 @@ namespace UnityEditor.VFX
 
                 infos.parameters = parameters.ToString();
 
+                UnityEngine.Profiling.Profiler.BeginSample("VFXEditor.GenerateShaders");
                 string result = (context as ISpecificGenerationOutput).GenerateShader(ref infos);
+                UnityEngine.Profiling.Profiler.EndSample();
 
                 if (result == null)
                     return null;
