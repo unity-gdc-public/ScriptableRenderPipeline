@@ -1,15 +1,8 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using UnityEngine;
-using System.Text;
-using UnityEditor.VFX;
-using UnityEngine.Rendering;
-using System.Reflection;
-using UnityEngine.VFX;
-using UnityEditor.VFX;
 
-using UnityObject = UnityEngine.Object;
+using UnityEngine;
+
 
 namespace UnityEditor.VFX.SG
 {
