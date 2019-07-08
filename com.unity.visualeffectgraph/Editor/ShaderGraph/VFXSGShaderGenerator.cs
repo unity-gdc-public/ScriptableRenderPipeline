@@ -435,14 +435,27 @@ struct ParticleMeshToPS
             if (generateVertex.planarProcedural) // we generate the normal if needed.
             {
                 shader.AppendLine(@"
-#ifdef ATTRIBUTES_NEED_NORMAL
+    #ifdef ATTRIBUTES_NEED_NORMAL
     float normalFlip = (size3.x * size3.y * size3.z) < 0 ? -1 : 1;
     inputMesh.normalOS.xyz = normalize(-transpose(elementToVFX)[2].xyz) * normalFlip;
-#endif
-#ifdef ATTRIBUTES_NEED_TANGENT
+    #endif
+    #ifdef ATTRIBUTES_NEED_TANGENT
     inputMesh.tangentOS.xyz = normalize(transpose(elementToVFX)[0].xyz);
-#endif
+    #endif
 ");
+            }
+            else
+            {
+                shader.AppendLine(@"
+    #ifdef ATTRIBUTES_NEED_NORMAL
+        float normalFlip = (size3.x * size3.y * size3.z) < 0 ? -1 : 1;
+        inputMesh.normalOS.xyz = normalize(mul(elementToVFX,inputMesh.normalOS)) * normalFlip;
+    #endif
+    #ifdef ATTRIBUTES_NEED_TANGENT
+        inputMesh.tangentOS.xyz = normalize(mul(elementToVFX,inputMesh.tangentOS));
+    #endif
+");
+
             }
 
             shader.Append(pipelineInfos.GetParticleVertexFunctionBottom(varyingAttributes.Select(t => t.name), shaderFunctionName));

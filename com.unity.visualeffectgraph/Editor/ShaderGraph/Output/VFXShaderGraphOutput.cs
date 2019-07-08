@@ -132,7 +132,7 @@ namespace UnityEditor.VFX.SG
                     var graph = VFXSGShaderGenerator.LoadShaderGraph(shaderGraph);
                     if( graph != null)
                     {
-                        List<string> sgDeclarations = VFXSGShaderGenerator.GetPropertiesExcept(graph,attributes.Select(t => t.attrib.name).ToList());
+                        List<string> sgDeclarations = VFXSGShaderGenerator.GetPropertiesExcept(graph,attributes.Select(t => t.attrib.name).Concat(Enumerable.Repeat("particleId",1)).ToList());
 
                         foreach (var decl in sgDeclarations)
                         {
@@ -167,7 +167,7 @@ namespace UnityEditor.VFX.SG
                 var graph = VFXSGShaderGenerator.LoadShaderGraph(shaderGraph);
                 if (graph != null)
                 {
-                    List<string> sgDeclarations = VFXSGShaderGenerator.GetPropertiesExcept(graph, attributes.Select(t => t.attrib.name).ToList());
+                    List<string> sgDeclarations = VFXSGShaderGenerator.GetPropertiesExcept(graph, attributes.Select(t => t.attrib.name).Concat(Enumerable.Repeat("particleId", 1)).ToList());
 
                     foreach (var decl in sgDeclarations)
                     {
