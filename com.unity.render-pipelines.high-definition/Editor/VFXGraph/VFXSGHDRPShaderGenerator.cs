@@ -595,16 +595,17 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 {
                     pass.InsertShaderLine(i + functionIndex, functionSurfaceDefinition[i]);
                 }
-                int cptLine = 2;
+                int cptLine = 2 + functionIndex;
                 //Load attributes from the ByteAddressBuffer
-                pass.InsertShaderLine((cptLine++) + functionIndex, "                                    uint index = IN.particleID;");
-                pass.InsertShaderLine((cptLine++) + functionIndex, "                                    " + vfxInfos.loadAttributes.Replace("\n", "\n                                    "));
+                pass.InsertShaderLine(cptLine++, "                                    uint index = IN.particleID;");
+                pass.InsertShaderLine(cptLine++, "                                    " + vfxInfos.loadAttributes.Replace("\n", "\n                                    "));
 
                 // override attribute load with value from varyings in case of attriibute values modified in output context
                 foreach (var varyingAttribute in varyingAttributes)
                 {
-                    pass.InsertShaderLine((cptLine++) + functionIndex, string.Format("{0} = vParticle.{0};", varyingAttribute.name));
+                    pass.InsertShaderLine(cptLine++, string.Format("{0} = vParticle.{0};", varyingAttribute.name));
                 }
+                pass.InsertShaderLine(cptLine++, "uint particleId = index;");
 
                 // define variable for each value that is a vfx attribute
                 PropertyCollector shaderProperties = new PropertyCollector();
@@ -615,30 +616,29 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                     if (matchingAttribute != null)
                     {
                         if (matchingAttribute == "color")
-                            pass.InsertShaderLine((cptLine++) + functionIndex, "    " + prop.GetPropertyDeclarationString("") + " = float4(color,1);");
+                            pass.InsertShaderLine(cptLine++, "    " + prop.GetPropertyDeclarationString("") + " = float4(color,1);");
                         else
-                            pass.InsertShaderLine((cptLine++) + functionIndex, "    " + prop.GetPropertyDeclarationString("") + " = " + matchingAttribute + ";");
+                            pass.InsertShaderLine(cptLine++, "    " + prop.GetPropertyDeclarationString("") + " = " + matchingAttribute + ";");
                     }
                 }
-                pass.InsertShaderLine((cptLine++) + functionIndex, @"
+                pass.InsertShaderLine(cptLine++, @"
 
     if( !alive) discard;
     ");
-                foreach( var loadAttrLine in vfxInfos.loadSlotValues.Where(t => !string.IsNullOrEmpty(t)))
-                {
-                    pass.InsertShaderLine(cptLine++ + functionIndex, "                                    " + loadAttrLine);
-                }
+
+                foreach ( var loadAttrLine in vfxInfos.loadSlotValues.Where(t => !string.IsNullOrEmpty(t)))
+                    pass.InsertShaderLine(cptLine++, "                                    " + loadAttrLine);
 
                 for (int i = 2; i < functionSurfaceDefinition.Count - 2; ++i)
                 {
-                    pass.InsertShaderLine((cptLine++) + functionIndex, functionSurfaceDefinition[i]);
+                    pass.InsertShaderLine(cptLine++, functionSurfaceDefinition[i]);
                 }
                 if (vfxInfos.attributes.Contains("alpha"))
-                    pass.InsertShaderLine((cptLine++) + functionIndex, "                        surface.Alpha *= alpha;");
+                    pass.InsertShaderLine(cptLine++, "                        surface.Alpha *= alpha;");
 
                 for (int i = functionSurfaceDefinition.Count - 2; i < functionSurfaceDefinition.Count; ++i)
                 {
-                    pass.InsertShaderLine((cptLine++) + functionIndex, functionSurfaceDefinition[i]);
+                    pass.InsertShaderLine(cptLine++, functionSurfaceDefinition[i]);
                 }
             }
 
