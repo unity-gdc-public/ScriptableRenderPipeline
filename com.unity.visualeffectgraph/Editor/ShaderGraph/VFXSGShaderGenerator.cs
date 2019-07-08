@@ -538,7 +538,9 @@ struct ParticleMeshToPS
 		float2(0.0f,	-0.5f),
 		float2(-0.5f,	-0.5f),
 	};
-	
+
+	${VFXLoadParameter:{cropFactor}}
+
 	float cf = id & 1 ? 1.0f - cropFactor : 1.0f;
     inputMesh.positionOS =  float3(kUvs[id & 7]  * cf,0);
 #ifdef ATTRIBUTES_NEED_TEXCOORD0

@@ -14,6 +14,8 @@ namespace UnityEditor.VFX
     interface ISpecificGenerationOutput
     {
         string GenerateShader(ref VFXInfos infos);
+
+        IEnumerable<string> GetUsedSlotNames();
     }
     struct VFXInfos
     {
@@ -24,6 +26,7 @@ namespace UnityEditor.VFX
         public List<string> attributes;
         public List<VFXValueType> attributeTypes;
         public string loadAttributes;
+        public List<string> loadSlotValues;
         public VFXTaskType renderingType;
 
         public List<string> modifiedByOutputAttributes;
@@ -440,7 +443,9 @@ namespace UnityEditor.VFX
             foreach (var includePath in uniqueIncludes)
                 perPassIncludeContent.WriteLine(string.Format("#include \"{0}\"", includePath));
 
-            if ( context is ISpecificGenerationOutput)
+            var mainParameters = contextData.gpuMapper.CollectExpression(-1).ToArray();
+
+            if ( context is ISpecificGenerationOutput shaderGraphContext)
             {
                 VFXInfos infos = new VFXInfos();
                 infos.vertexFunctions = blockFunction.ToString();
@@ -448,6 +453,14 @@ namespace UnityEditor.VFX
                 infos.attributes = context.GetData().GetAttributes().Select(t=>t.attrib.name).ToList();
                 infos.attributeTypes = context.GetData().GetAttributes().Select(t => t.attrib.type).ToList();
                 infos.loadAttributes = GenerateLoadAttribute(".*", context).ToString();
+
+                infos.loadSlotValues = new List<string>();
+
+                foreach( var value in shaderGraphContext.GetUsedSlotNames())
+                {
+                    infos.loadSlotValues.Add(GenerateLoadParameter(value, mainParameters, expressionToName).ToString());
+                }
+                
                 infos.modifiedByOutputAttributes = context.children.Where(t=>t.enabled).SelectMany(t=>t.attributes).Where(t=>(t.mode & VFXAttributeMode.Write) != 0).Select(t=>t.attrib.name).Distinct().ToList();
                 infos.renderingType = context.taskType;
 
@@ -464,7 +477,16 @@ namespace UnityEditor.VFX
                 if (result == null)
                     return null;
 
-                return new StringBuilder(result);
+                var resultSB = new StringBuilder(result);
+                foreach (var match in GetUniqueMatches("\\${VFXLoadParameter:{(.*?)}}", resultSB.ToString()))
+                {
+                    var str = match.Groups[0].Value;
+                    var pattern = match.Groups[1].Value;
+                    var loadParameters = GenerateLoadParameter(pattern, mainParameters, expressionToName);
+                    ReplaceMultiline(resultSB, str, loadParameters.builder);
+                }
+
+                return resultSB;
             } 
             var stringBuilder = GetFlattenedTemplateContent(templatePath, new List<string>(), context.additionalDefines);
 
@@ -474,7 +496,6 @@ namespace UnityEditor.VFX
             ReplaceMultiline(stringBuilder, "${VFXGeneratedBlockFunction}", blockFunction.builder);
             ReplaceMultiline(stringBuilder, "${VFXProcessBlocks}", blockCallFunction.builder);
 
-            var mainParameters = contextData.gpuMapper.CollectExpression(-1).ToArray();
             foreach (var match in GetUniqueMatches("\\${VFXLoadParameter:{(.*?)}}", stringBuilder.ToString()))
             {
                 var str = match.Groups[0].Value;

@@ -624,6 +624,10 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
     if( !alive) discard;
     ");
+                foreach( var loadAttrLine in vfxInfos.loadSlotValues.Where(t => !string.IsNullOrEmpty(t)))
+                {
+                    pass.InsertShaderLine(cptLine++ + functionIndex, "                                    " + loadAttrLine);
+                }
 
                 for (int i = 2; i < functionSurfaceDefinition.Count - 2; ++i)
                 {

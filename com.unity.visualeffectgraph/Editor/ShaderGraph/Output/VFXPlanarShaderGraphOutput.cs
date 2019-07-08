@@ -22,6 +22,19 @@ namespace UnityEditor.VFX.SG
                 return properties;
             }
         }
+        public override IEnumerable<string> GetUsedSlotNames()
+        {
+            if (primitiveType == VFXPrimitiveType.Octagon)
+            {
+                foreach (var input in inputSlots.Where(t=> t.name != nameof(VFXPlanarPrimitiveHelper.OctagonInputProperties.cropFactor)))
+                    yield return input.name;
+            }
+            else
+            {
+                foreach( var input in base.GetUsedSlotNames())
+                    yield return input;
+            }
+        }
 
         protected override IEnumerable<VFXNamedExpression> CollectGPUExpressions(IEnumerable<VFXNamedExpression> slotExpressions)
         {

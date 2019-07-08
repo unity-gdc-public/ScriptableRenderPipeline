@@ -144,15 +144,19 @@ namespace UnityEditor.VFX.SG
                                 yield return new VFXPropertyWithValue(new VFXProperty(type, variable));
                         }
                     }
-
                 }
-
 
                 foreach ( var prop in PropertiesFromType(GetInputPropertiesTypeName()))
                 {
                     yield return prop;
                 }
             }
+        }
+
+        public virtual IEnumerable<string> GetUsedSlotNames()
+        {
+            foreach( var input in inputSlots)
+                yield return input.name;
         }
         protected override IEnumerable<VFXNamedExpression> CollectGPUExpressions(IEnumerable<VFXNamedExpression> slotExpressions)
         {
