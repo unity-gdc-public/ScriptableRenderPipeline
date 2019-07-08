@@ -634,9 +634,8 @@ VisualEffectResource:
     source: "#pragma kernel CSMain\n#define NB_THREADS_PER_GROUP 64\n#define VFX_USE_VELOCITY_CURRENT
       1\n#define VFX_USE_SEED_CURRENT 1\n#define VFX_USE_LIFETIME_CURRENT 1\n#define
       VFX_USE_SIZE_CURRENT 1\n#define VFX_USE_POSITION_CURRENT 1\n#define VFX_USE_ALIVE_CURRENT
-      1\n#define VFX_USE_AGE_CURRENT 1\n#define VFX_LOCAL_SPACE 1\n#include \"Packages/com.unity.visualeffectgraph/Shaders/RenderPipeline/HDRP/VFXDefines.hlsl\"\n\n\nCBUFFER_START(parameters)\n   
-      float3 A_a;\n    float A_b;\n    float3 B_a;\n    float B_b;\n    float3 Position_d;\n   
-      float Size_c;\nCBUFFER_END\n\n\n#include \"Packages/com.unity.visualeffectgraph/Shaders/Common/VFXCommonCompute.cginc\"\n#include
+      1\n#define VFX_USE_AGE_CURRENT 1\n#define VFX_LOCAL_SPACE 1\n#include \"Packages/com.unity.visualeffectgraph/Shaders/RenderPipeline/HDRP/VFXDefines.hlsl\"\n\n\n\n#include
+      \"Packages/com.unity.visualeffectgraph/Shaders/Common/VFXCommonCompute.cginc\"\n#include
       \"Packages/com.unity.visualeffectgraph/Shaders/VFXCommon.cginc\"\n\n\n\nRWByteAddressBuffer
       attributeBuffer;\nByteAddressBuffer sourceAttributeBuffer;\n\nCBUFFER_START(initParams)\n#if
       !VFX_USE_SPAWNER_FROM_GPU\n    uint nbSpawned;\t\t\t\t\t// Numbers of particle
@@ -678,26 +677,27 @@ VisualEffectResource:
       = (float)0.1;\n        float3 position = float3(0,0,0);\n        bool alive
       = (bool)true;\n        float age = (float)0;\n        \n\n#if VFX_USE_PARTICLEID_CURRENT\n        
       particleId = particleIndex;\n#endif\n#if VFX_USE_SEED_CURRENT\n        seed
-      = WangHash(particleIndex ^ systemSeed);\n#endif\n        \n        SetAttribute_E6295C0(
-      /*inout */velocity,  /*inout */seed, A_a, B_a);\n        SetAttribute_F01429A3(
-      /*inout */lifetime,  /*inout */seed, A_b, B_b);\n        SetAttribute_3278B22F(
-      /*inout */size, Size_c);\n        SetAttribute_CAC29747( /*inout */position,
-      Position_d);\n        \n\n\n#if VFX_USE_ALIVE_CURRENT\n        if (alive)\n       
-      {\n\t\t\tuint deadIndex = deadListIn.DecrementCounter();\n            uint
-      index = deadListIn[deadIndex];\n            attributeBuffer.Store3((index *
-      0x4 + 0x0) << 2,asuint(velocity));\n            attributeBuffer.Store((index
-      * 0x4 + 0x3) << 2,asuint(lifetime));\n            attributeBuffer.Store((index
-      * 0x1 + 0x80) << 2,asuint(size));\n            attributeBuffer.Store3((index
-      * 0x4 + 0xA0) << 2,asuint(position));\n            attributeBuffer.Store((index
-      * 0x4 + 0xA3) << 2,uint(alive));\n            attributeBuffer.Store((index
-      * 0x1 + 0x120) << 2,asuint(age));\n            \n\n        }\n#else\n       
-      uint index = particleIndex;\n        attributeBuffer.Store3((index * 0x4 +
-      0x0) << 2,asuint(velocity));\n        attributeBuffer.Store((index * 0x4 +
-      0x3) << 2,asuint(lifetime));\n        attributeBuffer.Store((index * 0x1 +
-      0x80) << 2,asuint(size));\n        attributeBuffer.Store3((index * 0x4 + 0xA0)
-      << 2,asuint(position));\n        attributeBuffer.Store((index * 0x4 + 0xA3)
-      << 2,uint(alive));\n        attributeBuffer.Store((index * 0x1 + 0x120) <<
-      2,asuint(age));\n        \n\n#endif\n    }\n}\n"
+      = WangHash(particleIndex ^ systemSeed);\n#endif\n        \n        {\n           
+      SetAttribute_E6295C0( /*inout */velocity,  /*inout */seed, float3(-0.333,0.2,-0.333),
+      float3(0.333,1,0.333));\n        }\n        {\n            SetAttribute_F01429A3(
+      /*inout */lifetime,  /*inout */seed, (float)1, (float)3);\n        }\n       
+      {\n            SetAttribute_3278B22F( /*inout */size, (float)0.59);\n       
+      }\n        {\n            SetAttribute_CAC29747( /*inout */position, float3(0,0,0));\n       
+      }\n        \n\n\n#if VFX_USE_ALIVE_CURRENT\n        if (alive)\n        {\n\t\t\tuint
+      deadIndex = deadListIn.DecrementCounter();\n            uint index = deadListIn[deadIndex];\n           
+      attributeBuffer.Store3((index * 0x4 + 0x0) << 2,asuint(velocity));\n           
+      attributeBuffer.Store((index * 0x4 + 0x3) << 2,asuint(lifetime));\n           
+      attributeBuffer.Store((index * 0x1 + 0x80) << 2,asuint(size));\n           
+      attributeBuffer.Store3((index * 0x4 + 0xA0) << 2,asuint(position));\n           
+      attributeBuffer.Store((index * 0x4 + 0xA3) << 2,uint(alive));\n           
+      attributeBuffer.Store((index * 0x1 + 0x120) << 2,asuint(age));\n           
+      \n\n        }\n#else\n        uint index = particleIndex;\n        attributeBuffer.Store3((index
+      * 0x4 + 0x0) << 2,asuint(velocity));\n        attributeBuffer.Store((index
+      * 0x4 + 0x3) << 2,asuint(lifetime));\n        attributeBuffer.Store((index
+      * 0x1 + 0x80) << 2,asuint(size));\n        attributeBuffer.Store3((index *
+      0x4 + 0xA0) << 2,asuint(position));\n        attributeBuffer.Store((index *
+      0x4 + 0xA3) << 2,uint(alive));\n        attributeBuffer.Store((index * 0x1
+      + 0x120) << 2,asuint(age));\n        \n\n#endif\n    }\n}\n"
   - compute: 1
     name: '[System 1]Update'
     source: "#pragma kernel CSMain\n#define NB_THREADS_PER_GROUP 64\n#define VFX_USE_VELOCITY_CURRENT
@@ -879,9 +879,7 @@ VisualEffectResource:
       //-------------------------------------------------------------------------------------\n                   
       \n                        //-------------------------------------------------------------------------------------\n                       
       // Graph generated code\n                        //-------------------------------------------------------------------------------------\n                               
-      // Shared Graph Properties (uniform inputs)\n            CBUFFER_START(parameters)\n               
-      float3 Position_a;\n                float Vector1_4B24F63;\n               
-      float Vector1_9B1964B1;\n                uint3 PADDING_0;\n            CBUFFER_END\n\n                               
+      // Shared Graph Properties (uniform inputs)\n\n                               
       struct SurfaceDescriptionInputs {\n                                    float3
       ObjectSpacePosition; // optional\n                                    #if UNITY_VFX_ACTIVE\n                                   
       uint particleID;\n                                    #endif // UNITY_VFX_ACTIVE\n                               
@@ -927,20 +925,23 @@ VisualEffectResource:
       = (float)0;\n                                    float scaleX = (float)1;\n                                   
       float scaleY = (float)1;\n                                    float scaleZ
       = (float)1;\n                                    \n            \n\n    if(
-      !alive) discard;\n    \n                                    SurfaceDescription
-      surface = (SurfaceDescription)0;\n                                    Gradient
-      _Gradient_98BB5E59_Out_0 = NewGradient(0, 7, 2, float4(0.8469865, 1, 0.0990566,
-      0),float4(0.7294118, 0.08530336, 0.07058822, 0.1819791),float4(0.4582389, 0.04705882,
-      0.4941176, 0.3604791),float4(0.02995378, 0.02745097, 0.2745098, 0.5303273),float4(0.1229052,
-      0.4049238, 0.6743622, 0.6967117),float4(0.3398006, 0.8679245, 0.393839, 0.8370947),float4(0.8470588,
-      1, 0.09803922, 0.9947967),float4(0, 0, 0, 0), float2(1, 0),float2(1, 1),float2(0,
-      0),float2(0, 0),float2(0, 0),float2(0, 0),float2(0, 0),float2(0, 0));\n                                   
-      float _Property_7B40AA1C_Out_0 = Vector1_4B24F63;\n                                   
-      float _Property_85C76B20_Out_0 = Vector1_9B1964B1;\n                                   
-      float _Split_3B890ED_R_1 = IN.ObjectSpacePosition[0];\n                                   
-      float _Split_3B890ED_G_2 = IN.ObjectSpacePosition[1];\n                                   
-      float _Split_3B890ED_B_3 = IN.ObjectSpacePosition[2];\n                                   
-      float _Split_3B890ED_A_4 = 0;\n                                    float _InverseLerp_10C65378_Out_3;\n                                   
+      !alive) discard;\n    \n                                                float
+      Vector1_4B24F63 = (float)0;\n{\n    \n    Vector1_4B24F63 = (float)-4.16;\n}\n\n                                               
+      float Vector1_9B1964B1 = (float)0;\n{\n    \n    Vector1_9B1964B1 = (float)-2.63;\n}\n\n                                   
+      SurfaceDescription surface = (SurfaceDescription)0;\n                                   
+      Gradient _Gradient_98BB5E59_Out_0 = NewGradient(0, 7, 2, float4(0.8469865,
+      1, 0.0990566, 0),float4(0.7294118, 0.08530336, 0.07058822, 0.1819791),float4(0.4582389,
+      0.04705882, 0.4941176, 0.3604791),float4(0.02995378, 0.02745097, 0.2745098,
+      0.5303273),float4(0.1229052, 0.4049238, 0.6743622, 0.6967117),float4(0.3398006,
+      0.8679245, 0.393839, 0.8370947),float4(0.8470588, 1, 0.09803922, 0.9947967),float4(0,
+      0, 0, 0), float2(1, 0),float2(1, 1),float2(0, 0),float2(0, 0),float2(0, 0),float2(0,
+      0),float2(0, 0),float2(0, 0));\n                                    float _Property_7B40AA1C_Out_0
+      = Vector1_4B24F63;\n                                    float _Property_85C76B20_Out_0
+      = Vector1_9B1964B1;\n                                    float _Split_3B890ED_R_1
+      = IN.ObjectSpacePosition[0];\n                                    float _Split_3B890ED_G_2
+      = IN.ObjectSpacePosition[1];\n                                    float _Split_3B890ED_B_3
+      = IN.ObjectSpacePosition[2];\n                                    float _Split_3B890ED_A_4
+      = 0;\n                                    float _InverseLerp_10C65378_Out_3;\n                                   
       Unity_InverseLerp_float(_Property_7B40AA1C_Out_0, _Property_85C76B20_Out_0,
       _Split_3B890ED_R_1, _InverseLerp_10C65378_Out_3);\n                                   
       float4 _SampleGradient_3305CB8E_Out_2;\n                                   
@@ -1088,9 +1089,9 @@ VisualEffectResource:
       VFX_USE_SCALEX_CURRENT\n                size3.x *= scaleX;\n               
       #endif\n                #if VFX_USE_SCALEY_CURRENT\n                size3.y
       *= scaleY;\n                #endif\n                #if VFX_USE_SCALEZ_CURRENT\n               
-      size3.z *= scaleZ;\n                #endif\n             SetAttribute_C707D62A(
-      /*inout */position, Position_a);\n             \n                float4x4 elementToVFX
-      = GetElementToVFXMatrix(axisX,axisY,axisZ,float3(angleX,angleY,angleZ),float3(pivotX,pivotY,pivotZ),size3,position);\n\n           
+      size3.z *= scaleZ;\n                #endif\n             {\n                
+      SetAttribute_C707D62A( /*inout */position, float3(-3.8,0,0));\n            
+      }\n             \n                float4x4 elementToVFX = GetElementToVFXMatrix(axisX,axisY,axisZ,float3(angleX,angleY,angleZ),float3(pivotX,pivotY,pivotZ),size3,position);\n\n           
       #ifdef ATTRIBUTES_NEED_NORMAL\n                float normalFlip = (size3.x
       * size3.y * size3.z) < 0 ? -1 : 1;\n                inputMesh.normalOS.xyz
       = normalize(-transpose(elementToVFX)[2].xyz) * normalFlip;\n            #endif\n           
@@ -1220,9 +1221,7 @@ VisualEffectResource:
       //-------------------------------------------------------------------------------------\n                   
       \n                        //-------------------------------------------------------------------------------------\n                       
       // Graph generated code\n                        //-------------------------------------------------------------------------------------\n                               
-      // Shared Graph Properties (uniform inputs)\n            CBUFFER_START(parameters)\n               
-      float3 Position_a;\n                float Vector1_4B24F63;\n               
-      float Vector1_9B1964B1;\n                uint3 PADDING_0;\n            CBUFFER_END\n\n                               
+      // Shared Graph Properties (uniform inputs)\n\n                               
       struct SurfaceDescriptionInputs {\n                                    #if
       UNITY_VFX_ACTIVE\n                                    uint particleID;\n                                   
       #endif // UNITY_VFX_ACTIVE\n                                };\n                           
@@ -1246,12 +1245,15 @@ VisualEffectResource:
       = (float)0;\n                                    float scaleX = (float)1;\n                                   
       float scaleY = (float)1;\n                                    float scaleZ
       = (float)1;\n                                    \n            \n\n    if(
-      !alive) discard;\n    \n                                    SurfaceDescription
-      surface = (SurfaceDescription)0;\n                                    surface.Alpha
-      = 1;\n                                    surface.AlphaClipThreshold = 0.5;\n                                   
-      surface.Alpha *= alpha;\n                                    return surface;\n                               
-      }\n                            // Pixel Graph Evaluation\n                               
-      \n                        //-------------------------------------------------------------------------------------\n                       
+      !alive) discard;\n    \n                                                float
+      Vector1_4B24F63 = (float)0;\n{\n    \n    Vector1_4B24F63 = (float)-4.16;\n}\n\n                                               
+      float Vector1_9B1964B1 = (float)0;\n{\n    \n    Vector1_9B1964B1 = (float)-2.63;\n}\n\n                                   
+      SurfaceDescription surface = (SurfaceDescription)0;\n                                   
+      surface.Alpha = 1;\n                                    surface.AlphaClipThreshold
+      = 0.5;\n                                    surface.Alpha *= alpha;\n                                   
+      return surface;\n                                }\n                           
+      // Pixel Graph Evaluation\n                                \n                       
+      //-------------------------------------------------------------------------------------\n                       
       // End graph generated code\n                        //-------------------------------------------------------------------------------------\n                   
       \n                    // $include(\"VertexAnimation.template.hlsl\")\n                   
       \n                    \n                    //-------------------------------------------------------------------------------------\n                   
@@ -1387,9 +1389,9 @@ VisualEffectResource:
       VFX_USE_SCALEX_CURRENT\n                size3.x *= scaleX;\n               
       #endif\n                #if VFX_USE_SCALEY_CURRENT\n                size3.y
       *= scaleY;\n                #endif\n                #if VFX_USE_SCALEZ_CURRENT\n               
-      size3.z *= scaleZ;\n                #endif\n             SetAttribute_C707D62A(
-      /*inout */position, Position_a);\n             \n                float4x4 elementToVFX
-      = GetElementToVFXMatrix(axisX,axisY,axisZ,float3(angleX,angleY,angleZ),float3(pivotX,pivotY,pivotZ),size3,position);\n\n           
+      size3.z *= scaleZ;\n                #endif\n             {\n                
+      SetAttribute_C707D62A( /*inout */position, float3(-3.8,0,0));\n            
+      }\n             \n                float4x4 elementToVFX = GetElementToVFXMatrix(axisX,axisY,axisZ,float3(angleX,angleY,angleZ),float3(pivotX,pivotY,pivotZ),size3,position);\n\n           
       #ifdef ATTRIBUTES_NEED_NORMAL\n                float normalFlip = (size3.x
       * size3.y * size3.z) < 0 ? -1 : 1;\n                inputMesh.normalOS.xyz
       = normalize(-transpose(elementToVFX)[2].xyz) * normalFlip;\n            #endif\n           
@@ -1520,9 +1522,7 @@ VisualEffectResource:
       //-------------------------------------------------------------------------------------\n                   
       \n                        //-------------------------------------------------------------------------------------\n                       
       // Graph generated code\n                        //-------------------------------------------------------------------------------------\n                               
-      // Shared Graph Properties (uniform inputs)\n            CBUFFER_START(parameters)\n               
-      float3 Position_a;\n                float Vector1_4B24F63;\n               
-      float Vector1_9B1964B1;\n                uint3 PADDING_0;\n            CBUFFER_END\n\n                               
+      // Shared Graph Properties (uniform inputs)\n\n                               
       struct SurfaceDescriptionInputs {\n                                    #if
       UNITY_VFX_ACTIVE\n                                    uint particleID;\n                                   
       #endif // UNITY_VFX_ACTIVE\n                                };\n                           
@@ -1546,12 +1546,15 @@ VisualEffectResource:
       = (float)0;\n                                    float scaleX = (float)1;\n                                   
       float scaleY = (float)1;\n                                    float scaleZ
       = (float)1;\n                                    \n            \n\n    if(
-      !alive) discard;\n    \n                                    SurfaceDescription
-      surface = (SurfaceDescription)0;\n                                    surface.Alpha
-      = 1;\n                                    surface.AlphaClipThreshold = 0.5;\n                                   
-      surface.Alpha *= alpha;\n                                    return surface;\n                               
-      }\n                            // Pixel Graph Evaluation\n                               
-      \n                        //-------------------------------------------------------------------------------------\n                       
+      !alive) discard;\n    \n                                                float
+      Vector1_4B24F63 = (float)0;\n{\n    \n    Vector1_4B24F63 = (float)-4.16;\n}\n\n                                               
+      float Vector1_9B1964B1 = (float)0;\n{\n    \n    Vector1_9B1964B1 = (float)-2.63;\n}\n\n                                   
+      SurfaceDescription surface = (SurfaceDescription)0;\n                                   
+      surface.Alpha = 1;\n                                    surface.AlphaClipThreshold
+      = 0.5;\n                                    surface.Alpha *= alpha;\n                                   
+      return surface;\n                                }\n                           
+      // Pixel Graph Evaluation\n                                \n                       
+      //-------------------------------------------------------------------------------------\n                       
       // End graph generated code\n                        //-------------------------------------------------------------------------------------\n                   
       \n                    // $include(\"VertexAnimation.template.hlsl\")\n                   
       \n                    \n                    //-------------------------------------------------------------------------------------\n                   
@@ -1687,9 +1690,9 @@ VisualEffectResource:
       VFX_USE_SCALEX_CURRENT\n                size3.x *= scaleX;\n               
       #endif\n                #if VFX_USE_SCALEY_CURRENT\n                size3.y
       *= scaleY;\n                #endif\n                #if VFX_USE_SCALEZ_CURRENT\n               
-      size3.z *= scaleZ;\n                #endif\n             SetAttribute_C707D62A(
-      /*inout */position, Position_a);\n             \n                float4x4 elementToVFX
-      = GetElementToVFXMatrix(axisX,axisY,axisZ,float3(angleX,angleY,angleZ),float3(pivotX,pivotY,pivotZ),size3,position);\n\n           
+      size3.z *= scaleZ;\n                #endif\n             {\n                
+      SetAttribute_C707D62A( /*inout */position, float3(-3.8,0,0));\n            
+      }\n             \n                float4x4 elementToVFX = GetElementToVFXMatrix(axisX,axisY,axisZ,float3(angleX,angleY,angleZ),float3(pivotX,pivotY,pivotZ),size3,position);\n\n           
       #ifdef ATTRIBUTES_NEED_NORMAL\n                float normalFlip = (size3.x
       * size3.y * size3.z) < 0 ? -1 : 1;\n                inputMesh.normalOS.xyz
       = normalize(-transpose(elementToVFX)[2].xyz) * normalFlip;\n            #endif\n           
@@ -1822,9 +1825,7 @@ VisualEffectResource:
       //-------------------------------------------------------------------------------------\n                   
       \n                        //-------------------------------------------------------------------------------------\n                       
       // Graph generated code\n                        //-------------------------------------------------------------------------------------\n                               
-      // Shared Graph Properties (uniform inputs)\n            CBUFFER_START(parameters)\n               
-      float3 Position_a;\n                float Vector1_4B24F63;\n               
-      float Vector1_9B1964B1;\n                uint3 PADDING_0;\n            CBUFFER_END\n\n                               
+      // Shared Graph Properties (uniform inputs)\n\n                               
       struct SurfaceDescriptionInputs {\n                                    #if
       UNITY_VFX_ACTIVE\n                                    uint particleID;\n                                   
       #endif // UNITY_VFX_ACTIVE\n                                };\n                           
@@ -1848,12 +1849,15 @@ VisualEffectResource:
       = (float)0;\n                                    float scaleX = (float)1;\n                                   
       float scaleY = (float)1;\n                                    float scaleZ
       = (float)1;\n                                    \n            \n\n    if(
-      !alive) discard;\n    \n                                    SurfaceDescription
-      surface = (SurfaceDescription)0;\n                                    surface.Alpha
-      = 1;\n                                    surface.AlphaClipThreshold = 0.5;\n                                   
-      surface.Alpha *= alpha;\n                                    return surface;\n                               
-      }\n                            // Pixel Graph Evaluation\n                               
-      \n                        //-------------------------------------------------------------------------------------\n                       
+      !alive) discard;\n    \n                                                float
+      Vector1_4B24F63 = (float)0;\n{\n    \n    Vector1_4B24F63 = (float)-4.16;\n}\n\n                                               
+      float Vector1_9B1964B1 = (float)0;\n{\n    \n    Vector1_9B1964B1 = (float)-2.63;\n}\n\n                                   
+      SurfaceDescription surface = (SurfaceDescription)0;\n                                   
+      surface.Alpha = 1;\n                                    surface.AlphaClipThreshold
+      = 0.5;\n                                    surface.Alpha *= alpha;\n                                   
+      return surface;\n                                }\n                           
+      // Pixel Graph Evaluation\n                                \n                       
+      //-------------------------------------------------------------------------------------\n                       
       // End graph generated code\n                        //-------------------------------------------------------------------------------------\n                   
       \n                    // $include(\"VertexAnimation.template.hlsl\")\n                   
       \n                    \n                    //-------------------------------------------------------------------------------------\n                   
@@ -1989,9 +1993,9 @@ VisualEffectResource:
       VFX_USE_SCALEX_CURRENT\n                size3.x *= scaleX;\n               
       #endif\n                #if VFX_USE_SCALEY_CURRENT\n                size3.y
       *= scaleY;\n                #endif\n                #if VFX_USE_SCALEZ_CURRENT\n               
-      size3.z *= scaleZ;\n                #endif\n             SetAttribute_C707D62A(
-      /*inout */position, Position_a);\n             \n                float4x4 elementToVFX
-      = GetElementToVFXMatrix(axisX,axisY,axisZ,float3(angleX,angleY,angleZ),float3(pivotX,pivotY,pivotZ),size3,position);\n\n           
+      size3.z *= scaleZ;\n                #endif\n             {\n                
+      SetAttribute_C707D62A( /*inout */position, float3(-3.8,0,0));\n            
+      }\n             \n                float4x4 elementToVFX = GetElementToVFXMatrix(axisX,axisY,axisZ,float3(angleX,angleY,angleZ),float3(pivotX,pivotY,pivotZ),size3,position);\n\n           
       #ifdef ATTRIBUTES_NEED_NORMAL\n                float normalFlip = (size3.x
       * size3.y * size3.z) < 0 ? -1 : 1;\n                inputMesh.normalOS.xyz
       = normalize(-transpose(elementToVFX)[2].xyz) * normalFlip;\n            #endif\n           
@@ -2127,9 +2131,7 @@ VisualEffectResource:
       //-------------------------------------------------------------------------------------\n                   
       \n                        //-------------------------------------------------------------------------------------\n                       
       // Graph generated code\n                        //-------------------------------------------------------------------------------------\n                               
-      // Shared Graph Properties (uniform inputs)\n            CBUFFER_START(parameters)\n               
-      float3 Position_a;\n                float Vector1_4B24F63;\n               
-      float Vector1_9B1964B1;\n                uint3 PADDING_0;\n            CBUFFER_END\n\n                               
+      // Shared Graph Properties (uniform inputs)\n\n                               
       struct SurfaceDescriptionInputs {\n                                    #if
       UNITY_VFX_ACTIVE\n                                    uint particleID;\n                                   
       #endif // UNITY_VFX_ACTIVE\n                                };\n                           
@@ -2153,12 +2155,15 @@ VisualEffectResource:
       = (float)0;\n                                    float scaleX = (float)1;\n                                   
       float scaleY = (float)1;\n                                    float scaleZ
       = (float)1;\n                                    \n            \n\n    if(
-      !alive) discard;\n    \n                                    SurfaceDescription
-      surface = (SurfaceDescription)0;\n                                    surface.Alpha
-      = 1;\n                                    surface.AlphaClipThreshold = 0.5;\n                                   
-      surface.Alpha *= alpha;\n                                    return surface;\n                               
-      }\n                            // Pixel Graph Evaluation\n                               
-      \n                        //-------------------------------------------------------------------------------------\n                       
+      !alive) discard;\n    \n                                                float
+      Vector1_4B24F63 = (float)0;\n{\n    \n    Vector1_4B24F63 = (float)-4.16;\n}\n\n                                               
+      float Vector1_9B1964B1 = (float)0;\n{\n    \n    Vector1_9B1964B1 = (float)-2.63;\n}\n\n                                   
+      SurfaceDescription surface = (SurfaceDescription)0;\n                                   
+      surface.Alpha = 1;\n                                    surface.AlphaClipThreshold
+      = 0.5;\n                                    surface.Alpha *= alpha;\n                                   
+      return surface;\n                                }\n                           
+      // Pixel Graph Evaluation\n                                \n                       
+      //-------------------------------------------------------------------------------------\n                       
       // End graph generated code\n                        //-------------------------------------------------------------------------------------\n                   
       \n                    // $include(\"VertexAnimation.template.hlsl\")\n                   
       \n                    \n                    //-------------------------------------------------------------------------------------\n                   
@@ -2294,9 +2299,9 @@ VisualEffectResource:
       VFX_USE_SCALEX_CURRENT\n                size3.x *= scaleX;\n               
       #endif\n                #if VFX_USE_SCALEY_CURRENT\n                size3.y
       *= scaleY;\n                #endif\n                #if VFX_USE_SCALEZ_CURRENT\n               
-      size3.z *= scaleZ;\n                #endif\n             SetAttribute_C707D62A(
-      /*inout */position, Position_a);\n             \n                float4x4 elementToVFX
-      = GetElementToVFXMatrix(axisX,axisY,axisZ,float3(angleX,angleY,angleZ),float3(pivotX,pivotY,pivotZ),size3,position);\n\n           
+      size3.z *= scaleZ;\n                #endif\n             {\n                
+      SetAttribute_C707D62A( /*inout */position, float3(-3.8,0,0));\n            
+      }\n             \n                float4x4 elementToVFX = GetElementToVFXMatrix(axisX,axisY,axisZ,float3(angleX,angleY,angleZ),float3(pivotX,pivotY,pivotZ),size3,position);\n\n           
       #ifdef ATTRIBUTES_NEED_NORMAL\n                float normalFlip = (size3.x
       * size3.y * size3.z) < 0 ? -1 : 1;\n                inputMesh.normalOS.xyz
       = normalize(-transpose(elementToVFX)[2].xyz) * normalFlip;\n            #endif\n           
@@ -2435,9 +2440,7 @@ VisualEffectResource:
       //-------------------------------------------------------------------------------------\n                   
       \n                        //-------------------------------------------------------------------------------------\n                       
       // Graph generated code\n                        //-------------------------------------------------------------------------------------\n                               
-      // Shared Graph Properties (uniform inputs)\n            CBUFFER_START(parameters)\n               
-      float3 Position_a;\n                float Vector1_4B24F63;\n               
-      float Vector1_9B1964B1;\n                uint3 PADDING_0;\n            CBUFFER_END\n\n                               
+      // Shared Graph Properties (uniform inputs)\n\n                               
       struct SurfaceDescriptionInputs {\n                                    float3
       ObjectSpacePosition; // optional\n                                    #if UNITY_VFX_ACTIVE\n                                   
       uint particleID;\n                                    #endif // UNITY_VFX_ACTIVE\n                               
@@ -2483,20 +2486,23 @@ VisualEffectResource:
       = (float)0;\n                                    float scaleX = (float)1;\n                                   
       float scaleY = (float)1;\n                                    float scaleZ
       = (float)1;\n                                    \n            \n\n    if(
-      !alive) discard;\n    \n                                    SurfaceDescription
-      surface = (SurfaceDescription)0;\n                                    Gradient
-      _Gradient_98BB5E59_Out_0 = NewGradient(0, 7, 2, float4(0.8469865, 1, 0.0990566,
-      0),float4(0.7294118, 0.08530336, 0.07058822, 0.1819791),float4(0.4582389, 0.04705882,
-      0.4941176, 0.3604791),float4(0.02995378, 0.02745097, 0.2745098, 0.5303273),float4(0.1229052,
-      0.4049238, 0.6743622, 0.6967117),float4(0.3398006, 0.8679245, 0.393839, 0.8370947),float4(0.8470588,
-      1, 0.09803922, 0.9947967),float4(0, 0, 0, 0), float2(1, 0),float2(1, 1),float2(0,
-      0),float2(0, 0),float2(0, 0),float2(0, 0),float2(0, 0),float2(0, 0));\n                                   
-      float _Property_7B40AA1C_Out_0 = Vector1_4B24F63;\n                                   
-      float _Property_85C76B20_Out_0 = Vector1_9B1964B1;\n                                   
-      float _Split_3B890ED_R_1 = IN.ObjectSpacePosition[0];\n                                   
-      float _Split_3B890ED_G_2 = IN.ObjectSpacePosition[1];\n                                   
-      float _Split_3B890ED_B_3 = IN.ObjectSpacePosition[2];\n                                   
-      float _Split_3B890ED_A_4 = 0;\n                                    float _InverseLerp_10C65378_Out_3;\n                                   
+      !alive) discard;\n    \n                                                float
+      Vector1_4B24F63 = (float)0;\n{\n    \n    Vector1_4B24F63 = (float)-4.16;\n}\n\n                                               
+      float Vector1_9B1964B1 = (float)0;\n{\n    \n    Vector1_9B1964B1 = (float)-2.63;\n}\n\n                                   
+      SurfaceDescription surface = (SurfaceDescription)0;\n                                   
+      Gradient _Gradient_98BB5E59_Out_0 = NewGradient(0, 7, 2, float4(0.8469865,
+      1, 0.0990566, 0),float4(0.7294118, 0.08530336, 0.07058822, 0.1819791),float4(0.4582389,
+      0.04705882, 0.4941176, 0.3604791),float4(0.02995378, 0.02745097, 0.2745098,
+      0.5303273),float4(0.1229052, 0.4049238, 0.6743622, 0.6967117),float4(0.3398006,
+      0.8679245, 0.393839, 0.8370947),float4(0.8470588, 1, 0.09803922, 0.9947967),float4(0,
+      0, 0, 0), float2(1, 0),float2(1, 1),float2(0, 0),float2(0, 0),float2(0, 0),float2(0,
+      0),float2(0, 0),float2(0, 0));\n                                    float _Property_7B40AA1C_Out_0
+      = Vector1_4B24F63;\n                                    float _Property_85C76B20_Out_0
+      = Vector1_9B1964B1;\n                                    float _Split_3B890ED_R_1
+      = IN.ObjectSpacePosition[0];\n                                    float _Split_3B890ED_G_2
+      = IN.ObjectSpacePosition[1];\n                                    float _Split_3B890ED_B_3
+      = IN.ObjectSpacePosition[2];\n                                    float _Split_3B890ED_A_4
+      = 0;\n                                    float _InverseLerp_10C65378_Out_3;\n                                   
       Unity_InverseLerp_float(_Property_7B40AA1C_Out_0, _Property_85C76B20_Out_0,
       _Split_3B890ED_R_1, _InverseLerp_10C65378_Out_3);\n                                   
       float4 _SampleGradient_3305CB8E_Out_2;\n                                   
@@ -2644,9 +2650,9 @@ VisualEffectResource:
       VFX_USE_SCALEX_CURRENT\n                size3.x *= scaleX;\n               
       #endif\n                #if VFX_USE_SCALEY_CURRENT\n                size3.y
       *= scaleY;\n                #endif\n                #if VFX_USE_SCALEZ_CURRENT\n               
-      size3.z *= scaleZ;\n                #endif\n             SetAttribute_C707D62A(
-      /*inout */position, Position_a);\n             \n                float4x4 elementToVFX
-      = GetElementToVFXMatrix(axisX,axisY,axisZ,float3(angleX,angleY,angleZ),float3(pivotX,pivotY,pivotZ),size3,position);\n\n           
+      size3.z *= scaleZ;\n                #endif\n             {\n                
+      SetAttribute_C707D62A( /*inout */position, float3(-3.8,0,0));\n            
+      }\n             \n                float4x4 elementToVFX = GetElementToVFXMatrix(axisX,axisY,axisZ,float3(angleX,angleY,angleZ),float3(pivotX,pivotY,pivotZ),size3,position);\n\n           
       #ifdef ATTRIBUTES_NEED_NORMAL\n                float normalFlip = (size3.x
       * size3.y * size3.z) < 0 ? -1 : 1;\n                inputMesh.normalOS.xyz
       = normalize(-transpose(elementToVFX)[2].xyz) * normalFlip;\n            #endif\n           
@@ -2794,9 +2800,7 @@ VisualEffectResource:
       //-------------------------------------------------------------------------------------\n                   
       \n                        //-------------------------------------------------------------------------------------\n                       
       // Graph generated code\n                        //-------------------------------------------------------------------------------------\n                               
-      // Shared Graph Properties (uniform inputs)\n            CBUFFER_START(parameters)\n               
-      float3 Position_a;\n                float Vector1_4B24F63;\n               
-      float Vector1_9B1964B1;\n                uint3 PADDING_0;\n            CBUFFER_END\n\n                               
+      // Shared Graph Properties (uniform inputs)\n\n                               
       struct SurfaceDescriptionInputs {\n                                    float3
       ObjectSpacePosition; // optional\n                                    #if UNITY_VFX_ACTIVE\n                                   
       uint particleID;\n                                    #endif // UNITY_VFX_ACTIVE\n                               
@@ -2842,20 +2846,23 @@ VisualEffectResource:
       = (float)0;\n                                    float scaleX = (float)1;\n                                   
       float scaleY = (float)1;\n                                    float scaleZ
       = (float)1;\n                                    \n            \n\n    if(
-      !alive) discard;\n    \n                                    SurfaceDescription
-      surface = (SurfaceDescription)0;\n                                    Gradient
-      _Gradient_98BB5E59_Out_0 = NewGradient(0, 7, 2, float4(0.8469865, 1, 0.0990566,
-      0),float4(0.7294118, 0.08530336, 0.07058822, 0.1819791),float4(0.4582389, 0.04705882,
-      0.4941176, 0.3604791),float4(0.02995378, 0.02745097, 0.2745098, 0.5303273),float4(0.1229052,
-      0.4049238, 0.6743622, 0.6967117),float4(0.3398006, 0.8679245, 0.393839, 0.8370947),float4(0.8470588,
-      1, 0.09803922, 0.9947967),float4(0, 0, 0, 0), float2(1, 0),float2(1, 1),float2(0,
-      0),float2(0, 0),float2(0, 0),float2(0, 0),float2(0, 0),float2(0, 0));\n                                   
-      float _Property_7B40AA1C_Out_0 = Vector1_4B24F63;\n                                   
-      float _Property_85C76B20_Out_0 = Vector1_9B1964B1;\n                                   
-      float _Split_3B890ED_R_1 = IN.ObjectSpacePosition[0];\n                                   
-      float _Split_3B890ED_G_2 = IN.ObjectSpacePosition[1];\n                                   
-      float _Split_3B890ED_B_3 = IN.ObjectSpacePosition[2];\n                                   
-      float _Split_3B890ED_A_4 = 0;\n                                    float _InverseLerp_10C65378_Out_3;\n                                   
+      !alive) discard;\n    \n                                                float
+      Vector1_4B24F63 = (float)0;\n{\n    \n    Vector1_4B24F63 = (float)-1.21;\n}\n\n                                               
+      float Vector1_9B1964B1 = (float)0;\n{\n    \n    Vector1_9B1964B1 = (float)0;\n}\n\n                                   
+      SurfaceDescription surface = (SurfaceDescription)0;\n                                   
+      Gradient _Gradient_98BB5E59_Out_0 = NewGradient(0, 7, 2, float4(0.8469865,
+      1, 0.0990566, 0),float4(0.7294118, 0.08530336, 0.07058822, 0.1819791),float4(0.4582389,
+      0.04705882, 0.4941176, 0.3604791),float4(0.02995378, 0.02745097, 0.2745098,
+      0.5303273),float4(0.1229052, 0.4049238, 0.6743622, 0.6967117),float4(0.3398006,
+      0.8679245, 0.393839, 0.8370947),float4(0.8470588, 1, 0.09803922, 0.9947967),float4(0,
+      0, 0, 0), float2(1, 0),float2(1, 1),float2(0, 0),float2(0, 0),float2(0, 0),float2(0,
+      0),float2(0, 0),float2(0, 0));\n                                    float _Property_7B40AA1C_Out_0
+      = Vector1_4B24F63;\n                                    float _Property_85C76B20_Out_0
+      = Vector1_9B1964B1;\n                                    float _Split_3B890ED_R_1
+      = IN.ObjectSpacePosition[0];\n                                    float _Split_3B890ED_G_2
+      = IN.ObjectSpacePosition[1];\n                                    float _Split_3B890ED_B_3
+      = IN.ObjectSpacePosition[2];\n                                    float _Split_3B890ED_A_4
+      = 0;\n                                    float _InverseLerp_10C65378_Out_3;\n                                   
       Unity_InverseLerp_float(_Property_7B40AA1C_Out_0, _Property_85C76B20_Out_0,
       _Split_3B890ED_R_1, _InverseLerp_10C65378_Out_3);\n                                   
       float4 _SampleGradient_3305CB8E_Out_2;\n                                   
@@ -3005,9 +3012,9 @@ VisualEffectResource:
       VFX_USE_SCALEX_CURRENT\n                size3.x *= scaleX;\n               
       #endif\n                #if VFX_USE_SCALEY_CURRENT\n                size3.y
       *= scaleY;\n                #endif\n                #if VFX_USE_SCALEZ_CURRENT\n               
-      size3.z *= scaleZ;\n                #endif\n             SetAttribute_C707D62A(
-      /*inout */position, Position_a);\n             \n                float4x4 elementToVFX
-      = GetElementToVFXMatrix(axisX,axisY,axisZ,float3(angleX,angleY,angleZ),float3(pivotX,pivotY,pivotZ),size3,position);\n\n           
+      size3.z *= scaleZ;\n                #endif\n             {\n                
+      SetAttribute_C707D62A( /*inout */position, float3(-0.8,0,0));\n            
+      }\n             \n                float4x4 elementToVFX = GetElementToVFXMatrix(axisX,axisY,axisZ,float3(angleX,angleY,angleZ),float3(pivotX,pivotY,pivotZ),size3,position);\n\n           
       #ifdef ATTRIBUTES_NEED_NORMAL\n                float normalFlip = (size3.x
       * size3.y * size3.z) < 0 ? -1 : 1;\n                inputMesh.normalOS.xyz
       = normalize(-transpose(elementToVFX)[2].xyz) * normalFlip;\n            #endif\n           
@@ -3137,9 +3144,7 @@ VisualEffectResource:
       //-------------------------------------------------------------------------------------\n                   
       \n                        //-------------------------------------------------------------------------------------\n                       
       // Graph generated code\n                        //-------------------------------------------------------------------------------------\n                               
-      // Shared Graph Properties (uniform inputs)\n            CBUFFER_START(parameters)\n               
-      float3 Position_a;\n                float Vector1_4B24F63;\n               
-      float Vector1_9B1964B1;\n                uint3 PADDING_0;\n            CBUFFER_END\n\n                               
+      // Shared Graph Properties (uniform inputs)\n\n                               
       struct SurfaceDescriptionInputs {\n                                    #if
       UNITY_VFX_ACTIVE\n                                    uint particleID;\n                                   
       #endif // UNITY_VFX_ACTIVE\n                                };\n                           
@@ -3163,12 +3168,15 @@ VisualEffectResource:
       = (float)0;\n                                    float scaleX = (float)1;\n                                   
       float scaleY = (float)1;\n                                    float scaleZ
       = (float)1;\n                                    \n            \n\n    if(
-      !alive) discard;\n    \n                                    SurfaceDescription
-      surface = (SurfaceDescription)0;\n                                    surface.Alpha
-      = 1;\n                                    surface.AlphaClipThreshold = 0.5;\n                                   
-      surface.Alpha *= alpha;\n                                    return surface;\n                               
-      }\n                            // Pixel Graph Evaluation\n                               
-      \n                        //-------------------------------------------------------------------------------------\n                       
+      !alive) discard;\n    \n                                                float
+      Vector1_4B24F63 = (float)0;\n{\n    \n    Vector1_4B24F63 = (float)-1.21;\n}\n\n                                               
+      float Vector1_9B1964B1 = (float)0;\n{\n    \n    Vector1_9B1964B1 = (float)0;\n}\n\n                                   
+      SurfaceDescription surface = (SurfaceDescription)0;\n                                   
+      surface.Alpha = 1;\n                                    surface.AlphaClipThreshold
+      = 0.5;\n                                    surface.Alpha *= alpha;\n                                   
+      return surface;\n                                }\n                           
+      // Pixel Graph Evaluation\n                                \n                       
+      //-------------------------------------------------------------------------------------\n                       
       // End graph generated code\n                        //-------------------------------------------------------------------------------------\n                   
       \n                    // $include(\"VertexAnimation.template.hlsl\")\n                   
       \n                    \n                    //-------------------------------------------------------------------------------------\n                   
@@ -3306,9 +3314,9 @@ VisualEffectResource:
       VFX_USE_SCALEX_CURRENT\n                size3.x *= scaleX;\n               
       #endif\n                #if VFX_USE_SCALEY_CURRENT\n                size3.y
       *= scaleY;\n                #endif\n                #if VFX_USE_SCALEZ_CURRENT\n               
-      size3.z *= scaleZ;\n                #endif\n             SetAttribute_C707D62A(
-      /*inout */position, Position_a);\n             \n                float4x4 elementToVFX
-      = GetElementToVFXMatrix(axisX,axisY,axisZ,float3(angleX,angleY,angleZ),float3(pivotX,pivotY,pivotZ),size3,position);\n\n           
+      size3.z *= scaleZ;\n                #endif\n             {\n                
+      SetAttribute_C707D62A( /*inout */position, float3(-0.8,0,0));\n            
+      }\n             \n                float4x4 elementToVFX = GetElementToVFXMatrix(axisX,axisY,axisZ,float3(angleX,angleY,angleZ),float3(pivotX,pivotY,pivotZ),size3,position);\n\n           
       #ifdef ATTRIBUTES_NEED_NORMAL\n                float normalFlip = (size3.x
       * size3.y * size3.z) < 0 ? -1 : 1;\n                inputMesh.normalOS.xyz
       = normalize(-transpose(elementToVFX)[2].xyz) * normalFlip;\n            #endif\n           
@@ -3439,9 +3447,7 @@ VisualEffectResource:
       //-------------------------------------------------------------------------------------\n                   
       \n                        //-------------------------------------------------------------------------------------\n                       
       // Graph generated code\n                        //-------------------------------------------------------------------------------------\n                               
-      // Shared Graph Properties (uniform inputs)\n            CBUFFER_START(parameters)\n               
-      float3 Position_a;\n                float Vector1_4B24F63;\n               
-      float Vector1_9B1964B1;\n                uint3 PADDING_0;\n            CBUFFER_END\n\n                               
+      // Shared Graph Properties (uniform inputs)\n\n                               
       struct SurfaceDescriptionInputs {\n                                    #if
       UNITY_VFX_ACTIVE\n                                    uint particleID;\n                                   
       #endif // UNITY_VFX_ACTIVE\n                                };\n                           
@@ -3465,12 +3471,15 @@ VisualEffectResource:
       = (float)0;\n                                    float scaleX = (float)1;\n                                   
       float scaleY = (float)1;\n                                    float scaleZ
       = (float)1;\n                                    \n            \n\n    if(
-      !alive) discard;\n    \n                                    SurfaceDescription
-      surface = (SurfaceDescription)0;\n                                    surface.Alpha
-      = 1;\n                                    surface.AlphaClipThreshold = 0.5;\n                                   
-      surface.Alpha *= alpha;\n                                    return surface;\n                               
-      }\n                            // Pixel Graph Evaluation\n                               
-      \n                        //-------------------------------------------------------------------------------------\n                       
+      !alive) discard;\n    \n                                                float
+      Vector1_4B24F63 = (float)0;\n{\n    \n    Vector1_4B24F63 = (float)-1.21;\n}\n\n                                               
+      float Vector1_9B1964B1 = (float)0;\n{\n    \n    Vector1_9B1964B1 = (float)0;\n}\n\n                                   
+      SurfaceDescription surface = (SurfaceDescription)0;\n                                   
+      surface.Alpha = 1;\n                                    surface.AlphaClipThreshold
+      = 0.5;\n                                    surface.Alpha *= alpha;\n                                   
+      return surface;\n                                }\n                           
+      // Pixel Graph Evaluation\n                                \n                       
+      //-------------------------------------------------------------------------------------\n                       
       // End graph generated code\n                        //-------------------------------------------------------------------------------------\n                   
       \n                    // $include(\"VertexAnimation.template.hlsl\")\n                   
       \n                    \n                    //-------------------------------------------------------------------------------------\n                   
@@ -3608,9 +3617,9 @@ VisualEffectResource:
       VFX_USE_SCALEX_CURRENT\n                size3.x *= scaleX;\n               
       #endif\n                #if VFX_USE_SCALEY_CURRENT\n                size3.y
       *= scaleY;\n                #endif\n                #if VFX_USE_SCALEZ_CURRENT\n               
-      size3.z *= scaleZ;\n                #endif\n             SetAttribute_C707D62A(
-      /*inout */position, Position_a);\n             \n                float4x4 elementToVFX
-      = GetElementToVFXMatrix(axisX,axisY,axisZ,float3(angleX,angleY,angleZ),float3(pivotX,pivotY,pivotZ),size3,position);\n\n           
+      size3.z *= scaleZ;\n                #endif\n             {\n                
+      SetAttribute_C707D62A( /*inout */position, float3(-0.8,0,0));\n            
+      }\n             \n                float4x4 elementToVFX = GetElementToVFXMatrix(axisX,axisY,axisZ,float3(angleX,angleY,angleZ),float3(pivotX,pivotY,pivotZ),size3,position);\n\n           
       #ifdef ATTRIBUTES_NEED_NORMAL\n                float normalFlip = (size3.x
       * size3.y * size3.z) < 0 ? -1 : 1;\n                inputMesh.normalOS.xyz
       = normalize(-transpose(elementToVFX)[2].xyz) * normalFlip;\n            #endif\n           
@@ -3743,9 +3752,7 @@ VisualEffectResource:
       //-------------------------------------------------------------------------------------\n                   
       \n                        //-------------------------------------------------------------------------------------\n                       
       // Graph generated code\n                        //-------------------------------------------------------------------------------------\n                               
-      // Shared Graph Properties (uniform inputs)\n            CBUFFER_START(parameters)\n               
-      float3 Position_a;\n                float Vector1_4B24F63;\n               
-      float Vector1_9B1964B1;\n                uint3 PADDING_0;\n            CBUFFER_END\n\n                               
+      // Shared Graph Properties (uniform inputs)\n\n                               
       struct SurfaceDescriptionInputs {\n                                    #if
       UNITY_VFX_ACTIVE\n                                    uint particleID;\n                                   
       #endif // UNITY_VFX_ACTIVE\n                                };\n                           
@@ -3769,12 +3776,15 @@ VisualEffectResource:
       = (float)0;\n                                    float scaleX = (float)1;\n                                   
       float scaleY = (float)1;\n                                    float scaleZ
       = (float)1;\n                                    \n            \n\n    if(
-      !alive) discard;\n    \n                                    SurfaceDescription
-      surface = (SurfaceDescription)0;\n                                    surface.Alpha
-      = 1;\n                                    surface.AlphaClipThreshold = 0.5;\n                                   
-      surface.Alpha *= alpha;\n                                    return surface;\n                               
-      }\n                            // Pixel Graph Evaluation\n                               
-      \n                        //-------------------------------------------------------------------------------------\n                       
+      !alive) discard;\n    \n                                                float
+      Vector1_4B24F63 = (float)0;\n{\n    \n    Vector1_4B24F63 = (float)-1.21;\n}\n\n                                               
+      float Vector1_9B1964B1 = (float)0;\n{\n    \n    Vector1_9B1964B1 = (float)0;\n}\n\n                                   
+      SurfaceDescription surface = (SurfaceDescription)0;\n                                   
+      surface.Alpha = 1;\n                                    surface.AlphaClipThreshold
+      = 0.5;\n                                    surface.Alpha *= alpha;\n                                   
+      return surface;\n                                }\n                           
+      // Pixel Graph Evaluation\n                                \n                       
+      //-------------------------------------------------------------------------------------\n                       
       // End graph generated code\n                        //-------------------------------------------------------------------------------------\n                   
       \n                    // $include(\"VertexAnimation.template.hlsl\")\n                   
       \n                    \n                    //-------------------------------------------------------------------------------------\n                   
@@ -3912,9 +3922,9 @@ VisualEffectResource:
       VFX_USE_SCALEX_CURRENT\n                size3.x *= scaleX;\n               
       #endif\n                #if VFX_USE_SCALEY_CURRENT\n                size3.y
       *= scaleY;\n                #endif\n                #if VFX_USE_SCALEZ_CURRENT\n               
-      size3.z *= scaleZ;\n                #endif\n             SetAttribute_C707D62A(
-      /*inout */position, Position_a);\n             \n                float4x4 elementToVFX
-      = GetElementToVFXMatrix(axisX,axisY,axisZ,float3(angleX,angleY,angleZ),float3(pivotX,pivotY,pivotZ),size3,position);\n\n           
+      size3.z *= scaleZ;\n                #endif\n             {\n                
+      SetAttribute_C707D62A( /*inout */position, float3(-0.8,0,0));\n            
+      }\n             \n                float4x4 elementToVFX = GetElementToVFXMatrix(axisX,axisY,axisZ,float3(angleX,angleY,angleZ),float3(pivotX,pivotY,pivotZ),size3,position);\n\n           
       #ifdef ATTRIBUTES_NEED_NORMAL\n                float normalFlip = (size3.x
       * size3.y * size3.z) < 0 ? -1 : 1;\n                inputMesh.normalOS.xyz
       = normalize(-transpose(elementToVFX)[2].xyz) * normalFlip;\n            #endif\n           
@@ -4050,9 +4060,7 @@ VisualEffectResource:
       //-------------------------------------------------------------------------------------\n                   
       \n                        //-------------------------------------------------------------------------------------\n                       
       // Graph generated code\n                        //-------------------------------------------------------------------------------------\n                               
-      // Shared Graph Properties (uniform inputs)\n            CBUFFER_START(parameters)\n               
-      float3 Position_a;\n                float Vector1_4B24F63;\n               
-      float Vector1_9B1964B1;\n                uint3 PADDING_0;\n            CBUFFER_END\n\n                               
+      // Shared Graph Properties (uniform inputs)\n\n                               
       struct SurfaceDescriptionInputs {\n                                    #if
       UNITY_VFX_ACTIVE\n                                    uint particleID;\n                                   
       #endif // UNITY_VFX_ACTIVE\n                                };\n                           
@@ -4076,12 +4084,15 @@ VisualEffectResource:
       = (float)0;\n                                    float scaleX = (float)1;\n                                   
       float scaleY = (float)1;\n                                    float scaleZ
       = (float)1;\n                                    \n            \n\n    if(
-      !alive) discard;\n    \n                                    SurfaceDescription
-      surface = (SurfaceDescription)0;\n                                    surface.Alpha
-      = 1;\n                                    surface.AlphaClipThreshold = 0.5;\n                                   
-      surface.Alpha *= alpha;\n                                    return surface;\n                               
-      }\n                            // Pixel Graph Evaluation\n                               
-      \n                        //-------------------------------------------------------------------------------------\n                       
+      !alive) discard;\n    \n                                                float
+      Vector1_4B24F63 = (float)0;\n{\n    \n    Vector1_4B24F63 = (float)-1.21;\n}\n\n                                               
+      float Vector1_9B1964B1 = (float)0;\n{\n    \n    Vector1_9B1964B1 = (float)0;\n}\n\n                                   
+      SurfaceDescription surface = (SurfaceDescription)0;\n                                   
+      surface.Alpha = 1;\n                                    surface.AlphaClipThreshold
+      = 0.5;\n                                    surface.Alpha *= alpha;\n                                   
+      return surface;\n                                }\n                           
+      // Pixel Graph Evaluation\n                                \n                       
+      //-------------------------------------------------------------------------------------\n                       
       // End graph generated code\n                        //-------------------------------------------------------------------------------------\n                   
       \n                    // $include(\"VertexAnimation.template.hlsl\")\n                   
       \n                    \n                    //-------------------------------------------------------------------------------------\n                   
@@ -4219,9 +4230,9 @@ VisualEffectResource:
       VFX_USE_SCALEX_CURRENT\n                size3.x *= scaleX;\n               
       #endif\n                #if VFX_USE_SCALEY_CURRENT\n                size3.y
       *= scaleY;\n                #endif\n                #if VFX_USE_SCALEZ_CURRENT\n               
-      size3.z *= scaleZ;\n                #endif\n             SetAttribute_C707D62A(
-      /*inout */position, Position_a);\n             \n                float4x4 elementToVFX
-      = GetElementToVFXMatrix(axisX,axisY,axisZ,float3(angleX,angleY,angleZ),float3(pivotX,pivotY,pivotZ),size3,position);\n\n           
+      size3.z *= scaleZ;\n                #endif\n             {\n                
+      SetAttribute_C707D62A( /*inout */position, float3(-0.8,0,0));\n            
+      }\n             \n                float4x4 elementToVFX = GetElementToVFXMatrix(axisX,axisY,axisZ,float3(angleX,angleY,angleZ),float3(pivotX,pivotY,pivotZ),size3,position);\n\n           
       #ifdef ATTRIBUTES_NEED_NORMAL\n                float normalFlip = (size3.x
       * size3.y * size3.z) < 0 ? -1 : 1;\n                inputMesh.normalOS.xyz
       = normalize(-transpose(elementToVFX)[2].xyz) * normalFlip;\n            #endif\n           
@@ -4360,9 +4371,7 @@ VisualEffectResource:
       //-------------------------------------------------------------------------------------\n                   
       \n                        //-------------------------------------------------------------------------------------\n                       
       // Graph generated code\n                        //-------------------------------------------------------------------------------------\n                               
-      // Shared Graph Properties (uniform inputs)\n            CBUFFER_START(parameters)\n               
-      float3 Position_a;\n                float Vector1_4B24F63;\n               
-      float Vector1_9B1964B1;\n                uint3 PADDING_0;\n            CBUFFER_END\n\n                               
+      // Shared Graph Properties (uniform inputs)\n\n                               
       struct SurfaceDescriptionInputs {\n                                    float3
       ObjectSpacePosition; // optional\n                                    #if UNITY_VFX_ACTIVE\n                                   
       uint particleID;\n                                    #endif // UNITY_VFX_ACTIVE\n                               
@@ -4408,20 +4417,23 @@ VisualEffectResource:
       = (float)0;\n                                    float scaleX = (float)1;\n                                   
       float scaleY = (float)1;\n                                    float scaleZ
       = (float)1;\n                                    \n            \n\n    if(
-      !alive) discard;\n    \n                                    SurfaceDescription
-      surface = (SurfaceDescription)0;\n                                    Gradient
-      _Gradient_98BB5E59_Out_0 = NewGradient(0, 7, 2, float4(0.8469865, 1, 0.0990566,
-      0),float4(0.7294118, 0.08530336, 0.07058822, 0.1819791),float4(0.4582389, 0.04705882,
-      0.4941176, 0.3604791),float4(0.02995378, 0.02745097, 0.2745098, 0.5303273),float4(0.1229052,
-      0.4049238, 0.6743622, 0.6967117),float4(0.3398006, 0.8679245, 0.393839, 0.8370947),float4(0.8470588,
-      1, 0.09803922, 0.9947967),float4(0, 0, 0, 0), float2(1, 0),float2(1, 1),float2(0,
-      0),float2(0, 0),float2(0, 0),float2(0, 0),float2(0, 0),float2(0, 0));\n                                   
-      float _Property_7B40AA1C_Out_0 = Vector1_4B24F63;\n                                   
-      float _Property_85C76B20_Out_0 = Vector1_9B1964B1;\n                                   
-      float _Split_3B890ED_R_1 = IN.ObjectSpacePosition[0];\n                                   
-      float _Split_3B890ED_G_2 = IN.ObjectSpacePosition[1];\n                                   
-      float _Split_3B890ED_B_3 = IN.ObjectSpacePosition[2];\n                                   
-      float _Split_3B890ED_A_4 = 0;\n                                    float _InverseLerp_10C65378_Out_3;\n                                   
+      !alive) discard;\n    \n                                                float
+      Vector1_4B24F63 = (float)0;\n{\n    \n    Vector1_4B24F63 = (float)-1.21;\n}\n\n                                               
+      float Vector1_9B1964B1 = (float)0;\n{\n    \n    Vector1_9B1964B1 = (float)0;\n}\n\n                                   
+      SurfaceDescription surface = (SurfaceDescription)0;\n                                   
+      Gradient _Gradient_98BB5E59_Out_0 = NewGradient(0, 7, 2, float4(0.8469865,
+      1, 0.0990566, 0),float4(0.7294118, 0.08530336, 0.07058822, 0.1819791),float4(0.4582389,
+      0.04705882, 0.4941176, 0.3604791),float4(0.02995378, 0.02745097, 0.2745098,
+      0.5303273),float4(0.1229052, 0.4049238, 0.6743622, 0.6967117),float4(0.3398006,
+      0.8679245, 0.393839, 0.8370947),float4(0.8470588, 1, 0.09803922, 0.9947967),float4(0,
+      0, 0, 0), float2(1, 0),float2(1, 1),float2(0, 0),float2(0, 0),float2(0, 0),float2(0,
+      0),float2(0, 0),float2(0, 0));\n                                    float _Property_7B40AA1C_Out_0
+      = Vector1_4B24F63;\n                                    float _Property_85C76B20_Out_0
+      = Vector1_9B1964B1;\n                                    float _Split_3B890ED_R_1
+      = IN.ObjectSpacePosition[0];\n                                    float _Split_3B890ED_G_2
+      = IN.ObjectSpacePosition[1];\n                                    float _Split_3B890ED_B_3
+      = IN.ObjectSpacePosition[2];\n                                    float _Split_3B890ED_A_4
+      = 0;\n                                    float _InverseLerp_10C65378_Out_3;\n                                   
       Unity_InverseLerp_float(_Property_7B40AA1C_Out_0, _Property_85C76B20_Out_0,
       _Split_3B890ED_R_1, _InverseLerp_10C65378_Out_3);\n                                   
       float4 _SampleGradient_3305CB8E_Out_2;\n                                   
@@ -4571,9 +4583,9 @@ VisualEffectResource:
       VFX_USE_SCALEX_CURRENT\n                size3.x *= scaleX;\n               
       #endif\n                #if VFX_USE_SCALEY_CURRENT\n                size3.y
       *= scaleY;\n                #endif\n                #if VFX_USE_SCALEZ_CURRENT\n               
-      size3.z *= scaleZ;\n                #endif\n             SetAttribute_C707D62A(
-      /*inout */position, Position_a);\n             \n                float4x4 elementToVFX
-      = GetElementToVFXMatrix(axisX,axisY,axisZ,float3(angleX,angleY,angleZ),float3(pivotX,pivotY,pivotZ),size3,position);\n\n           
+      size3.z *= scaleZ;\n                #endif\n             {\n                
+      SetAttribute_C707D62A( /*inout */position, float3(-0.8,0,0));\n            
+      }\n             \n                float4x4 elementToVFX = GetElementToVFXMatrix(axisX,axisY,axisZ,float3(angleX,angleY,angleZ),float3(pivotX,pivotY,pivotZ),size3,position);\n\n           
       #ifdef ATTRIBUTES_NEED_NORMAL\n                float normalFlip = (size3.x
       * size3.y * size3.z) < 0 ? -1 : 1;\n                inputMesh.normalOS.xyz
       = normalize(-transpose(elementToVFX)[2].xyz) * normalFlip;\n            #endif\n           
@@ -4721,10 +4733,7 @@ VisualEffectResource:
       //-------------------------------------------------------------------------------------\n                   
       \n                        //-------------------------------------------------------------------------------------\n                       
       // Graph generated code\n                        //-------------------------------------------------------------------------------------\n                               
-      // Shared Graph Properties (uniform inputs)\n            CBUFFER_START(parameters)\n               
-      float3 Position_a;\n                float Vector1_4B24F63;\n               
-      float Vector1_9B1964B1;\n                float cropFactor;\n               
-      uint2 PADDING_0;\n            CBUFFER_END\n\n                               
+      // Shared Graph Properties (uniform inputs)\n\n                               
       struct SurfaceDescriptionInputs {\n                                    float3
       ObjectSpacePosition; // optional\n                                    #if UNITY_VFX_ACTIVE\n                                   
       uint particleID;\n                                    #endif // UNITY_VFX_ACTIVE\n                               
@@ -4770,20 +4779,23 @@ VisualEffectResource:
       = (float)0;\n                                    float scaleX = (float)1;\n                                   
       float scaleY = (float)1;\n                                    float scaleZ
       = (float)1;\n                                    \n            \n\n    if(
-      !alive) discard;\n    \n                                    SurfaceDescription
-      surface = (SurfaceDescription)0;\n                                    Gradient
-      _Gradient_98BB5E59_Out_0 = NewGradient(0, 7, 2, float4(0.8469865, 1, 0.0990566,
-      0),float4(0.7294118, 0.08530336, 0.07058822, 0.1819791),float4(0.4582389, 0.04705882,
-      0.4941176, 0.3604791),float4(0.02995378, 0.02745097, 0.2745098, 0.5303273),float4(0.1229052,
-      0.4049238, 0.6743622, 0.6967117),float4(0.3398006, 0.8679245, 0.393839, 0.8370947),float4(0.8470588,
-      1, 0.09803922, 0.9947967),float4(0, 0, 0, 0), float2(1, 0),float2(1, 1),float2(0,
-      0),float2(0, 0),float2(0, 0),float2(0, 0),float2(0, 0),float2(0, 0));\n                                   
-      float _Property_7B40AA1C_Out_0 = Vector1_4B24F63;\n                                   
-      float _Property_85C76B20_Out_0 = Vector1_9B1964B1;\n                                   
-      float _Split_3B890ED_R_1 = IN.ObjectSpacePosition[0];\n                                   
-      float _Split_3B890ED_G_2 = IN.ObjectSpacePosition[1];\n                                   
-      float _Split_3B890ED_B_3 = IN.ObjectSpacePosition[2];\n                                   
-      float _Split_3B890ED_A_4 = 0;\n                                    float _InverseLerp_10C65378_Out_3;\n                                   
+      !alive) discard;\n    \n                                                float
+      Vector1_4B24F63 = (float)0;\n{\n    \n    Vector1_4B24F63 = (float)1.23;\n}\n\n                                               
+      float Vector1_9B1964B1 = (float)0;\n{\n    \n    Vector1_9B1964B1 = (float)0;\n}\n\n                                   
+      SurfaceDescription surface = (SurfaceDescription)0;\n                                   
+      Gradient _Gradient_98BB5E59_Out_0 = NewGradient(0, 7, 2, float4(0.8469865,
+      1, 0.0990566, 0),float4(0.7294118, 0.08530336, 0.07058822, 0.1819791),float4(0.4582389,
+      0.04705882, 0.4941176, 0.3604791),float4(0.02995378, 0.02745097, 0.2745098,
+      0.5303273),float4(0.1229052, 0.4049238, 0.6743622, 0.6967117),float4(0.3398006,
+      0.8679245, 0.393839, 0.8370947),float4(0.8470588, 1, 0.09803922, 0.9947967),float4(0,
+      0, 0, 0), float2(1, 0),float2(1, 1),float2(0, 0),float2(0, 0),float2(0, 0),float2(0,
+      0),float2(0, 0),float2(0, 0));\n                                    float _Property_7B40AA1C_Out_0
+      = Vector1_4B24F63;\n                                    float _Property_85C76B20_Out_0
+      = Vector1_9B1964B1;\n                                    float _Split_3B890ED_R_1
+      = IN.ObjectSpacePosition[0];\n                                    float _Split_3B890ED_G_2
+      = IN.ObjectSpacePosition[1];\n                                    float _Split_3B890ED_B_3
+      = IN.ObjectSpacePosition[2];\n                                    float _Split_3B890ED_A_4
+      = 0;\n                                    float _InverseLerp_10C65378_Out_3;\n                                   
       Unity_InverseLerp_float(_Property_7B40AA1C_Out_0, _Property_85C76B20_Out_0,
       _Split_3B890ED_R_1, _InverseLerp_10C65378_Out_3);\n                                   
       float4 _SampleGradient_3305CB8E_Out_2;\n                                   
@@ -4917,8 +4929,10 @@ VisualEffectResource:
       float2(-0.5f, 0.5f),\n              float2(0.0f, 0.5f),\n              float2(0.5f,
       0.5f),\n              float2(0.5f, 0.0f),\n              float2(0.5f, -0.5f),\n             
       float2(0.0f, -0.5f),\n              float2(-0.5f, -0.5f),\n             };\n\n            
-      \n\n             float cf = id & 1 ? 1.0f - cropFactor : 1.0f;\n               
-      inputMesh.positionOS =  float3(kUvs[id & 7]  * cf,0);\n            #ifdef ATTRIBUTES_NEED_TEXCOORD0\n            
+      float cropFactor = (float)0;\n             {\n                 \n                
+      cropFactor = (float)0.2928932;\n             }\n             \n\n\n            
+      float cf = id & 1 ? 1.0f - cropFactor : 1.0f;\n                inputMesh.positionOS
+      =  float3(kUvs[id & 7]  * cf,0);\n            #ifdef ATTRIBUTES_NEED_TEXCOORD0\n            
       inputMesh.uv0.xy = inputMesh.positionOS.xy + 0.5f;\n            #endif\n               
       inputMesh.particleID = particleID;\n                float size = asfloat(attributeBuffer.Load((index
       * 0x1 + 0x80) << 2));\n                float3 position = asfloat(attributeBuffer.Load3((index
@@ -4934,9 +4948,9 @@ VisualEffectResource:
       float3(size,size,size);\n                #if VFX_USE_SCALEX_CURRENT\n               
       size3.x *= scaleX;\n                #endif\n                #if VFX_USE_SCALEY_CURRENT\n               
       size3.y *= scaleY;\n                #endif\n                #if VFX_USE_SCALEZ_CURRENT\n               
-      size3.z *= scaleZ;\n                #endif\n             SetAttribute_C707D62A(
-      /*inout */position, Position_a);\n             \n                float4x4 elementToVFX
-      = GetElementToVFXMatrix(axisX,axisY,axisZ,float3(angleX,angleY,angleZ),float3(pivotX,pivotY,pivotZ),size3,position);\n\n           
+      size3.z *= scaleZ;\n                #endif\n             {\n                
+      SetAttribute_C707D62A( /*inout */position, float3(0.8,0,0));\n            
+      }\n             \n                float4x4 elementToVFX = GetElementToVFXMatrix(axisX,axisY,axisZ,float3(angleX,angleY,angleZ),float3(pivotX,pivotY,pivotZ),size3,position);\n\n           
       #ifdef ATTRIBUTES_NEED_NORMAL\n                float normalFlip = (size3.x
       * size3.y * size3.z) < 0 ? -1 : 1;\n                inputMesh.normalOS.xyz
       = normalize(-transpose(elementToVFX)[2].xyz) * normalFlip;\n            #endif\n           
@@ -5066,10 +5080,7 @@ VisualEffectResource:
       //-------------------------------------------------------------------------------------\n                   
       \n                        //-------------------------------------------------------------------------------------\n                       
       // Graph generated code\n                        //-------------------------------------------------------------------------------------\n                               
-      // Shared Graph Properties (uniform inputs)\n            CBUFFER_START(parameters)\n               
-      float3 Position_a;\n                float Vector1_4B24F63;\n               
-      float Vector1_9B1964B1;\n                float cropFactor;\n               
-      uint2 PADDING_0;\n            CBUFFER_END\n\n                               
+      // Shared Graph Properties (uniform inputs)\n\n                               
       struct SurfaceDescriptionInputs {\n                                    #if
       UNITY_VFX_ACTIVE\n                                    uint particleID;\n                                   
       #endif // UNITY_VFX_ACTIVE\n                                };\n                           
@@ -5093,12 +5104,15 @@ VisualEffectResource:
       = (float)0;\n                                    float scaleX = (float)1;\n                                   
       float scaleY = (float)1;\n                                    float scaleZ
       = (float)1;\n                                    \n            \n\n    if(
-      !alive) discard;\n    \n                                    SurfaceDescription
-      surface = (SurfaceDescription)0;\n                                    surface.Alpha
-      = 1;\n                                    surface.AlphaClipThreshold = 0.5;\n                                   
-      surface.Alpha *= alpha;\n                                    return surface;\n                               
-      }\n                            // Pixel Graph Evaluation\n                               
-      \n                        //-------------------------------------------------------------------------------------\n                       
+      !alive) discard;\n    \n                                                float
+      Vector1_4B24F63 = (float)0;\n{\n    \n    Vector1_4B24F63 = (float)1.23;\n}\n\n                                               
+      float Vector1_9B1964B1 = (float)0;\n{\n    \n    Vector1_9B1964B1 = (float)0;\n}\n\n                                   
+      SurfaceDescription surface = (SurfaceDescription)0;\n                                   
+      surface.Alpha = 1;\n                                    surface.AlphaClipThreshold
+      = 0.5;\n                                    surface.Alpha *= alpha;\n                                   
+      return surface;\n                                }\n                           
+      // Pixel Graph Evaluation\n                                \n                       
+      //-------------------------------------------------------------------------------------\n                       
       // End graph generated code\n                        //-------------------------------------------------------------------------------------\n                   
       \n                    // $include(\"VertexAnimation.template.hlsl\")\n                   
       \n                    \n                    //-------------------------------------------------------------------------------------\n                   
@@ -5220,8 +5234,10 @@ VisualEffectResource:
       float2(-0.5f, 0.5f),\n              float2(0.0f, 0.5f),\n              float2(0.5f,
       0.5f),\n              float2(0.5f, 0.0f),\n              float2(0.5f, -0.5f),\n             
       float2(0.0f, -0.5f),\n              float2(-0.5f, -0.5f),\n             };\n\n            
-      \n\n             float cf = id & 1 ? 1.0f - cropFactor : 1.0f;\n               
-      inputMesh.positionOS =  float3(kUvs[id & 7]  * cf,0);\n            #ifdef ATTRIBUTES_NEED_TEXCOORD0\n            
+      float cropFactor = (float)0;\n             {\n                 \n                
+      cropFactor = (float)0.2928932;\n             }\n             \n\n\n            
+      float cf = id & 1 ? 1.0f - cropFactor : 1.0f;\n                inputMesh.positionOS
+      =  float3(kUvs[id & 7]  * cf,0);\n            #ifdef ATTRIBUTES_NEED_TEXCOORD0\n            
       inputMesh.uv0.xy = inputMesh.positionOS.xy + 0.5f;\n            #endif\n               
       inputMesh.particleID = particleID;\n                float size = asfloat(attributeBuffer.Load((index
       * 0x1 + 0x80) << 2));\n                float3 position = asfloat(attributeBuffer.Load3((index
@@ -5237,9 +5253,9 @@ VisualEffectResource:
       float3(size,size,size);\n                #if VFX_USE_SCALEX_CURRENT\n               
       size3.x *= scaleX;\n                #endif\n                #if VFX_USE_SCALEY_CURRENT\n               
       size3.y *= scaleY;\n                #endif\n                #if VFX_USE_SCALEZ_CURRENT\n               
-      size3.z *= scaleZ;\n                #endif\n             SetAttribute_C707D62A(
-      /*inout */position, Position_a);\n             \n                float4x4 elementToVFX
-      = GetElementToVFXMatrix(axisX,axisY,axisZ,float3(angleX,angleY,angleZ),float3(pivotX,pivotY,pivotZ),size3,position);\n\n           
+      size3.z *= scaleZ;\n                #endif\n             {\n                
+      SetAttribute_C707D62A( /*inout */position, float3(0.8,0,0));\n            
+      }\n             \n                float4x4 elementToVFX = GetElementToVFXMatrix(axisX,axisY,axisZ,float3(angleX,angleY,angleZ),float3(pivotX,pivotY,pivotZ),size3,position);\n\n           
       #ifdef ATTRIBUTES_NEED_NORMAL\n                float normalFlip = (size3.x
       * size3.y * size3.z) < 0 ? -1 : 1;\n                inputMesh.normalOS.xyz
       = normalize(-transpose(elementToVFX)[2].xyz) * normalFlip;\n            #endif\n           
@@ -5370,10 +5386,7 @@ VisualEffectResource:
       //-------------------------------------------------------------------------------------\n                   
       \n                        //-------------------------------------------------------------------------------------\n                       
       // Graph generated code\n                        //-------------------------------------------------------------------------------------\n                               
-      // Shared Graph Properties (uniform inputs)\n            CBUFFER_START(parameters)\n               
-      float3 Position_a;\n                float Vector1_4B24F63;\n               
-      float Vector1_9B1964B1;\n                float cropFactor;\n               
-      uint2 PADDING_0;\n            CBUFFER_END\n\n                               
+      // Shared Graph Properties (uniform inputs)\n\n                               
       struct SurfaceDescriptionInputs {\n                                    #if
       UNITY_VFX_ACTIVE\n                                    uint particleID;\n                                   
       #endif // UNITY_VFX_ACTIVE\n                                };\n                           
@@ -5397,12 +5410,15 @@ VisualEffectResource:
       = (float)0;\n                                    float scaleX = (float)1;\n                                   
       float scaleY = (float)1;\n                                    float scaleZ
       = (float)1;\n                                    \n            \n\n    if(
-      !alive) discard;\n    \n                                    SurfaceDescription
-      surface = (SurfaceDescription)0;\n                                    surface.Alpha
-      = 1;\n                                    surface.AlphaClipThreshold = 0.5;\n                                   
-      surface.Alpha *= alpha;\n                                    return surface;\n                               
-      }\n                            // Pixel Graph Evaluation\n                               
-      \n                        //-------------------------------------------------------------------------------------\n                       
+      !alive) discard;\n    \n                                                float
+      Vector1_4B24F63 = (float)0;\n{\n    \n    Vector1_4B24F63 = (float)1.23;\n}\n\n                                               
+      float Vector1_9B1964B1 = (float)0;\n{\n    \n    Vector1_9B1964B1 = (float)0;\n}\n\n                                   
+      SurfaceDescription surface = (SurfaceDescription)0;\n                                   
+      surface.Alpha = 1;\n                                    surface.AlphaClipThreshold
+      = 0.5;\n                                    surface.Alpha *= alpha;\n                                   
+      return surface;\n                                }\n                           
+      // Pixel Graph Evaluation\n                                \n                       
+      //-------------------------------------------------------------------------------------\n                       
       // End graph generated code\n                        //-------------------------------------------------------------------------------------\n                   
       \n                    // $include(\"VertexAnimation.template.hlsl\")\n                   
       \n                    \n                    //-------------------------------------------------------------------------------------\n                   
@@ -5524,8 +5540,10 @@ VisualEffectResource:
       float2(-0.5f, 0.5f),\n              float2(0.0f, 0.5f),\n              float2(0.5f,
       0.5f),\n              float2(0.5f, 0.0f),\n              float2(0.5f, -0.5f),\n             
       float2(0.0f, -0.5f),\n              float2(-0.5f, -0.5f),\n             };\n\n            
-      \n\n             float cf = id & 1 ? 1.0f - cropFactor : 1.0f;\n               
-      inputMesh.positionOS =  float3(kUvs[id & 7]  * cf,0);\n            #ifdef ATTRIBUTES_NEED_TEXCOORD0\n            
+      float cropFactor = (float)0;\n             {\n                 \n                
+      cropFactor = (float)0.2928932;\n             }\n             \n\n\n            
+      float cf = id & 1 ? 1.0f - cropFactor : 1.0f;\n                inputMesh.positionOS
+      =  float3(kUvs[id & 7]  * cf,0);\n            #ifdef ATTRIBUTES_NEED_TEXCOORD0\n            
       inputMesh.uv0.xy = inputMesh.positionOS.xy + 0.5f;\n            #endif\n               
       inputMesh.particleID = particleID;\n                float size = asfloat(attributeBuffer.Load((index
       * 0x1 + 0x80) << 2));\n                float3 position = asfloat(attributeBuffer.Load3((index
@@ -5541,9 +5559,9 @@ VisualEffectResource:
       float3(size,size,size);\n                #if VFX_USE_SCALEX_CURRENT\n               
       size3.x *= scaleX;\n                #endif\n                #if VFX_USE_SCALEY_CURRENT\n               
       size3.y *= scaleY;\n                #endif\n                #if VFX_USE_SCALEZ_CURRENT\n               
-      size3.z *= scaleZ;\n                #endif\n             SetAttribute_C707D62A(
-      /*inout */position, Position_a);\n             \n                float4x4 elementToVFX
-      = GetElementToVFXMatrix(axisX,axisY,axisZ,float3(angleX,angleY,angleZ),float3(pivotX,pivotY,pivotZ),size3,position);\n\n           
+      size3.z *= scaleZ;\n                #endif\n             {\n                
+      SetAttribute_C707D62A( /*inout */position, float3(0.8,0,0));\n            
+      }\n             \n                float4x4 elementToVFX = GetElementToVFXMatrix(axisX,axisY,axisZ,float3(angleX,angleY,angleZ),float3(pivotX,pivotY,pivotZ),size3,position);\n\n           
       #ifdef ATTRIBUTES_NEED_NORMAL\n                float normalFlip = (size3.x
       * size3.y * size3.z) < 0 ? -1 : 1;\n                inputMesh.normalOS.xyz
       = normalize(-transpose(elementToVFX)[2].xyz) * normalFlip;\n            #endif\n           
@@ -5676,10 +5694,7 @@ VisualEffectResource:
       //-------------------------------------------------------------------------------------\n                   
       \n                        //-------------------------------------------------------------------------------------\n                       
       // Graph generated code\n                        //-------------------------------------------------------------------------------------\n                               
-      // Shared Graph Properties (uniform inputs)\n            CBUFFER_START(parameters)\n               
-      float3 Position_a;\n                float Vector1_4B24F63;\n               
-      float Vector1_9B1964B1;\n                float cropFactor;\n               
-      uint2 PADDING_0;\n            CBUFFER_END\n\n                               
+      // Shared Graph Properties (uniform inputs)\n\n                               
       struct SurfaceDescriptionInputs {\n                                    #if
       UNITY_VFX_ACTIVE\n                                    uint particleID;\n                                   
       #endif // UNITY_VFX_ACTIVE\n                                };\n                           
@@ -5703,12 +5718,15 @@ VisualEffectResource:
       = (float)0;\n                                    float scaleX = (float)1;\n                                   
       float scaleY = (float)1;\n                                    float scaleZ
       = (float)1;\n                                    \n            \n\n    if(
-      !alive) discard;\n    \n                                    SurfaceDescription
-      surface = (SurfaceDescription)0;\n                                    surface.Alpha
-      = 1;\n                                    surface.AlphaClipThreshold = 0.5;\n                                   
-      surface.Alpha *= alpha;\n                                    return surface;\n                               
-      }\n                            // Pixel Graph Evaluation\n                               
-      \n                        //-------------------------------------------------------------------------------------\n                       
+      !alive) discard;\n    \n                                                float
+      Vector1_4B24F63 = (float)0;\n{\n    \n    Vector1_4B24F63 = (float)1.23;\n}\n\n                                               
+      float Vector1_9B1964B1 = (float)0;\n{\n    \n    Vector1_9B1964B1 = (float)0;\n}\n\n                                   
+      SurfaceDescription surface = (SurfaceDescription)0;\n                                   
+      surface.Alpha = 1;\n                                    surface.AlphaClipThreshold
+      = 0.5;\n                                    surface.Alpha *= alpha;\n                                   
+      return surface;\n                                }\n                           
+      // Pixel Graph Evaluation\n                                \n                       
+      //-------------------------------------------------------------------------------------\n                       
       // End graph generated code\n                        //-------------------------------------------------------------------------------------\n                   
       \n                    // $include(\"VertexAnimation.template.hlsl\")\n                   
       \n                    \n                    //-------------------------------------------------------------------------------------\n                   
@@ -5830,8 +5848,10 @@ VisualEffectResource:
       float2(-0.5f, 0.5f),\n              float2(0.0f, 0.5f),\n              float2(0.5f,
       0.5f),\n              float2(0.5f, 0.0f),\n              float2(0.5f, -0.5f),\n             
       float2(0.0f, -0.5f),\n              float2(-0.5f, -0.5f),\n             };\n\n            
-      \n\n             float cf = id & 1 ? 1.0f - cropFactor : 1.0f;\n               
-      inputMesh.positionOS =  float3(kUvs[id & 7]  * cf,0);\n            #ifdef ATTRIBUTES_NEED_TEXCOORD0\n            
+      float cropFactor = (float)0;\n             {\n                 \n                
+      cropFactor = (float)0.2928932;\n             }\n             \n\n\n            
+      float cf = id & 1 ? 1.0f - cropFactor : 1.0f;\n                inputMesh.positionOS
+      =  float3(kUvs[id & 7]  * cf,0);\n            #ifdef ATTRIBUTES_NEED_TEXCOORD0\n            
       inputMesh.uv0.xy = inputMesh.positionOS.xy + 0.5f;\n            #endif\n               
       inputMesh.particleID = particleID;\n                float size = asfloat(attributeBuffer.Load((index
       * 0x1 + 0x80) << 2));\n                float3 position = asfloat(attributeBuffer.Load3((index
@@ -5847,9 +5867,9 @@ VisualEffectResource:
       float3(size,size,size);\n                #if VFX_USE_SCALEX_CURRENT\n               
       size3.x *= scaleX;\n                #endif\n                #if VFX_USE_SCALEY_CURRENT\n               
       size3.y *= scaleY;\n                #endif\n                #if VFX_USE_SCALEZ_CURRENT\n               
-      size3.z *= scaleZ;\n                #endif\n             SetAttribute_C707D62A(
-      /*inout */position, Position_a);\n             \n                float4x4 elementToVFX
-      = GetElementToVFXMatrix(axisX,axisY,axisZ,float3(angleX,angleY,angleZ),float3(pivotX,pivotY,pivotZ),size3,position);\n\n           
+      size3.z *= scaleZ;\n                #endif\n             {\n                
+      SetAttribute_C707D62A( /*inout */position, float3(0.8,0,0));\n            
+      }\n             \n                float4x4 elementToVFX = GetElementToVFXMatrix(axisX,axisY,axisZ,float3(angleX,angleY,angleZ),float3(pivotX,pivotY,pivotZ),size3,position);\n\n           
       #ifdef ATTRIBUTES_NEED_NORMAL\n                float normalFlip = (size3.x
       * size3.y * size3.z) < 0 ? -1 : 1;\n                inputMesh.normalOS.xyz
       = normalize(-transpose(elementToVFX)[2].xyz) * normalFlip;\n            #endif\n           
@@ -5985,10 +6005,7 @@ VisualEffectResource:
       //-------------------------------------------------------------------------------------\n                   
       \n                        //-------------------------------------------------------------------------------------\n                       
       // Graph generated code\n                        //-------------------------------------------------------------------------------------\n                               
-      // Shared Graph Properties (uniform inputs)\n            CBUFFER_START(parameters)\n               
-      float3 Position_a;\n                float Vector1_4B24F63;\n               
-      float Vector1_9B1964B1;\n                float cropFactor;\n               
-      uint2 PADDING_0;\n            CBUFFER_END\n\n                               
+      // Shared Graph Properties (uniform inputs)\n\n                               
       struct SurfaceDescriptionInputs {\n                                    #if
       UNITY_VFX_ACTIVE\n                                    uint particleID;\n                                   
       #endif // UNITY_VFX_ACTIVE\n                                };\n                           
@@ -6012,12 +6029,15 @@ VisualEffectResource:
       = (float)0;\n                                    float scaleX = (float)1;\n                                   
       float scaleY = (float)1;\n                                    float scaleZ
       = (float)1;\n                                    \n            \n\n    if(
-      !alive) discard;\n    \n                                    SurfaceDescription
-      surface = (SurfaceDescription)0;\n                                    surface.Alpha
-      = 1;\n                                    surface.AlphaClipThreshold = 0.5;\n                                   
-      surface.Alpha *= alpha;\n                                    return surface;\n                               
-      }\n                            // Pixel Graph Evaluation\n                               
-      \n                        //-------------------------------------------------------------------------------------\n                       
+      !alive) discard;\n    \n                                                float
+      Vector1_4B24F63 = (float)0;\n{\n    \n    Vector1_4B24F63 = (float)1.23;\n}\n\n                                               
+      float Vector1_9B1964B1 = (float)0;\n{\n    \n    Vector1_9B1964B1 = (float)0;\n}\n\n                                   
+      SurfaceDescription surface = (SurfaceDescription)0;\n                                   
+      surface.Alpha = 1;\n                                    surface.AlphaClipThreshold
+      = 0.5;\n                                    surface.Alpha *= alpha;\n                                   
+      return surface;\n                                }\n                           
+      // Pixel Graph Evaluation\n                                \n                       
+      //-------------------------------------------------------------------------------------\n                       
       // End graph generated code\n                        //-------------------------------------------------------------------------------------\n                   
       \n                    // $include(\"VertexAnimation.template.hlsl\")\n                   
       \n                    \n                    //-------------------------------------------------------------------------------------\n                   
@@ -6139,8 +6159,10 @@ VisualEffectResource:
       float2(-0.5f, 0.5f),\n              float2(0.0f, 0.5f),\n              float2(0.5f,
       0.5f),\n              float2(0.5f, 0.0f),\n              float2(0.5f, -0.5f),\n             
       float2(0.0f, -0.5f),\n              float2(-0.5f, -0.5f),\n             };\n\n            
-      \n\n             float cf = id & 1 ? 1.0f - cropFactor : 1.0f;\n               
-      inputMesh.positionOS =  float3(kUvs[id & 7]  * cf,0);\n            #ifdef ATTRIBUTES_NEED_TEXCOORD0\n            
+      float cropFactor = (float)0;\n             {\n                 \n                
+      cropFactor = (float)0.2928932;\n             }\n             \n\n\n            
+      float cf = id & 1 ? 1.0f - cropFactor : 1.0f;\n                inputMesh.positionOS
+      =  float3(kUvs[id & 7]  * cf,0);\n            #ifdef ATTRIBUTES_NEED_TEXCOORD0\n            
       inputMesh.uv0.xy = inputMesh.positionOS.xy + 0.5f;\n            #endif\n               
       inputMesh.particleID = particleID;\n                float size = asfloat(attributeBuffer.Load((index
       * 0x1 + 0x80) << 2));\n                float3 position = asfloat(attributeBuffer.Load3((index
@@ -6156,9 +6178,9 @@ VisualEffectResource:
       float3(size,size,size);\n                #if VFX_USE_SCALEX_CURRENT\n               
       size3.x *= scaleX;\n                #endif\n                #if VFX_USE_SCALEY_CURRENT\n               
       size3.y *= scaleY;\n                #endif\n                #if VFX_USE_SCALEZ_CURRENT\n               
-      size3.z *= scaleZ;\n                #endif\n             SetAttribute_C707D62A(
-      /*inout */position, Position_a);\n             \n                float4x4 elementToVFX
-      = GetElementToVFXMatrix(axisX,axisY,axisZ,float3(angleX,angleY,angleZ),float3(pivotX,pivotY,pivotZ),size3,position);\n\n           
+      size3.z *= scaleZ;\n                #endif\n             {\n                
+      SetAttribute_C707D62A( /*inout */position, float3(0.8,0,0));\n            
+      }\n             \n                float4x4 elementToVFX = GetElementToVFXMatrix(axisX,axisY,axisZ,float3(angleX,angleY,angleZ),float3(pivotX,pivotY,pivotZ),size3,position);\n\n           
       #ifdef ATTRIBUTES_NEED_NORMAL\n                float normalFlip = (size3.x
       * size3.y * size3.z) < 0 ? -1 : 1;\n                inputMesh.normalOS.xyz
       = normalize(-transpose(elementToVFX)[2].xyz) * normalFlip;\n            #endif\n           
@@ -6297,10 +6319,7 @@ VisualEffectResource:
       //-------------------------------------------------------------------------------------\n                   
       \n                        //-------------------------------------------------------------------------------------\n                       
       // Graph generated code\n                        //-------------------------------------------------------------------------------------\n                               
-      // Shared Graph Properties (uniform inputs)\n            CBUFFER_START(parameters)\n               
-      float3 Position_a;\n                float Vector1_4B24F63;\n               
-      float Vector1_9B1964B1;\n                float cropFactor;\n               
-      uint2 PADDING_0;\n            CBUFFER_END\n\n                               
+      // Shared Graph Properties (uniform inputs)\n\n                               
       struct SurfaceDescriptionInputs {\n                                    float3
       ObjectSpacePosition; // optional\n                                    #if UNITY_VFX_ACTIVE\n                                   
       uint particleID;\n                                    #endif // UNITY_VFX_ACTIVE\n                               
@@ -6346,20 +6365,23 @@ VisualEffectResource:
       = (float)0;\n                                    float scaleX = (float)1;\n                                   
       float scaleY = (float)1;\n                                    float scaleZ
       = (float)1;\n                                    \n            \n\n    if(
-      !alive) discard;\n    \n                                    SurfaceDescription
-      surface = (SurfaceDescription)0;\n                                    Gradient
-      _Gradient_98BB5E59_Out_0 = NewGradient(0, 7, 2, float4(0.8469865, 1, 0.0990566,
-      0),float4(0.7294118, 0.08530336, 0.07058822, 0.1819791),float4(0.4582389, 0.04705882,
-      0.4941176, 0.3604791),float4(0.02995378, 0.02745097, 0.2745098, 0.5303273),float4(0.1229052,
-      0.4049238, 0.6743622, 0.6967117),float4(0.3398006, 0.8679245, 0.393839, 0.8370947),float4(0.8470588,
-      1, 0.09803922, 0.9947967),float4(0, 0, 0, 0), float2(1, 0),float2(1, 1),float2(0,
-      0),float2(0, 0),float2(0, 0),float2(0, 0),float2(0, 0),float2(0, 0));\n                                   
-      float _Property_7B40AA1C_Out_0 = Vector1_4B24F63;\n                                   
-      float _Property_85C76B20_Out_0 = Vector1_9B1964B1;\n                                   
-      float _Split_3B890ED_R_1 = IN.ObjectSpacePosition[0];\n                                   
-      float _Split_3B890ED_G_2 = IN.ObjectSpacePosition[1];\n                                   
-      float _Split_3B890ED_B_3 = IN.ObjectSpacePosition[2];\n                                   
-      float _Split_3B890ED_A_4 = 0;\n                                    float _InverseLerp_10C65378_Out_3;\n                                   
+      !alive) discard;\n    \n                                                float
+      Vector1_4B24F63 = (float)0;\n{\n    \n    Vector1_4B24F63 = (float)1.23;\n}\n\n                                               
+      float Vector1_9B1964B1 = (float)0;\n{\n    \n    Vector1_9B1964B1 = (float)0;\n}\n\n                                   
+      SurfaceDescription surface = (SurfaceDescription)0;\n                                   
+      Gradient _Gradient_98BB5E59_Out_0 = NewGradient(0, 7, 2, float4(0.8469865,
+      1, 0.0990566, 0),float4(0.7294118, 0.08530336, 0.07058822, 0.1819791),float4(0.4582389,
+      0.04705882, 0.4941176, 0.3604791),float4(0.02995378, 0.02745097, 0.2745098,
+      0.5303273),float4(0.1229052, 0.4049238, 0.6743622, 0.6967117),float4(0.3398006,
+      0.8679245, 0.393839, 0.8370947),float4(0.8470588, 1, 0.09803922, 0.9947967),float4(0,
+      0, 0, 0), float2(1, 0),float2(1, 1),float2(0, 0),float2(0, 0),float2(0, 0),float2(0,
+      0),float2(0, 0),float2(0, 0));\n                                    float _Property_7B40AA1C_Out_0
+      = Vector1_4B24F63;\n                                    float _Property_85C76B20_Out_0
+      = Vector1_9B1964B1;\n                                    float _Split_3B890ED_R_1
+      = IN.ObjectSpacePosition[0];\n                                    float _Split_3B890ED_G_2
+      = IN.ObjectSpacePosition[1];\n                                    float _Split_3B890ED_B_3
+      = IN.ObjectSpacePosition[2];\n                                    float _Split_3B890ED_A_4
+      = 0;\n                                    float _InverseLerp_10C65378_Out_3;\n                                   
       Unity_InverseLerp_float(_Property_7B40AA1C_Out_0, _Property_85C76B20_Out_0,
       _Split_3B890ED_R_1, _InverseLerp_10C65378_Out_3);\n                                   
       float4 _SampleGradient_3305CB8E_Out_2;\n                                   
@@ -6493,8 +6515,10 @@ VisualEffectResource:
       float2(-0.5f, 0.5f),\n              float2(0.0f, 0.5f),\n              float2(0.5f,
       0.5f),\n              float2(0.5f, 0.0f),\n              float2(0.5f, -0.5f),\n             
       float2(0.0f, -0.5f),\n              float2(-0.5f, -0.5f),\n             };\n\n            
-      \n\n             float cf = id & 1 ? 1.0f - cropFactor : 1.0f;\n               
-      inputMesh.positionOS =  float3(kUvs[id & 7]  * cf,0);\n            #ifdef ATTRIBUTES_NEED_TEXCOORD0\n            
+      float cropFactor = (float)0;\n             {\n                 \n                
+      cropFactor = (float)0.2928932;\n             }\n             \n\n\n            
+      float cf = id & 1 ? 1.0f - cropFactor : 1.0f;\n                inputMesh.positionOS
+      =  float3(kUvs[id & 7]  * cf,0);\n            #ifdef ATTRIBUTES_NEED_TEXCOORD0\n            
       inputMesh.uv0.xy = inputMesh.positionOS.xy + 0.5f;\n            #endif\n               
       inputMesh.particleID = particleID;\n                float size = asfloat(attributeBuffer.Load((index
       * 0x1 + 0x80) << 2));\n                float3 position = asfloat(attributeBuffer.Load3((index
@@ -6510,9 +6534,9 @@ VisualEffectResource:
       float3(size,size,size);\n                #if VFX_USE_SCALEX_CURRENT\n               
       size3.x *= scaleX;\n                #endif\n                #if VFX_USE_SCALEY_CURRENT\n               
       size3.y *= scaleY;\n                #endif\n                #if VFX_USE_SCALEZ_CURRENT\n               
-      size3.z *= scaleZ;\n                #endif\n             SetAttribute_C707D62A(
-      /*inout */position, Position_a);\n             \n                float4x4 elementToVFX
-      = GetElementToVFXMatrix(axisX,axisY,axisZ,float3(angleX,angleY,angleZ),float3(pivotX,pivotY,pivotZ),size3,position);\n\n           
+      size3.z *= scaleZ;\n                #endif\n             {\n                
+      SetAttribute_C707D62A( /*inout */position, float3(0.8,0,0));\n            
+      }\n             \n                float4x4 elementToVFX = GetElementToVFXMatrix(axisX,axisY,axisZ,float3(angleX,angleY,angleZ),float3(pivotX,pivotY,pivotZ),size3,position);\n\n           
       #ifdef ATTRIBUTES_NEED_NORMAL\n                float normalFlip = (size3.x
       * size3.y * size3.z) < 0 ? -1 : 1;\n                inputMesh.normalOS.xyz
       = normalize(-transpose(elementToVFX)[2].xyz) * normalFlip;\n            #endif\n           
@@ -6660,9 +6684,7 @@ VisualEffectResource:
       //-------------------------------------------------------------------------------------\n                   
       \n                        //-------------------------------------------------------------------------------------\n                       
       // Graph generated code\n                        //-------------------------------------------------------------------------------------\n                               
-      // Shared Graph Properties (uniform inputs)\n            CBUFFER_START(parameters)\n               
-      float3 Position_a;\n                float Vector1_4B24F63;\n               
-      float Vector1_9B1964B1;\n                uint3 PADDING_0;\n            CBUFFER_END\n\n                               
+      // Shared Graph Properties (uniform inputs)\n\n                               
       struct SurfaceDescriptionInputs {\n                                    float3
       ObjectSpacePosition; // optional\n                                    #if UNITY_VFX_ACTIVE\n                                   
       uint particleID;\n                                    #endif // UNITY_VFX_ACTIVE\n                               
@@ -6708,20 +6730,23 @@ VisualEffectResource:
       = (float)0;\n                                    float scaleX = (float)1;\n                                   
       float scaleY = (float)1;\n                                    float scaleZ
       = (float)1;\n                                    \n            \n\n    if(
-      !alive) discard;\n    \n                                    SurfaceDescription
-      surface = (SurfaceDescription)0;\n                                    Gradient
-      _Gradient_98BB5E59_Out_0 = NewGradient(0, 7, 2, float4(0.8469865, 1, 0.0990566,
-      0),float4(0.7294118, 0.08530336, 0.07058822, 0.1819791),float4(0.4582389, 0.04705882,
-      0.4941176, 0.3604791),float4(0.02995378, 0.02745097, 0.2745098, 0.5303273),float4(0.1229052,
-      0.4049238, 0.6743622, 0.6967117),float4(0.3398006, 0.8679245, 0.393839, 0.8370947),float4(0.8470588,
-      1, 0.09803922, 0.9947967),float4(0, 0, 0, 0), float2(1, 0),float2(1, 1),float2(0,
-      0),float2(0, 0),float2(0, 0),float2(0, 0),float2(0, 0),float2(0, 0));\n                                   
-      float _Property_7B40AA1C_Out_0 = Vector1_4B24F63;\n                                   
-      float _Property_85C76B20_Out_0 = Vector1_9B1964B1;\n                                   
-      float _Split_3B890ED_R_1 = IN.ObjectSpacePosition[0];\n                                   
-      float _Split_3B890ED_G_2 = IN.ObjectSpacePosition[1];\n                                   
-      float _Split_3B890ED_B_3 = IN.ObjectSpacePosition[2];\n                                   
-      float _Split_3B890ED_A_4 = 0;\n                                    float _InverseLerp_10C65378_Out_3;\n                                   
+      !alive) discard;\n    \n                                                float
+      Vector1_4B24F63 = (float)0;\n{\n    \n    Vector1_4B24F63 = (float)2.63;\n}\n\n                                               
+      float Vector1_9B1964B1 = (float)0;\n{\n    \n    Vector1_9B1964B1 = (float)4.16;\n}\n\n                                   
+      SurfaceDescription surface = (SurfaceDescription)0;\n                                   
+      Gradient _Gradient_98BB5E59_Out_0 = NewGradient(0, 7, 2, float4(0.8469865,
+      1, 0.0990566, 0),float4(0.7294118, 0.08530336, 0.07058822, 0.1819791),float4(0.4582389,
+      0.04705882, 0.4941176, 0.3604791),float4(0.02995378, 0.02745097, 0.2745098,
+      0.5303273),float4(0.1229052, 0.4049238, 0.6743622, 0.6967117),float4(0.3398006,
+      0.8679245, 0.393839, 0.8370947),float4(0.8470588, 1, 0.09803922, 0.9947967),float4(0,
+      0, 0, 0), float2(1, 0),float2(1, 1),float2(0, 0),float2(0, 0),float2(0, 0),float2(0,
+      0),float2(0, 0),float2(0, 0));\n                                    float _Property_7B40AA1C_Out_0
+      = Vector1_4B24F63;\n                                    float _Property_85C76B20_Out_0
+      = Vector1_9B1964B1;\n                                    float _Split_3B890ED_R_1
+      = IN.ObjectSpacePosition[0];\n                                    float _Split_3B890ED_G_2
+      = IN.ObjectSpacePosition[1];\n                                    float _Split_3B890ED_B_3
+      = IN.ObjectSpacePosition[2];\n                                    float _Split_3B890ED_A_4
+      = 0;\n                                    float _InverseLerp_10C65378_Out_3;\n                                   
       Unity_InverseLerp_float(_Property_7B40AA1C_Out_0, _Property_85C76B20_Out_0,
       _Split_3B890ED_R_1, _InverseLerp_10C65378_Out_3);\n                                   
       float4 _SampleGradient_3305CB8E_Out_2;\n                                   
@@ -6863,9 +6888,9 @@ VisualEffectResource:
       float3(size,size,size);\n                #if VFX_USE_SCALEX_CURRENT\n               
       size3.x *= scaleX;\n                #endif\n                #if VFX_USE_SCALEY_CURRENT\n               
       size3.y *= scaleY;\n                #endif\n                #if VFX_USE_SCALEZ_CURRENT\n               
-      size3.z *= scaleZ;\n                #endif\n             SetAttribute_C707D62A(
-      /*inout */position, Position_a);\n             \n                float4x4 elementToVFX
-      = GetElementToVFXMatrix(axisX,axisY,axisZ,float3(angleX,angleY,angleZ),float3(pivotX,pivotY,pivotZ),size3,position);\n\n               
+      size3.z *= scaleZ;\n                #endif\n             {\n                
+      SetAttribute_C707D62A( /*inout */position, float3(3.8,0,0));\n            
+      }\n             \n                float4x4 elementToVFX = GetElementToVFXMatrix(axisX,axisY,axisZ,float3(angleX,angleY,angleZ),float3(pivotX,pivotY,pivotZ),size3,position);\n\n               
       float3 objectPos = inputMesh.positionOS;\n                float3 particlePos
       = mul(elementToVFX,float4(objectPos,1)).xyz;\n                inputMesh.positionOS
       = particlePos;\n                PackedVaryingsType result = Vert(inputMesh);\n\n               
@@ -6991,9 +7016,7 @@ VisualEffectResource:
       //-------------------------------------------------------------------------------------\n                   
       \n                        //-------------------------------------------------------------------------------------\n                       
       // Graph generated code\n                        //-------------------------------------------------------------------------------------\n                               
-      // Shared Graph Properties (uniform inputs)\n            CBUFFER_START(parameters)\n               
-      float3 Position_a;\n                float Vector1_4B24F63;\n               
-      float Vector1_9B1964B1;\n                uint3 PADDING_0;\n            CBUFFER_END\n\n                               
+      // Shared Graph Properties (uniform inputs)\n\n                               
       struct SurfaceDescriptionInputs {\n                                    #if
       UNITY_VFX_ACTIVE\n                                    uint particleID;\n                                   
       #endif // UNITY_VFX_ACTIVE\n                                };\n                           
@@ -7017,12 +7040,15 @@ VisualEffectResource:
       = (float)0;\n                                    float scaleX = (float)1;\n                                   
       float scaleY = (float)1;\n                                    float scaleZ
       = (float)1;\n                                    \n            \n\n    if(
-      !alive) discard;\n    \n                                    SurfaceDescription
-      surface = (SurfaceDescription)0;\n                                    surface.Alpha
-      = 1;\n                                    surface.AlphaClipThreshold = 0.5;\n                                   
-      surface.Alpha *= alpha;\n                                    return surface;\n                               
-      }\n                            // Pixel Graph Evaluation\n                               
-      \n                        //-------------------------------------------------------------------------------------\n                       
+      !alive) discard;\n    \n                                                float
+      Vector1_4B24F63 = (float)0;\n{\n    \n    Vector1_4B24F63 = (float)2.63;\n}\n\n                                               
+      float Vector1_9B1964B1 = (float)0;\n{\n    \n    Vector1_9B1964B1 = (float)4.16;\n}\n\n                                   
+      SurfaceDescription surface = (SurfaceDescription)0;\n                                   
+      surface.Alpha = 1;\n                                    surface.AlphaClipThreshold
+      = 0.5;\n                                    surface.Alpha *= alpha;\n                                   
+      return surface;\n                                }\n                           
+      // Pixel Graph Evaluation\n                                \n                       
+      //-------------------------------------------------------------------------------------\n                       
       // End graph generated code\n                        //-------------------------------------------------------------------------------------\n                   
       \n                    // $include(\"VertexAnimation.template.hlsl\")\n                   
       \n                    \n                    //-------------------------------------------------------------------------------------\n                   
@@ -7152,9 +7178,9 @@ VisualEffectResource:
       float3(size,size,size);\n                #if VFX_USE_SCALEX_CURRENT\n               
       size3.x *= scaleX;\n                #endif\n                #if VFX_USE_SCALEY_CURRENT\n               
       size3.y *= scaleY;\n                #endif\n                #if VFX_USE_SCALEZ_CURRENT\n               
-      size3.z *= scaleZ;\n                #endif\n             SetAttribute_C707D62A(
-      /*inout */position, Position_a);\n             \n                float4x4 elementToVFX
-      = GetElementToVFXMatrix(axisX,axisY,axisZ,float3(angleX,angleY,angleZ),float3(pivotX,pivotY,pivotZ),size3,position);\n\n               
+      size3.z *= scaleZ;\n                #endif\n             {\n                
+      SetAttribute_C707D62A( /*inout */position, float3(3.8,0,0));\n            
+      }\n             \n                float4x4 elementToVFX = GetElementToVFXMatrix(axisX,axisY,axisZ,float3(angleX,angleY,angleZ),float3(pivotX,pivotY,pivotZ),size3,position);\n\n               
       float3 objectPos = inputMesh.positionOS;\n                float3 particlePos
       = mul(elementToVFX,float4(objectPos,1)).xyz;\n                inputMesh.positionOS
       = particlePos;\n                PackedVaryingsType result = Vert(inputMesh);\n\n               
@@ -7281,9 +7307,7 @@ VisualEffectResource:
       //-------------------------------------------------------------------------------------\n                   
       \n                        //-------------------------------------------------------------------------------------\n                       
       // Graph generated code\n                        //-------------------------------------------------------------------------------------\n                               
-      // Shared Graph Properties (uniform inputs)\n            CBUFFER_START(parameters)\n               
-      float3 Position_a;\n                float Vector1_4B24F63;\n               
-      float Vector1_9B1964B1;\n                uint3 PADDING_0;\n            CBUFFER_END\n\n                               
+      // Shared Graph Properties (uniform inputs)\n\n                               
       struct SurfaceDescriptionInputs {\n                                    #if
       UNITY_VFX_ACTIVE\n                                    uint particleID;\n                                   
       #endif // UNITY_VFX_ACTIVE\n                                };\n                           
@@ -7307,12 +7331,15 @@ VisualEffectResource:
       = (float)0;\n                                    float scaleX = (float)1;\n                                   
       float scaleY = (float)1;\n                                    float scaleZ
       = (float)1;\n                                    \n            \n\n    if(
-      !alive) discard;\n    \n                                    SurfaceDescription
-      surface = (SurfaceDescription)0;\n                                    surface.Alpha
-      = 1;\n                                    surface.AlphaClipThreshold = 0.5;\n                                   
-      surface.Alpha *= alpha;\n                                    return surface;\n                               
-      }\n                            // Pixel Graph Evaluation\n                               
-      \n                        //-------------------------------------------------------------------------------------\n                       
+      !alive) discard;\n    \n                                                float
+      Vector1_4B24F63 = (float)0;\n{\n    \n    Vector1_4B24F63 = (float)2.63;\n}\n\n                                               
+      float Vector1_9B1964B1 = (float)0;\n{\n    \n    Vector1_9B1964B1 = (float)4.16;\n}\n\n                                   
+      SurfaceDescription surface = (SurfaceDescription)0;\n                                   
+      surface.Alpha = 1;\n                                    surface.AlphaClipThreshold
+      = 0.5;\n                                    surface.Alpha *= alpha;\n                                   
+      return surface;\n                                }\n                           
+      // Pixel Graph Evaluation\n                                \n                       
+      //-------------------------------------------------------------------------------------\n                       
       // End graph generated code\n                        //-------------------------------------------------------------------------------------\n                   
       \n                    // $include(\"VertexAnimation.template.hlsl\")\n                   
       \n                    \n                    //-------------------------------------------------------------------------------------\n                   
@@ -7442,9 +7469,9 @@ VisualEffectResource:
       float3(size,size,size);\n                #if VFX_USE_SCALEX_CURRENT\n               
       size3.x *= scaleX;\n                #endif\n                #if VFX_USE_SCALEY_CURRENT\n               
       size3.y *= scaleY;\n                #endif\n                #if VFX_USE_SCALEZ_CURRENT\n               
-      size3.z *= scaleZ;\n                #endif\n             SetAttribute_C707D62A(
-      /*inout */position, Position_a);\n             \n                float4x4 elementToVFX
-      = GetElementToVFXMatrix(axisX,axisY,axisZ,float3(angleX,angleY,angleZ),float3(pivotX,pivotY,pivotZ),size3,position);\n\n               
+      size3.z *= scaleZ;\n                #endif\n             {\n                
+      SetAttribute_C707D62A( /*inout */position, float3(3.8,0,0));\n            
+      }\n             \n                float4x4 elementToVFX = GetElementToVFXMatrix(axisX,axisY,axisZ,float3(angleX,angleY,angleZ),float3(pivotX,pivotY,pivotZ),size3,position);\n\n               
       float3 objectPos = inputMesh.positionOS;\n                float3 particlePos
       = mul(elementToVFX,float4(objectPos,1)).xyz;\n                inputMesh.positionOS
       = particlePos;\n                PackedVaryingsType result = Vert(inputMesh);\n\n               
@@ -7573,9 +7600,7 @@ VisualEffectResource:
       //-------------------------------------------------------------------------------------\n                   
       \n                        //-------------------------------------------------------------------------------------\n                       
       // Graph generated code\n                        //-------------------------------------------------------------------------------------\n                               
-      // Shared Graph Properties (uniform inputs)\n            CBUFFER_START(parameters)\n               
-      float3 Position_a;\n                float Vector1_4B24F63;\n               
-      float Vector1_9B1964B1;\n                uint3 PADDING_0;\n            CBUFFER_END\n\n                               
+      // Shared Graph Properties (uniform inputs)\n\n                               
       struct SurfaceDescriptionInputs {\n                                    #if
       UNITY_VFX_ACTIVE\n                                    uint particleID;\n                                   
       #endif // UNITY_VFX_ACTIVE\n                                };\n                           
@@ -7599,12 +7624,15 @@ VisualEffectResource:
       = (float)0;\n                                    float scaleX = (float)1;\n                                   
       float scaleY = (float)1;\n                                    float scaleZ
       = (float)1;\n                                    \n            \n\n    if(
-      !alive) discard;\n    \n                                    SurfaceDescription
-      surface = (SurfaceDescription)0;\n                                    surface.Alpha
-      = 1;\n                                    surface.AlphaClipThreshold = 0.5;\n                                   
-      surface.Alpha *= alpha;\n                                    return surface;\n                               
-      }\n                            // Pixel Graph Evaluation\n                               
-      \n                        //-------------------------------------------------------------------------------------\n                       
+      !alive) discard;\n    \n                                                float
+      Vector1_4B24F63 = (float)0;\n{\n    \n    Vector1_4B24F63 = (float)2.63;\n}\n\n                                               
+      float Vector1_9B1964B1 = (float)0;\n{\n    \n    Vector1_9B1964B1 = (float)4.16;\n}\n\n                                   
+      SurfaceDescription surface = (SurfaceDescription)0;\n                                   
+      surface.Alpha = 1;\n                                    surface.AlphaClipThreshold
+      = 0.5;\n                                    surface.Alpha *= alpha;\n                                   
+      return surface;\n                                }\n                           
+      // Pixel Graph Evaluation\n                                \n                       
+      //-------------------------------------------------------------------------------------\n                       
       // End graph generated code\n                        //-------------------------------------------------------------------------------------\n                   
       \n                    // $include(\"VertexAnimation.template.hlsl\")\n                   
       \n                    \n                    //-------------------------------------------------------------------------------------\n                   
@@ -7734,9 +7762,9 @@ VisualEffectResource:
       float3(size,size,size);\n                #if VFX_USE_SCALEX_CURRENT\n               
       size3.x *= scaleX;\n                #endif\n                #if VFX_USE_SCALEY_CURRENT\n               
       size3.y *= scaleY;\n                #endif\n                #if VFX_USE_SCALEZ_CURRENT\n               
-      size3.z *= scaleZ;\n                #endif\n             SetAttribute_C707D62A(
-      /*inout */position, Position_a);\n             \n                float4x4 elementToVFX
-      = GetElementToVFXMatrix(axisX,axisY,axisZ,float3(angleX,angleY,angleZ),float3(pivotX,pivotY,pivotZ),size3,position);\n\n               
+      size3.z *= scaleZ;\n                #endif\n             {\n                
+      SetAttribute_C707D62A( /*inout */position, float3(3.8,0,0));\n            
+      }\n             \n                float4x4 elementToVFX = GetElementToVFXMatrix(axisX,axisY,axisZ,float3(angleX,angleY,angleZ),float3(pivotX,pivotY,pivotZ),size3,position);\n\n               
       float3 objectPos = inputMesh.positionOS;\n                float3 particlePos
       = mul(elementToVFX,float4(objectPos,1)).xyz;\n                inputMesh.positionOS
       = particlePos;\n                PackedVaryingsType result = Vert(inputMesh);\n\n               
@@ -7868,9 +7896,7 @@ VisualEffectResource:
       //-------------------------------------------------------------------------------------\n                   
       \n                        //-------------------------------------------------------------------------------------\n                       
       // Graph generated code\n                        //-------------------------------------------------------------------------------------\n                               
-      // Shared Graph Properties (uniform inputs)\n            CBUFFER_START(parameters)\n               
-      float3 Position_a;\n                float Vector1_4B24F63;\n               
-      float Vector1_9B1964B1;\n                uint3 PADDING_0;\n            CBUFFER_END\n\n                               
+      // Shared Graph Properties (uniform inputs)\n\n                               
       struct SurfaceDescriptionInputs {\n                                    #if
       UNITY_VFX_ACTIVE\n                                    uint particleID;\n                                   
       #endif // UNITY_VFX_ACTIVE\n                                };\n                           
@@ -7894,12 +7920,15 @@ VisualEffectResource:
       = (float)0;\n                                    float scaleX = (float)1;\n                                   
       float scaleY = (float)1;\n                                    float scaleZ
       = (float)1;\n                                    \n            \n\n    if(
-      !alive) discard;\n    \n                                    SurfaceDescription
-      surface = (SurfaceDescription)0;\n                                    surface.Alpha
-      = 1;\n                                    surface.AlphaClipThreshold = 0.5;\n                                   
-      surface.Alpha *= alpha;\n                                    return surface;\n                               
-      }\n                            // Pixel Graph Evaluation\n                               
-      \n                        //-------------------------------------------------------------------------------------\n                       
+      !alive) discard;\n    \n                                                float
+      Vector1_4B24F63 = (float)0;\n{\n    \n    Vector1_4B24F63 = (float)2.63;\n}\n\n                                               
+      float Vector1_9B1964B1 = (float)0;\n{\n    \n    Vector1_9B1964B1 = (float)4.16;\n}\n\n                                   
+      SurfaceDescription surface = (SurfaceDescription)0;\n                                   
+      surface.Alpha = 1;\n                                    surface.AlphaClipThreshold
+      = 0.5;\n                                    surface.Alpha *= alpha;\n                                   
+      return surface;\n                                }\n                           
+      // Pixel Graph Evaluation\n                                \n                       
+      //-------------------------------------------------------------------------------------\n                       
       // End graph generated code\n                        //-------------------------------------------------------------------------------------\n                   
       \n                    // $include(\"VertexAnimation.template.hlsl\")\n                   
       \n                    \n                    //-------------------------------------------------------------------------------------\n                   
@@ -8029,9 +8058,9 @@ VisualEffectResource:
       float3(size,size,size);\n                #if VFX_USE_SCALEX_CURRENT\n               
       size3.x *= scaleX;\n                #endif\n                #if VFX_USE_SCALEY_CURRENT\n               
       size3.y *= scaleY;\n                #endif\n                #if VFX_USE_SCALEZ_CURRENT\n               
-      size3.z *= scaleZ;\n                #endif\n             SetAttribute_C707D62A(
-      /*inout */position, Position_a);\n             \n                float4x4 elementToVFX
-      = GetElementToVFXMatrix(axisX,axisY,axisZ,float3(angleX,angleY,angleZ),float3(pivotX,pivotY,pivotZ),size3,position);\n\n               
+      size3.z *= scaleZ;\n                #endif\n             {\n                
+      SetAttribute_C707D62A( /*inout */position, float3(3.8,0,0));\n            
+      }\n             \n                float4x4 elementToVFX = GetElementToVFXMatrix(axisX,axisY,axisZ,float3(angleX,angleY,angleZ),float3(pivotX,pivotY,pivotZ),size3,position);\n\n               
       float3 objectPos = inputMesh.positionOS;\n                float3 particlePos
       = mul(elementToVFX,float4(objectPos,1)).xyz;\n                inputMesh.positionOS
       = particlePos;\n                PackedVaryingsType result = Vert(inputMesh);\n\n               
@@ -8166,9 +8195,7 @@ VisualEffectResource:
       //-------------------------------------------------------------------------------------\n                   
       \n                        //-------------------------------------------------------------------------------------\n                       
       // Graph generated code\n                        //-------------------------------------------------------------------------------------\n                               
-      // Shared Graph Properties (uniform inputs)\n            CBUFFER_START(parameters)\n               
-      float3 Position_a;\n                float Vector1_4B24F63;\n               
-      float Vector1_9B1964B1;\n                uint3 PADDING_0;\n            CBUFFER_END\n\n                               
+      // Shared Graph Properties (uniform inputs)\n\n                               
       struct SurfaceDescriptionInputs {\n                                    float3
       ObjectSpacePosition; // optional\n                                    #if UNITY_VFX_ACTIVE\n                                   
       uint particleID;\n                                    #endif // UNITY_VFX_ACTIVE\n                               
@@ -8214,20 +8241,23 @@ VisualEffectResource:
       = (float)0;\n                                    float scaleX = (float)1;\n                                   
       float scaleY = (float)1;\n                                    float scaleZ
       = (float)1;\n                                    \n            \n\n    if(
-      !alive) discard;\n    \n                                    SurfaceDescription
-      surface = (SurfaceDescription)0;\n                                    Gradient
-      _Gradient_98BB5E59_Out_0 = NewGradient(0, 7, 2, float4(0.8469865, 1, 0.0990566,
-      0),float4(0.7294118, 0.08530336, 0.07058822, 0.1819791),float4(0.4582389, 0.04705882,
-      0.4941176, 0.3604791),float4(0.02995378, 0.02745097, 0.2745098, 0.5303273),float4(0.1229052,
-      0.4049238, 0.6743622, 0.6967117),float4(0.3398006, 0.8679245, 0.393839, 0.8370947),float4(0.8470588,
-      1, 0.09803922, 0.9947967),float4(0, 0, 0, 0), float2(1, 0),float2(1, 1),float2(0,
-      0),float2(0, 0),float2(0, 0),float2(0, 0),float2(0, 0),float2(0, 0));\n                                   
-      float _Property_7B40AA1C_Out_0 = Vector1_4B24F63;\n                                   
-      float _Property_85C76B20_Out_0 = Vector1_9B1964B1;\n                                   
-      float _Split_3B890ED_R_1 = IN.ObjectSpacePosition[0];\n                                   
-      float _Split_3B890ED_G_2 = IN.ObjectSpacePosition[1];\n                                   
-      float _Split_3B890ED_B_3 = IN.ObjectSpacePosition[2];\n                                   
-      float _Split_3B890ED_A_4 = 0;\n                                    float _InverseLerp_10C65378_Out_3;\n                                   
+      !alive) discard;\n    \n                                                float
+      Vector1_4B24F63 = (float)0;\n{\n    \n    Vector1_4B24F63 = (float)2.63;\n}\n\n                                               
+      float Vector1_9B1964B1 = (float)0;\n{\n    \n    Vector1_9B1964B1 = (float)4.16;\n}\n\n                                   
+      SurfaceDescription surface = (SurfaceDescription)0;\n                                   
+      Gradient _Gradient_98BB5E59_Out_0 = NewGradient(0, 7, 2, float4(0.8469865,
+      1, 0.0990566, 0),float4(0.7294118, 0.08530336, 0.07058822, 0.1819791),float4(0.4582389,
+      0.04705882, 0.4941176, 0.3604791),float4(0.02995378, 0.02745097, 0.2745098,
+      0.5303273),float4(0.1229052, 0.4049238, 0.6743622, 0.6967117),float4(0.3398006,
+      0.8679245, 0.393839, 0.8370947),float4(0.8470588, 1, 0.09803922, 0.9947967),float4(0,
+      0, 0, 0), float2(1, 0),float2(1, 1),float2(0, 0),float2(0, 0),float2(0, 0),float2(0,
+      0),float2(0, 0),float2(0, 0));\n                                    float _Property_7B40AA1C_Out_0
+      = Vector1_4B24F63;\n                                    float _Property_85C76B20_Out_0
+      = Vector1_9B1964B1;\n                                    float _Split_3B890ED_R_1
+      = IN.ObjectSpacePosition[0];\n                                    float _Split_3B890ED_G_2
+      = IN.ObjectSpacePosition[1];\n                                    float _Split_3B890ED_B_3
+      = IN.ObjectSpacePosition[2];\n                                    float _Split_3B890ED_A_4
+      = 0;\n                                    float _InverseLerp_10C65378_Out_3;\n                                   
       Unity_InverseLerp_float(_Property_7B40AA1C_Out_0, _Property_85C76B20_Out_0,
       _Split_3B890ED_R_1, _InverseLerp_10C65378_Out_3);\n                                   
       float4 _SampleGradient_3305CB8E_Out_2;\n                                   
@@ -8369,9 +8399,9 @@ VisualEffectResource:
       float3(size,size,size);\n                #if VFX_USE_SCALEX_CURRENT\n               
       size3.x *= scaleX;\n                #endif\n                #if VFX_USE_SCALEY_CURRENT\n               
       size3.y *= scaleY;\n                #endif\n                #if VFX_USE_SCALEZ_CURRENT\n               
-      size3.z *= scaleZ;\n                #endif\n             SetAttribute_C707D62A(
-      /*inout */position, Position_a);\n             \n                float4x4 elementToVFX
-      = GetElementToVFXMatrix(axisX,axisY,axisZ,float3(angleX,angleY,angleZ),float3(pivotX,pivotY,pivotZ),size3,position);\n\n               
+      size3.z *= scaleZ;\n                #endif\n             {\n                
+      SetAttribute_C707D62A( /*inout */position, float3(3.8,0,0));\n            
+      }\n             \n                float4x4 elementToVFX = GetElementToVFXMatrix(axisX,axisY,axisZ,float3(angleX,angleY,angleZ),float3(pivotX,pivotY,pivotZ),size3,position);\n\n               
       float3 objectPos = inputMesh.positionOS;\n                float3 particlePos
       = mul(elementToVFX,float4(objectPos,1)).xyz;\n                inputMesh.positionOS
       = particlePos;\n                PackedVaryingsType result = Vert(inputMesh);\n\n               
@@ -8393,19 +8423,7 @@ VisualEffectResource:
         data[0]: -1
         data[1]: -1
         data[2]: -1
-        data[3]: 1
-      - op: 1
-        valueIndex: 2
-        data[0]: -1
-        data[1]: -1
-        data[2]: -1
-        data[3]: 1
-      - op: 1
-        valueIndex: 3
-        data[0]: -1
-        data[1]: -1
-        data[2]: -1
-        data[3]: 1
+        data[3]: 3
       - op: 1
         valueIndex: 4
         data[0]: -1
@@ -8423,19 +8441,7 @@ VisualEffectResource:
         data[0]: -1
         data[1]: -1
         data[2]: -1
-        data[3]: 1
-      - op: 1
-        valueIndex: 7
-        data[0]: -1
-        data[1]: -1
-        data[2]: -1
-        data[3]: 1
-      - op: 1
-        valueIndex: 8
-        data[0]: -1
-        data[1]: -1
-        data[2]: -1
-        data[3]: 1
+        data[3]: 3
       - op: 1
         valueIndex: 9
         data[0]: -1
@@ -8453,19 +8459,7 @@ VisualEffectResource:
         data[0]: -1
         data[1]: -1
         data[2]: -1
-        data[3]: 1
-      - op: 1
-        valueIndex: 12
-        data[0]: -1
-        data[1]: -1
-        data[2]: -1
-        data[3]: 1
-      - op: 1
-        valueIndex: 13
-        data[0]: -1
-        data[1]: -1
-        data[2]: -1
-        data[3]: 1
+        data[3]: 3
       - op: 1
         valueIndex: 14
         data[0]: -1
@@ -8483,43 +8477,19 @@ VisualEffectResource:
         data[0]: -1
         data[1]: -1
         data[2]: -1
-        data[3]: 1
-      - op: 1
-        valueIndex: 17
-        data[0]: -1
-        data[1]: -1
-        data[2]: -1
-        data[3]: 1
-      - op: 1
-        valueIndex: 18
-        data[0]: -1
-        data[1]: -1
-        data[2]: -1
-        data[3]: 1
-      - op: 1
+        data[3]: 3
+      - op: 6
         valueIndex: 19
         data[0]: -1
         data[1]: -1
         data[2]: -1
-        data[3]: 1
+        data[3]: -1
       - op: 1
         valueIndex: 20
         data[0]: -1
         data[1]: -1
         data[2]: -1
-        data[3]: 1
-      - op: 1
-        valueIndex: 21
-        data[0]: -1
-        data[1]: -1
-        data[2]: -1
-        data[3]: 1
-      - op: 1
-        valueIndex: 22
-        data[0]: -1
-        data[1]: -1
-        data[2]: -1
-        data[3]: 1
+        data[3]: 3
       - op: 1
         valueIndex: 23
         data[0]: -1
@@ -8543,171 +8513,45 @@ VisualEffectResource:
         data[0]: -1
         data[1]: -1
         data[2]: -1
-        data[3]: 1
-      - op: 1
-        valueIndex: 27
-        data[0]: -1
-        data[1]: -1
-        data[2]: -1
-        data[3]: 1
-      - op: 1
-        valueIndex: 28
-        data[0]: -1
-        data[1]: -1
-        data[2]: -1
-        data[3]: 1
+        data[3]: 3
       - op: 1
         valueIndex: 29
         data[0]: -1
         data[1]: -1
         data[2]: -1
-        data[3]: 1
+        data[3]: 3
       - op: 1
-        valueIndex: 30
-        data[0]: -1
-        data[1]: -1
-        data[2]: -1
-        data[3]: 1
-      - op: 1
-        valueIndex: 31
-        data[0]: -1
-        data[1]: -1
-        data[2]: -1
-        data[3]: 1
-      - op: 3
         valueIndex: 32
-        data[0]: 5
-        data[1]: 8
-        data[2]: 9
-        data[3]: -1
-      - op: 1
-        valueIndex: 35
         data[0]: -1
         data[1]: -1
         data[2]: -1
-        data[3]: 1
-      - op: 3
-        valueIndex: 36
-        data[0]: 27
-        data[1]: 23
-        data[2]: 19
-        data[3]: -1
+        data[3]: 6
       - op: 1
-        valueIndex: 39
-        data[0]: -1
-        data[1]: -1
-        data[2]: -1
-        data[3]: 1
-      - op: 20
-        valueIndex: 40
-        data[0]: 16
-        data[1]: -1
-        data[2]: -1
-        data[3]: 1
-      - op: 31
-        valueIndex: 41
-        data[0]: 17
-        data[1]: 18
-        data[2]: -1
-        data[3]: 1
-      - op: 1
-        valueIndex: 42
-        data[0]: -1
-        data[1]: -1
-        data[2]: -1
-        data[3]: 1
-      - op: 3
-        valueIndex: 43
-        data[0]: 20
-        data[1]: 21
-        data[2]: 24
-        data[3]: -1
-      - op: 3
-        valueIndex: 46
-        data[0]: 28
-        data[1]: 25
-        data[2]: 26
-        data[3]: -1
-      - op: 1
-        valueIndex: 49
+        valueIndex: 33
         data[0]: -1
         data[1]: -1
         data[2]: -1
         data[3]: 15
       - op: 1
-        valueIndex: 50
+        valueIndex: 34
         data[0]: -1
         data[1]: -1
         data[2]: -1
-        data[3]: 6
-      - op: 3
-        valueIndex: 51
-        data[0]: 22
-        data[1]: 14
-        data[2]: 13
-        data[3]: -1
-      - op: 3
-        valueIndex: 54
-        data[0]: 15
-        data[1]: 11
-        data[2]: 10
-        data[3]: -1
-      - op: 3
-        valueIndex: 57
-        data[0]: 29
-        data[1]: 12
-        data[2]: 1
-        data[3]: -1
+        data[3]: 3
       - op: 1
-        valueIndex: 60
+        valueIndex: 37
+        data[0]: -1
+        data[1]: -1
+        data[2]: -1
+        data[3]: 3
+      - op: 1
+        valueIndex: 40
         data[0]: -1
         data[1]: -1
         data[2]: -1
         data[3]: 1
       - op: 1
-        valueIndex: 61
-        data[0]: -1
-        data[1]: -1
-        data[2]: -1
-        data[3]: 1
-      - op: 3
-        valueIndex: 62
-        data[0]: 7
-        data[1]: 6
-        data[2]: 0
-        data[3]: -1
-      - op: 1
-        valueIndex: 65
-        data[0]: -1
-        data[1]: -1
-        data[2]: -1
-        data[3]: 1
-      - op: 6
-        valueIndex: 66
-        data[0]: -1
-        data[1]: -1
-        data[2]: -1
-        data[3]: -1
-      - op: 3
-        valueIndex: 67
-        data[0]: 4
-        data[1]: 3
-        data[2]: 2
-        data[3]: -1
-      - op: 1
-        valueIndex: 70
-        data[0]: -1
-        data[1]: -1
-        data[2]: -1
-        data[3]: 1
-      - op: 1
-        valueIndex: 71
-        data[0]: -1
-        data[1]: -1
-        data[2]: -1
-        data[3]: 1
-      - op: 1
-        valueIndex: 72
+        valueIndex: 41
         data[0]: -1
         data[1]: -1
         data[2]: -1
@@ -8719,96 +8563,56 @@ VisualEffectResource:
       m_Float:
         m_Array:
         - m_ExpressionIndex: 0
-          m_Value: 0
-        - m_ExpressionIndex: 1
-          m_Value: 0
-        - m_ExpressionIndex: 2
-          m_Value: 0
-        - m_ExpressionIndex: 3
-          m_Value: 0
-        - m_ExpressionIndex: 4
-          m_Value: -3.8
-        - m_ExpressionIndex: 5
-          m_Value: 0.8
-        - m_ExpressionIndex: 6
-          m_Value: 0
-        - m_ExpressionIndex: 7
-          m_Value: 0
-        - m_ExpressionIndex: 8
-          m_Value: 0
-        - m_ExpressionIndex: 9
-          m_Value: 0
-        - m_ExpressionIndex: 10
-          m_Value: 0.333
-        - m_ExpressionIndex: 11
-          m_Value: 1
-        - m_ExpressionIndex: 12
-          m_Value: 0
-        - m_ExpressionIndex: 13
-          m_Value: -0.333
-        - m_ExpressionIndex: 14
-          m_Value: 0.2
-        - m_ExpressionIndex: 15
-          m_Value: 0.333
-        - m_ExpressionIndex: 16
-          m_Value: 0.2928932
-        - m_ExpressionIndex: 17
           m_Value: 10
-        - m_ExpressionIndex: 18
+        - m_ExpressionIndex: 2
+          m_Value: 0.2928932
+        - m_ExpressionIndex: 3
+          m_Value: 1.23
+        - m_ExpressionIndex: 5
           m_Value: 0
-        - m_ExpressionIndex: 19
-          m_Value: 0
-        - m_ExpressionIndex: 20
-          m_Value: 0
-        - m_ExpressionIndex: 21
+        - m_ExpressionIndex: 6
+          m_Value: -1.21
+        - m_ExpressionIndex: 8
+          m_Value: -2.63
+        - m_ExpressionIndex: 9
+          m_Value: -4.16
+        - m_ExpressionIndex: 13
+          m_Value: 0.59
+        - m_ExpressionIndex: 14
+          m_Value: 3
+        - m_ExpressionIndex: 15
           m_Value: 1
         - m_ExpressionIndex: 22
-          m_Value: -0.333
-        - m_ExpressionIndex: 23
-          m_Value: 0
-        - m_ExpressionIndex: 24
-          m_Value: 0
-        - m_ExpressionIndex: 25
-          m_Value: 3
-        - m_ExpressionIndex: 26
-          m_Value: 2
-        - m_ExpressionIndex: 27
-          m_Value: 3.8
-        - m_ExpressionIndex: 28
-          m_Value: 2
-        - m_ExpressionIndex: 29
-          m_Value: -0.8
-        - m_ExpressionIndex: 30
-          m_Value: 1.23
-        - m_ExpressionIndex: 31
-          m_Value: 0
-        - m_ExpressionIndex: 33
-          m_Value: 0
-        - m_ExpressionIndex: 35
-          m_Value: -1.21
-        - m_ExpressionIndex: 38
-          m_Value: -2.63
-        - m_ExpressionIndex: 46
-          m_Value: 1
-        - m_ExpressionIndex: 47
-          m_Value: 0.59
-        - m_ExpressionIndex: 49
           m_Value: 2.63
-        - m_ExpressionIndex: 52
-          m_Value: -4.16
-        - m_ExpressionIndex: 53
-          m_Value: 3
-        - m_ExpressionIndex: 54
+        - m_ExpressionIndex: 23
           m_Value: 4.16
       m_Vector2f:
         m_Array: []
       m_Vector3f:
-        m_Array: []
+        m_Array:
+        - m_ExpressionIndex: 1
+          m_Value: {x: 3.8, y: 0, z: 0}
+        - m_ExpressionIndex: 4
+          m_Value: {x: 0.8, y: 0, z: 0}
+        - m_ExpressionIndex: 7
+          m_Value: {x: -0.8, y: 0, z: 0}
+        - m_ExpressionIndex: 10
+          m_Value: {x: -3.8, y: 0, z: 0}
+        - m_ExpressionIndex: 12
+          m_Value: {x: 0, y: 0, z: 0}
+        - m_ExpressionIndex: 16
+          m_Value: {x: 0.333, y: 1, z: 0.333}
+        - m_ExpressionIndex: 17
+          m_Value: {x: -0.333, y: 0.2, z: -0.333}
+        - m_ExpressionIndex: 20
+          m_Value: {x: 2, y: 3, z: 2}
+        - m_ExpressionIndex: 21
+          m_Value: {x: 0, y: 1, z: 0}
       m_Vector4f:
         m_Array: []
       m_Uint:
         m_Array:
-        - m_ExpressionIndex: 42
+        - m_ExpressionIndex: 18
           m_Value: 4294967295
       m_Int:
         m_Array: []
@@ -8820,7 +8624,7 @@ VisualEffectResource:
         m_Array: []
       m_NamedObject:
         m_Array:
-        - m_ExpressionIndex: 41
+        - m_ExpressionIndex: 19
           m_Value: {fileID: 10208, guid: 0000000000000000e000000000000000, type: 0}
       m_Bool:
         m_Array: []
@@ -8987,7 +8791,7 @@ VisualEffectResource:
       temporaryBuffers: []
       values:
       - nameId: Rate
-        index: 37
+        index: 0
       params: []
       processor: {fileID: 0}
       shaderSourceIndex: -1
@@ -9008,9 +8812,9 @@ VisualEffectResource:
       index: 1
     values:
     - nameId: bounds_center
-      index: 39
+      index: 21
     - nameId: bounds_size
-      index: 40
+      index: 20
     tasks:
     - type: 536870912
       buffers:
@@ -9023,24 +8827,12 @@ VisualEffectResource:
       - nameId: sourceAttributeBuffer
         index: 2
       temporaryBuffers: []
-      values:
-      - nameId: A_a
-        index: 43
-      - nameId: B_a
-        index: 44
-      - nameId: A_b
-        index: 46
-      - nameId: B_b
-        index: 53
-      - nameId: Size_c
-        index: 47
-      - nameId: Position_d
-        index: 48
+      values: []
       params:
       - nameId: bounds_center
-        index: 39
+        index: 21
       - nameId: bounds_size
-        index: 40
+        index: 20
       processor: {fileID: 0}
       shaderSourceIndex: 0
     - type: 805306368
@@ -9052,7 +8844,7 @@ VisualEffectResource:
       temporaryBuffers: []
       values:
       - nameId: deltaTime_a
-        index: 50
+        index: 11
       params: []
       processor: {fileID: 0}
       shaderSourceIndex: 1
@@ -9061,13 +8853,7 @@ VisualEffectResource:
       - nameId: attributeBuffer
         index: 0
       temporaryBuffers: []
-      values:
-      - nameId: Position_a
-        index: 51
-      - nameId: Vector1_4B24F63
-        index: 52
-      - nameId: Vector1_9B1964B1
-        index: 38
+      values: []
       params:
       - nameId: sortPriority
         index: 0
@@ -9078,13 +8864,7 @@ VisualEffectResource:
       - nameId: attributeBuffer
         index: 0
       temporaryBuffers: []
-      values:
-      - nameId: Position_a
-        index: 45
-      - nameId: Vector1_4B24F63
-        index: 35
-      - nameId: Vector1_9B1964B1
-        index: 33
+      values: []
       params:
       - nameId: sortPriority
         index: 0
@@ -9095,15 +8875,7 @@ VisualEffectResource:
       - nameId: attributeBuffer
         index: 0
       temporaryBuffers: []
-      values:
-      - nameId: Position_a
-        index: 32
-      - nameId: Vector1_4B24F63
-        index: 30
-      - nameId: Vector1_9B1964B1
-        index: 31
-      - nameId: cropFactor
-        index: 36
+      values: []
       params:
       - nameId: sortPriority
         index: 0
@@ -9114,18 +8886,12 @@ VisualEffectResource:
       - nameId: attributeBuffer
         index: 0
       temporaryBuffers: []
-      values:
-      - nameId: Position_a
-        index: 34
-      - nameId: Vector1_4B24F63
-        index: 49
-      - nameId: Vector1_9B1964B1
-        index: 54
+      values: []
       params:
       - nameId: mesh
-        index: 41
+        index: 19
       - nameId: subMeshMask
-        index: 42
+        index: 18
       - nameId: sortPriority
         index: 0
       processor: {fileID: 0}

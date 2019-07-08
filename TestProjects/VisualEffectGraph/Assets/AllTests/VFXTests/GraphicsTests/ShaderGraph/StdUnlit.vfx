@@ -744,8 +744,8 @@ VisualEffectResource:
       VFX_HAS_INDIRECT_DRAW\n        uint indirectIndex = indirectBuffer.IncrementCounter();\n\t\tindirectBuffer[indirectIndex]
       = index;\n#endif\n#endif\n\t}\n}\n"
   - compute: 0
-    name: '[System 1]Shader Graph Quad Output'
-    source: "Shader \"Hidden/VFX/StdUnlit/System 1/Shader Graph Quad Output\"\n{\n   
+    name: '[System 1]A Shader Graph Quad Output'
+    source: "Shader \"Hidden/VFX/StdUnlit/System 1/(A) Shader Graph Quad Output\"\n{\n   
       HLSLINCLUDE\n    #define UNITY_VFX_ACTIVE 1\n    #include \"Packages/com.unity.visualeffectgraph/Shaders/RenderPipeline/HDRP/VFXDefines.hlsl\"\n   
       ENDHLSL\n    SubShader\n    {\n        Tags {\"RenderPipeline\" = \"HDRenderPipeline\"
       \"RenderType\" = \"HDUnlitShader\" \"Queue\" = \"AlphaTest+0\" }\n        Pass\n       
@@ -2553,8 +2553,8 @@ VisualEffectResource:
       return result;\n            }\n            #pragma vertex ParticleVert\n\n           
       ENDHLSL\n        }\n    }\n        }\n"
   - compute: 0
-    name: '[System 1]Shader Graph Triangle Output'
-    source: "Shader \"Hidden/VFX/StdUnlit/System 1/Shader Graph Triangle Output\"\n{\n   
+    name: '[System 1]B Shader Graph Triangle Output'
+    source: "Shader \"Hidden/VFX/StdUnlit/System 1/(B) Shader Graph Triangle Output\"\n{\n   
       HLSLINCLUDE\n    #define UNITY_VFX_ACTIVE 1\n    #include \"Packages/com.unity.visualeffectgraph/Shaders/RenderPipeline/HDRP/VFXDefines.hlsl\"\n   
       ENDHLSL\n    SubShader\n    {\n        Tags {\"RenderPipeline\" = \"HDRenderPipeline\"
       \"RenderType\" = \"HDUnlitShader\" \"Queue\" = \"AlphaTest+0\" }\n        Pass\n       
@@ -4374,8 +4374,8 @@ VisualEffectResource:
       return result;\n            }\n            #pragma vertex ParticleVert\n\n           
       ENDHLSL\n        }\n    }\n        }\n"
   - compute: 0
-    name: '[System 1]Shader Graph Octagon Output'
-    source: "Shader \"Hidden/VFX/StdUnlit/System 1/Shader Graph Octagon Output\"\n{\n   
+    name: '[System 1]C Shader Graph Octagon Output'
+    source: "Shader \"Hidden/VFX/StdUnlit/System 1/(C) Shader Graph Octagon Output\"\n{\n   
       HLSLINCLUDE\n    #define UNITY_VFX_ACTIVE 1\n    #include \"Packages/com.unity.visualeffectgraph/Shaders/RenderPipeline/HDRP/VFXDefines.hlsl\"\n   
       ENDHLSL\n    SubShader\n    {\n        Tags {\"RenderPipeline\" = \"HDRenderPipeline\"
       \"RenderType\" = \"HDUnlitShader\" \"Queue\" = \"AlphaTest+0\" }\n        Pass\n       
@@ -6213,8 +6213,8 @@ VisualEffectResource:
       return result;\n            }\n            #pragma vertex ParticleVert\n\n           
       ENDHLSL\n        }\n    }\n        }\n"
   - compute: 0
-    name: '[System 1]Shader Graph Mesh Output'
-    source: "Shader \"Hidden/VFX/StdUnlit/System 1/Shader Graph Mesh Output\"\n{\n   
+    name: '[System 1]D Shader Graph Mesh Output'
+    source: "Shader \"Hidden/VFX/StdUnlit/System 1/(D) Shader Graph Mesh Output\"\n{\n   
       HLSLINCLUDE\n    #define UNITY_VFX_ACTIVE 1\n    #include \"Packages/com.unity.visualeffectgraph/Shaders/RenderPipeline/HDRP/VFXDefines.hlsl\"\n   
       ENDHLSL\n    SubShader\n    {\n        Tags {\"RenderPipeline\" = \"HDRenderPipeline\"
       \"RenderType\" = \"HDUnlitShader\" \"Queue\" = \"AlphaTest+0\" }\n        Pass\n       
