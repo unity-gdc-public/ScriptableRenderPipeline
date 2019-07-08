@@ -562,6 +562,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public static readonly int _NormalHistoryCriterion          = Shader.PropertyToID("_NormalHistoryCriterion");
         public static readonly int _FilterSampleCount               = Shader.PropertyToID("_FilterSampleCount");
         public static readonly int _DenoiseInputTexture             = Shader.PropertyToID("_DenoiseInputTexture");
+        public static readonly int _ValidDenoisingTexture           = Shader.PropertyToID("_ValidDenoisingTexture");
         public static readonly int _DenoiseOutputTextureRW          = Shader.PropertyToID("_DenoiseOutputTextureRW");
 
         // Reflections

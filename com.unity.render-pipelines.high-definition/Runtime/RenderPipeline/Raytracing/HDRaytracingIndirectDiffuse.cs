@@ -11,6 +11,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         // Buffers used for the evaluation
         RTHandle m_IDIntermediateBuffer0 = null;
         RTHandle m_IDIntermediateBuffer1 = null;
+        RTHandle m_IDIntermediateBuffer2 = null;
 
         // String values
         const string m_RayGenIndirectDiffuseIntegrationName = "RayGenIntegration";
@@ -18,14 +19,20 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         const string m_MissIndirectDiffuseName = "MissShaderIndirectDiffuse";
         const string m_ClosestHitIndirectDiffuseName = "ClosestHitMain";
 
+        Material m_SobelFilter;
+
         public void InitRayTracedIndirectDiffuse()
         {
             m_IDIntermediateBuffer0 = RTHandles.Alloc(Vector2.one, TextureXR.slices, colorFormat: GraphicsFormat.R16G16B16A16_SFloat, dimension: TextureXR.dimension, enableRandomWrite: true, useDynamicScale: true, useMipMap: false, autoGenerateMips: false, name: "IndirectDiffuseBuffer");
             m_IDIntermediateBuffer1 = RTHandles.Alloc(Vector2.one, TextureXR.slices, colorFormat: GraphicsFormat.R16G16B16A16_SFloat, dimension: TextureXR.dimension, enableRandomWrite: true, useDynamicScale: true, useMipMap: false, autoGenerateMips: false, name: "IndirectDiffuseDenoiseBuffer");
+            m_IDIntermediateBuffer2 = RTHandles.Alloc(Vector2.one, TextureXR.slices, colorFormat: GraphicsFormat.R16_SFloat, dimension: TextureXR.dimension, enableRandomWrite: true, useDynamicScale: true, useMipMap: false, autoGenerateMips: false, name: "IndirectDiffuseDenoiseBuffer");
+            m_SobelFilter = CoreUtils.CreateEngineMaterial(m_Asset.renderPipelineRayTracingResources.sobelFilterRS);
         }
 
         public void ReleaseRayTracedIndirectDiffuse()
         {
+            CoreUtils.Destroy(m_SobelFilter);
+            RTHandles.Release(m_IDIntermediateBuffer2);
             RTHandles.Release(m_IDIntermediateBuffer1);
             RTHandles.Release(m_IDIntermediateBuffer0);
         }
@@ -115,7 +122,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             deferredParameters.clampValue = settings.clampValue.value;
             deferredParameters.includeSky = true;
             deferredParameters.diffuseLightingOnly = true;
-            deferredParameters.disableSpecularLighting =  true;
+            deferredParameters.disableSpecularLighting = true;
             deferredParameters.halfResolution = false;
             deferredParameters.rtEnv = rtEnv;
             deferredParameters.defaultSpecularLighting = hdCamera.frameSettings.IsEnabled(FrameSettingsField.SpecularLighting);
@@ -222,13 +229,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             {
                 if (settings.enableFilter.value)
                 {
-                    // Grab the history buffer
-                    RTHandleSystem.RTHandle indirectDiffuseHistory = hdCamera.GetCurrentFrameRT((int)HDCameraFrameHistoryType.RaytracedIndirectDiffuse)
-                        ?? hdCamera.AllocHistoryFrameRT((int)HDCameraFrameHistoryType.RaytracedIndirectDiffuse, IndirectDiffuseHistoryBufferAllocatorFunction, 1);
-
-                    HDSimpleDenoiser simpleDenoiser = m_RayTracingManager.GetSimpleDenoiser();
-                    simpleDenoiser.DenoiseBuffer(cmd, hdCamera, m_IDIntermediateBuffer0, indirectDiffuseHistory, m_IDIntermediateBuffer1, settings.filterRadius.value, singleChannel: false);
-                    HDUtils.BlitCameraTexture(cmd, m_IDIntermediateBuffer1, m_IDIntermediateBuffer0);
+                    DenoiseIndirectDiffuseBuffer(hdCamera, cmd, settings);
                 }
             }
         }
@@ -321,30 +322,52 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             CoreUtils.SetKeyword(cmd, "DIFFUSE_LIGHTING_ONLY", false);
             CoreUtils.SetKeyword(cmd, "MULTI_BOUNCE_INDIRECT", false);
 
-            if(settings.enableFilter.value)
+            using (new ProfilingSample(cmd, "Filter Indirect Diffuse", CustomSamplerId.RaytracingFilterIndirectDiffuse.GetSampler()))
             {
-                // Grab the high frequency history buffer
-                RTHandleSystem.RTHandle indirectDiffuseHistoryHF = hdCamera.GetCurrentFrameRT((int)HDCameraFrameHistoryType.RaytracedIndirectDiffuse)
-                    ?? hdCamera.AllocHistoryFrameRT((int)HDCameraFrameHistoryType.RaytracedIndirectDiffuse, IndirectDiffuseHistoryBufferAllocatorFunction, 1);
-
-                // Grab the low frequency history buffer
-                RTHandleSystem.RTHandle indirectDiffuseHistoryLF = hdCamera.GetCurrentFrameRT((int)HDCameraFrameHistoryType.RaytracedIndirectDiffuse)
-                    ?? hdCamera.AllocHistoryFrameRT((int)HDCameraFrameHistoryType.RaytracedIndirectDiffuse, IndirectDiffuseHistoryBufferAllocatorFunction, 2);
-
-
-                if (settings.diffuseDenoiser.value)
+                if (settings.enableFilter.value)
                 {
-                    // Apply the simple denoiser
-                    HDDiffuseDenoiser diffuseDenoiser = m_RaytracingManager.GetDiffuseDenoiser();
-                    diffuseDenoiser.DenoiseBuffer(cmd, hdCamera, m_IDIntermediateBuffer0, indirectDiffuseHistoryHF, m_IDIntermediateBuffer1, settings.filterRadiusFirst.value, settings.filterSampleCount.value, singleChannel: false, useNormal: true);
-                    diffuseDenoiser.DenoiseBuffer(cmd, hdCamera, m_IDIntermediateBuffer1, indirectDiffuseHistoryLF, m_IDIntermediateBuffer0, settings.filterRadiusSecond.value, settings.filterSampleCount.value, singleChannel: false, useNormal: true);
+                    DenoiseIndirectDiffuseBuffer(hdCamera, cmd, settings);
+                }
+            }
+        }
+
+        public void DenoiseIndirectDiffuseBuffer(HDCamera hdCamera, CommandBuffer cmd, GlobalIllumination settings)
+        {
+            /*
+            cmd.SetRenderTarget(m_IDIntermediateBuffer2);
+            m_SobelFilter.SetTexture(HDShaderIDs._DepthTexture, m_SharedRTManager.GetDepthStencilBuffer());
+            m_SobelFilter.SetTexture("_NormalTexture", m_SharedRTManager.GetNormalBuffer());
+            cmd.DrawProcedural(Matrix4x4.identity, m_SobelFilter, 0, MeshTopology.Triangles, 3, 1);
+            */
+
+            // Grab the high frequency history buffer
+            RTHandleSystem.RTHandle indirectDiffuseHistoryHF = hdCamera.GetCurrentFrameRT((int)HDCameraFrameHistoryType.RaytracedIndirectDiffuseHF)
+                ?? hdCamera.AllocHistoryFrameRT((int)HDCameraFrameHistoryType.RaytracedIndirectDiffuseHF, IndirectDiffuseHistoryBufferAllocatorFunction, 1);
+            // Grab the low frequency history buffer
+            RTHandleSystem.RTHandle indirectDiffuseHistoryLF = hdCamera.GetCurrentFrameRT((int)HDCameraFrameHistoryType.RaytracedIndirectDiffuseLF)
+                ?? hdCamera.AllocHistoryFrameRT((int)HDCameraFrameHistoryType.RaytracedIndirectDiffuseLF, IndirectDiffuseHistoryBufferAllocatorFunction, 1);
+
+            if (settings.diffuseDenoiser.value)
+            {
+                // Apply the simple denoiser
+                HDDiffuseDenoiser diffuseDenoiser = m_RayTracingManager.GetDiffuseDenoiser();
+                diffuseDenoiser.DenoiseBuffer(cmd, hdCamera, m_IDIntermediateBuffer0, indirectDiffuseHistoryHF, m_IDIntermediateBuffer1, settings.filterRadiusFirst.value, settings.filterSampleCount.value, singleChannel: false, useNormal: true);
+                if (settings.enableSecondPass.value)
+                {
+                    diffuseDenoiser.DenoiseBuffer(cmd, hdCamera, m_IDIntermediateBuffer1, indirectDiffuseHistoryLF , m_IDIntermediateBuffer0, settings.filterRadiusSecond.value, settings.filterSampleCount.value, singleChannel: false, useNormal: true);
                 }
                 else
                 {
-                    HDSimpleDenoiser simpleDenoiser = m_RayTracingManager.GetSimpleDenoiser();
-                    simpleDenoiser.DenoiseBuffer(cmd, hdCamera, m_IDIntermediateBuffer0, indirectDiffuseHistoryHF, m_IDIntermediateBuffer1, settings.filterRadius.value, singleChannel: false);
                     HDUtils.BlitCameraTexture(cmd, m_IDIntermediateBuffer1, m_IDIntermediateBuffer0);
                 }
+
+                diffuseDenoiser.PropagateHistory(cmd, hdCamera);
+            }
+            else
+            {
+                HDSimpleDenoiser simpleDenoiser = m_RayTracingManager.GetSimpleDenoiser();
+                simpleDenoiser.DenoiseBuffer(cmd, hdCamera, m_IDIntermediateBuffer0, indirectDiffuseHistoryHF, m_IDIntermediateBuffer1, (int)(settings.filterRadiusFirst.value * 4.0), singleChannel: false);
+                HDUtils.BlitCameraTexture(cmd, m_IDIntermediateBuffer1, m_IDIntermediateBuffer0);
             }
         }
     }

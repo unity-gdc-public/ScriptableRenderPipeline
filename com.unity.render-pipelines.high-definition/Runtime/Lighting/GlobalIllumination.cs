@@ -33,6 +33,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         [Tooltip("Controls the radius of GI filtering (First Pass).")]
         public ClampedFloatParameter filterRadiusFirst = new ClampedFloatParameter(0.5f, 0.001f, 6.0f);
 
+        [Tooltip("Enable second pass.")]
+        public BoolParameter enableSecondPass = new BoolParameter(false);
+
         [Tooltip("Controls the radius of GI filtering (Second Pass).")]
         public ClampedFloatParameter filterRadiusSecond = new ClampedFloatParameter(1.0f, 0.001f, 6.0f);
 

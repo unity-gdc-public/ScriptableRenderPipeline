@@ -15,7 +15,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         RaytracedShadow,
         RaytracedAreaAnalytic,
         RaytracedReflection,
-        RaytracedIndirectDiffuse,
+        RaytracedIndirectDiffuseHF,
+        RaytracedIndirectDiffuseLF,
 #endif
         Count
     }

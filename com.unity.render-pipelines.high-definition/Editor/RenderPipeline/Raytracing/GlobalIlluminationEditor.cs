@@ -22,6 +22,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         SerializedDataParameter m_EnableFilter;
         SerializedDataParameter m_DiffuseDenoiser;
         SerializedDataParameter m_FilterRadiusFirst;
+        SerializedDataParameter m_EnableSecondPass;
         SerializedDataParameter m_FilterRadiusSecond;
         SerializedDataParameter m_FilterSampleCount;
 
@@ -44,6 +45,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             m_DiffuseDenoiser = Unpack(o.Find(x => x.diffuseDenoiser));
             m_FilterRadiusFirst = Unpack(o.Find(x => x.filterRadiusFirst));
             m_FilterRadiusSecond = Unpack(o.Find(x => x.filterRadiusSecond));
+            m_EnableSecondPass = Unpack(o.Find(x => x.enableSecondPass));
             m_FilterSampleCount = Unpack(o.Find(x => x.filterSampleCount));
         }
 
@@ -86,6 +88,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 PropertyField(m_DiffuseDenoiser);
                 PropertyField(m_FilterRadiusFirst);
                 PropertyField(m_FilterRadiusSecond);
+                PropertyField(m_EnableSecondPass);
                 PropertyField(m_FilterSampleCount);
                 EditorGUI.indentLevel--;
             }

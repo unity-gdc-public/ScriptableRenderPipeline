@@ -16,6 +16,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         RTHandle m_HistoryValidity = null;
         RTHandle m_IntermediateBuffer0 = null;
         RTHandle m_IntermediateBuffer1 = null;
+        RTHandle m_IntermediateBuffer2 = null;
 
         public HDDiffuseDenoiser()
         {
@@ -30,19 +31,22 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             m_HistoryValidity = RTHandles.Alloc(Vector2.one, TextureXR.slices, colorFormat: GraphicsFormat.R8_UInt, dimension: TextureXR.dimension, enableRandomWrite: true, useDynamicScale: true, useMipMap: false, autoGenerateMips: false, name: "HistoryValidity");
             m_IntermediateBuffer0 = RTHandles.Alloc(Vector2.one, TextureXR.slices, colorFormat: GraphicsFormat.R16G16B16A16_SFloat, dimension: TextureXR.dimension, enableRandomWrite: true, useDynamicScale: true, useMipMap: false, autoGenerateMips: false, name: "IntermediateBuffer0");
             m_IntermediateBuffer1 = RTHandles.Alloc(Vector2.one, TextureXR.slices, colorFormat: GraphicsFormat.R16G16B16A16_SFloat, dimension: TextureXR.dimension, enableRandomWrite: true, useDynamicScale: true, useMipMap: false, autoGenerateMips: false, name: "IntermediateBuffer1");
+            m_IntermediateBuffer2 = RTHandles.Alloc(Vector2.one, TextureXR.slices, colorFormat: GraphicsFormat.R8_UInt, dimension: TextureXR.dimension, enableRandomWrite: true, useDynamicScale: true, useMipMap: false, autoGenerateMips: false, name: "IntermediateBuffer2");
         }
 
         public void Release()
         {
+            RTHandles.Release(m_IntermediateBuffer2);
             RTHandles.Release(m_IntermediateBuffer1);
             RTHandles.Release(m_IntermediateBuffer0);
             RTHandles.Release(m_HistoryValidity);
         }
 
         public void DenoiseBuffer(CommandBuffer cmd, HDCamera hdCamera,
-            RTHandleSystem.RTHandle noisySignal, RTHandleSystem.RTHandle historySignal, 
-            RTHandleSystem.RTHandle outputSignal, 
+            RTHandle noisySignal, RTHandle historySignal,
+            RTHandle outputSignal, 
             float kernelSize, int sampleCount,
+            bool ignoreMotionVectors = false,
             bool singleChannel = true, bool useNormal =  false)
         {
             // Texture dimensions
@@ -77,11 +81,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             cmd.SetComputeTextureParam(m_SimpleDenoiserCS, m_KernelFilter, HDShaderIDs._NormalHistoryCriterion, useNormal ? 1 : 0);
             cmd.DispatchCompute(m_SimpleDenoiserCS, m_KernelFilter, numTilesX, numTilesY, 1);
 
-            m_KernelFilter = m_SimpleDenoiserCS.FindKernel(singleChannel ? "CopyHistorySingle" : "CopyHistoryColor");
-            cmd.SetComputeTextureParam(m_SimpleDenoiserCS, m_KernelFilter, HDShaderIDs._DenoiseInputTexture, m_SharedRTManager.GetDepthStencilBuffer());
-            cmd.SetComputeTextureParam(m_SimpleDenoiserCS, m_KernelFilter, HDShaderIDs._DenoiseOutputTextureRW, historyDepthBuffer);
-            cmd.DispatchCompute(m_SimpleDenoiserCS, m_KernelFilter, numTilesX, numTilesY, 1);
-
             m_KernelFilter = m_SimpleDenoiserCS.FindKernel(singleChannel ?  "TemporalAccumulationSingle": "TemporalAccumulationColor");
             cmd.SetComputeTextureParam(m_SimpleDenoiserCS, m_KernelFilter, HDShaderIDs._DenoiseInputTexture, noisySignal);
             cmd.SetComputeTextureParam(m_SimpleDenoiserCS, m_KernelFilter, HDShaderIDs._HistoryBuffer, historySignal);
@@ -103,8 +102,39 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             cmd.SetComputeTextureParam(m_SimpleDenoiserCS, m_KernelFilter, HDShaderIDs._DenoiseInputTexture, m_IntermediateBuffer1);
             cmd.SetComputeTextureParam(m_SimpleDenoiserCS, m_KernelFilter, HDShaderIDs._DepthTexture, m_SharedRTManager.GetDepthStencilBuffer());
             cmd.SetComputeTextureParam(m_SimpleDenoiserCS, m_KernelFilter, HDShaderIDs._NormalBufferTexture, m_SharedRTManager.GetNormalBuffer());
+            cmd.SetComputeTextureParam(m_SimpleDenoiserCS, m_KernelFilter, HDShaderIDs._ValidDenoisingTexture, m_IntermediateBuffer2);
             cmd.SetComputeTextureParam(m_SimpleDenoiserCS, m_KernelFilter, HDShaderIDs._DenoiseOutputTextureRW, outputSignal);
             cmd.DispatchCompute(m_SimpleDenoiserCS, m_KernelFilter, numTilesX, numTilesY, 1);
+        }
+
+        public void PropagateHistory(CommandBuffer cmd, HDCamera hdCamera)
+        {
+            var historyDepthBuffer = hdCamera.GetCurrentFrameRT((int)HDCameraFrameHistoryType.Depth);
+            var historyNormalBuffer = hdCamera.GetCurrentFrameRT((int)HDCameraFrameHistoryType.Normal);
+            if (historyDepthBuffer == null || historyNormalBuffer == null)
+            {
+                return;
+            }
+
+            // Texture dimensions
+            int texWidth = hdCamera.actualWidth;
+            int texHeight = hdCamera.actualHeight;
+
+            // Evaluate the dispatch parameters
+            int areaTileSize = 8;
+            int numTilesX = (texWidth + (areaTileSize - 1)) / areaTileSize;
+            int numTilesY = (texHeight + (areaTileSize - 1)) / areaTileSize;
+
+            int m_KernelFilter = m_SimpleDenoiserCS.FindKernel("CopyHistorySingle");
+            cmd.SetComputeTextureParam(m_SimpleDenoiserCS, m_KernelFilter, HDShaderIDs._DenoiseInputTexture, m_SharedRTManager.GetDepthStencilBuffer());
+            cmd.SetComputeTextureParam(m_SimpleDenoiserCS, m_KernelFilter, HDShaderIDs._DenoiseOutputTextureRW, historyDepthBuffer);
+            cmd.DispatchCompute(m_SimpleDenoiserCS, m_KernelFilter, numTilesX, numTilesY, 1);
+
+            m_KernelFilter = m_SimpleDenoiserCS.FindKernel("CopyHistoryColor");
+            cmd.SetComputeTextureParam(m_SimpleDenoiserCS, m_KernelFilter, HDShaderIDs._DenoiseInputTexture, m_SharedRTManager.GetNormalBuffer());
+            cmd.SetComputeTextureParam(m_SimpleDenoiserCS, m_KernelFilter, HDShaderIDs._DenoiseOutputTextureRW, historyNormalBuffer);
+            cmd.DispatchCompute(m_SimpleDenoiserCS, m_KernelFilter, numTilesX, numTilesY, 1);
+
         }
 #endif
     }

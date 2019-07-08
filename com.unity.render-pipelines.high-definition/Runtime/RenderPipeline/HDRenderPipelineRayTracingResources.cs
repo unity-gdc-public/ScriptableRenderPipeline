@@ -49,6 +49,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public ComputeShader simpleDenoiserCS;
         [Reload("Runtime/RenderPipeline/Raytracing/Shaders/Denoising/DiffuseDenoiser.compute")]
         public ComputeShader diffuseDenoiserCS;
+        [Reload("Runtime/RenderPipeline/Raytracing/Shaders/Denoising/SobelFilter.shader")]
+        public Shader sobelFilterRS;
 
         // Deferred Lighting
         [Reload("Runtime/RenderPipeline/Raytracing/Shaders/Deferred/RaytracingGBuffer.raytrace")]

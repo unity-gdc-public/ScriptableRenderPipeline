@@ -6,9 +6,6 @@
 #pragma kernel CopyHistorySingle            COPY_HISTORY=CopyHistorySingle SINGLE_CHANNEL
 #pragma kernel CopyHistoryColor             COPY_HISTORY=CopyHistoryColor 
 
-#pragma kernel GatherSingle                 GATHER=GatherSingle SINGLE_CHANNEL
-#pragma kernel GatherColor                  GATHER=GatherColor 
-
 #pragma kernel BilateralFilterSingle        BILATERAL_FILTER=BilateralFilterSingle     SINGLE_CHANNEL
 #pragma kernel BilateralFilterColor         BILATERAL_FILTER=BilateralFilterColor
 
@@ -16,16 +13,20 @@
 #include "Packages/com.unity.render-pipelines.high-definition/Runtime/ShaderLibrary/ShaderVariables.hlsl"
 #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/NormalBuffer.hlsl"
 #include "Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipeline/Raytracing/Shaders/RaytracingSampling.hlsl"
+#include "Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipeline/Raytracing/Shaders/OnlineVariance.hlsl"
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Color.hlsl"
 #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Builtin/BuiltinData.hlsl"
 #include "Packages/com.unity.render-pipelines.high-definition/Runtime/PostProcessing/Shaders/TemporalAntialiasing.hlsl"
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/CommonLighting.hlsl"
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Sampling/Sampling.hlsl"
 
+#pragma enable_d3d11_debug_symbols
+
 // Tile size of this compute
 #define SPATIO_TEMPORAL_TILE_SIZE 8
 
 TEXTURE2D_X(_DepthTexture);
+TEXTURE2D_X(_EdgeDetection);
 TEXTURE2D_X(_HistoryDepthTexture);
 TEXTURE2D_X(_HistoryNormalBufferTexture);
 RW_TEXTURE2D_X(uint, _HistoryValidityBuffer);
@@ -50,7 +51,7 @@ void ValidateHistory(uint2 groupThreadId : SV_GroupThreadID, uint2 groupId : SV_
     float2 closest = GetClosestFragment(posInputs);
 
     // Decode the velocity of the pixel
-    float2 velocity;
+    float2 velocity = float2(0.0, 0.0);
     DecodeMotionVector(LOAD_TEXTURE2D_X(_CameraMotionVectorsTexture, closest), velocity);
     float velocityLength = length(velocity);
 
@@ -81,19 +82,19 @@ void ValidateHistory(uint2 groupThreadId : SV_GroupThreadID, uint2 groupId : SV_
 
     uint validityFlag = 0xF;
     float2 uvHistory = (posInputs.positionNDC - velocity) *  _RTHandleScaleHistory.xy;
-    if( uvHistory.x < 0.0 || uvHistory.x > 1.0 || uvHistory.y < 0.0 || uvHistory.y > 1.0)
+    if (uvHistory.x < 0.0 || uvHistory.x > 1.0 || uvHistory.y < 0.0 || uvHistory.y > 1.0)
     {
-        validityFlag = 0;
+        validityFlag = 0xE;
     }
 
     if (length (historyPositionWS - (posInputs.positionWS)) > 0.01)
     {
-        validityFlag = 0;
+        validityFlag = 0xD;
     }
     
     if (_NormalHistoryCriterion != 0 && dot (normalData.normalWS, historyNormalData.normalWS) < 0.9)
     {
-        validityFlag = 0;
+        validityFlag = 0xB;
     }
     _HistoryValidityBuffer[COORD_TEXTURE2D_X(centerCoord)] = validityFlag;
 }
@@ -126,7 +127,7 @@ void TEMPORAL_ACCUMULATION(uint2 groupThreadId : SV_GroupThreadID, uint2 groupId
 
     float2 closest = GetClosestFragment(posInputs);
 
-    float2 velocity;
+    float2 velocity = float2(0.0, 0.0);
     DecodeMotionVector(LOAD_TEXTURE2D_X(_CameraMotionVectorsTexture, closest), velocity);
     float velocityLength = length(velocity);
 
@@ -162,89 +163,6 @@ void COPY_HISTORY(uint3 dispatchThreadId : SV_DispatchThreadID)
     _DenoiseOutputTextureRW[COORD_TEXTURE2D_X(dispatchThreadId.xy)] = _DenoiseInputTexture[COORD_TEXTURE2D_X(dispatchThreadId.xy)].x;
     #else
     _DenoiseOutputTextureRW[COORD_TEXTURE2D_X(dispatchThreadId.xy)] = float4(_DenoiseInputTexture[COORD_TEXTURE2D_X(dispatchThreadId.xy)].xyz, 1.0);
-    #endif
-}
-
-#define DEPTH_SCALE 1
-#define BILATERAL_EPSILON 0.01
-
-float BilateralWeight(float sampleDepth, float linearCentralDepth)
-{
-    float linearSample = LinearEyeDepth(sampleDepth, _ZBufferParams);
-    float delta = abs(linearSample - linearCentralDepth);
-    float w = saturate(1.0f - (DEPTH_SCALE * delta + BILATERAL_EPSILON));
-
-    return w;
-}
-
-static const float2 LocalShifts[4] = { float2(0,0), float2(-2.0, 0), float2(0.0, 2.0), float2(-2.0, 2.0) };
-
-
-[numthreads(SPATIO_TEMPORAL_TILE_SIZE, SPATIO_TEMPORAL_TILE_SIZE, 1)]
-void GATHER(uint3 dispatchThreadId : SV_DispatchThreadID)
-{
-    UNITY_STEREO_ASSIGN_COMPUTE_EYE_INDEX(dispatchThreadId.z);
-
-    if (any(dispatchThreadId.xy > uint2(_ScreenSize.xy)))
-        return;  // Out of bounds, discard
-
-    float2 curentCoord = dispatchThreadId.xy;
-
-    float centralDepth = LOAD_TEXTURE2D_X(_DepthTexture, curentCoord).r;
-    float linearCentralDepth = LinearEyeDepth(centralDepth, _ZBufferParams);
-
-    #if SINGLE_CHANNEL
-    float total = LOAD_TEXTURE2D_X(_DenoiseInputTexture, curentCoord).r;
-    float totalWeight = 1;
-    for (int i = 0; i < 4; ++i)
-    {
-        float4 aoValues = GATHER_TEXTURE2D_X(_DenoiseInputTexture, s_linear_clamp_sampler, ClampAndScaleUVForBilinear((curentCoord + LocalShifts[i])  * _ScreenSize.zw, _ScreenSize.zw));
-        float4 depthValues = GATHER_TEXTURE2D_X(_DepthTexture, s_linear_clamp_sampler, ClampAndScaleUVForBilinear((curentCoord + LocalShifts[i])  * _ScreenSize.zw, _ScreenSize.zw));
-
-        float weight = BilateralWeight(depthValues.x, linearCentralDepth);
-        total += weight * aoValues.x;
-        totalWeight += weight;
-
-        weight = BilateralWeight(depthValues.y, linearCentralDepth);
-        total += weight * aoValues.z;
-        totalWeight += weight;
-
-        weight = BilateralWeight(depthValues.z, linearCentralDepth);
-        total += weight * aoValues.z;
-        totalWeight += weight;
-
-        weight = BilateralWeight(depthValues.w, linearCentralDepth);
-        total += weight * aoValues.w;
-        totalWeight += weight;
-    }
-    _DenoiseOutputTextureRW[COORD_TEXTURE2D_X(dispatchThreadId.xy)] = total / totalWeight;
-    #else
-    float3 total = LOAD_TEXTURE2D_X(_DenoiseInputTexture, curentCoord).xyz;
-    float totalWeight = 1;
-    for (int i = 0; i < 4; ++i)
-    {
-        float4 colorR = GATHER_RED_TEXTURE2D_X(_DenoiseInputTexture, s_linear_clamp_sampler, ClampAndScaleUVForBilinear((curentCoord + LocalShifts[i])  * _ScreenSize.zw, _ScreenSize.zw));
-        float4 colorG = GATHER_GREEN_TEXTURE2D_X(_DenoiseInputTexture, s_linear_clamp_sampler, ClampAndScaleUVForBilinear((curentCoord + LocalShifts[i])  * _ScreenSize.zw, _ScreenSize.zw));
-        float4 colorB = GATHER_BLUE_TEXTURE2D_X(_DenoiseInputTexture, s_linear_clamp_sampler, ClampAndScaleUVForBilinear((curentCoord + LocalShifts[i])  * _ScreenSize.zw, _ScreenSize.zw));
-        float4 depthValues = GATHER_TEXTURE2D_X(_DepthTexture, s_linear_clamp_sampler, ClampAndScaleUVForBilinear((curentCoord + LocalShifts[i])  * _ScreenSize.zw, _ScreenSize.zw));
-
-        float weight = BilateralWeight(depthValues.x, linearCentralDepth);
-        total += weight * float3(colorR.x, colorG.x, colorB.x);
-        totalWeight += weight;
-
-        weight = BilateralWeight(depthValues.y, linearCentralDepth);
-        total += weight * float3(colorR.y, colorG.y, colorB.y);
-        totalWeight += weight;
-
-        weight = BilateralWeight(depthValues.z, linearCentralDepth);
-        total += weight * float3(colorR.z, colorG.z, colorB.z);
-        totalWeight += weight;
-
-        weight = BilateralWeight(depthValues.w, linearCentralDepth);
-        total += weight * float3(colorR.w, colorG.w, colorB.w);
-        totalWeight += weight;
-    }
-    _DenoiseOutputTextureRW[COORD_TEXTURE2D_X(dispatchThreadId.xy)] = float4(total / totalWeight, 1.0);
     #endif
 }
 
@@ -343,6 +261,7 @@ float ComputeBilateralWeight(BilateralData center, BilateralData tap)
 
 float _DenoiserFilterRadius;
 int _FilterSampleCount;
+RW_TEXTURE2D_X(uint, _ValidDenoisingTexture);
 
 // Separated bilateral filter (two passes, each with 2*Radius taps)
 [numthreads(SPATIO_TEMPORAL_TILE_SIZE, SPATIO_TEMPORAL_TILE_SIZE, 1)]
@@ -353,6 +272,15 @@ void BILATERAL_FILTER(uint2 groupThreadId : SV_GroupThreadID, uint2 groupId : SV
 
     // Read the central position
     const BilateralData center = TapBilateralData(centerCoord);
+    if (center.z01 == 1.0)
+    {
+        #if SINGLE_CHANNEL
+        _DenoiseOutputTextureRW[COORD_TEXTURE2D_X(centerCoord)] = 0.0;
+        #else
+        _DenoiseOutputTextureRW[COORD_TEXTURE2D_X(centerCoord)] = float4(0.0, 0.0, 0.0, 1.0);
+        #endif
+        _ValidDenoisingTexture[COORD_TEXTURE2D_X(centerCoord)] = 1.0;
+    }
 
     // Create the local ortho basis for our sampling
     float3x3 localToWorld = GetLocalFrame(center.normal);
@@ -366,10 +294,11 @@ void BILATERAL_FILTER(uint2 groupThreadId : SV_GroupThreadID, uint2 groupId : SV
     #endif
     float hcoord = saturate(length(centerCoord * _ScreenSize.zw * 2.0 - 1.0) * 0.70710678118) * InterleavedGradientNoise(centerCoord, (uint)_TaaFrameInfo.z);
 
-    int samplecount = lerp(16, 64, hcoord);
+    int numSamples = lerp(16, 64, hcoord);
     const float sigma = 0.5 * _DenoiserFilterRadius;
-    
-    for (uint sampleIndex = 0; sampleIndex < (uint)samplecount; ++sampleIndex)
+
+    int contributingSamples = 0;
+    for (uint sampleIndex = 0; sampleIndex < (uint)numSamples; ++sampleIndex)
     {
         float2 sample = GetRaytracingNoiseSampleRG(sampleIndex);
         sample = SampleDiskUniform(sample.x * sample.x, sample.y);
@@ -406,6 +335,7 @@ void BILATERAL_FILTER(uint2 groupThreadId : SV_GroupThreadID, uint2 groupId : SV
         colorSum += LOAD_TEXTURE2D_X(_DenoiseInputTexture, tapCoord).xyz * w;
     #endif
         wSum += w;
+        contributingSamples++;
     }
 
 #if SINGLE_CHANNEL
@@ -421,4 +351,5 @@ void BILATERAL_FILTER(uint2 groupThreadId : SV_GroupThreadID, uint2 groupId : SV
     #else
     _DenoiseOutputTextureRW[COORD_TEXTURE2D_X(centerCoord)] = float4(colorSum / wSum, 1.0);
     #endif
+    _ValidDenoisingTexture[COORD_TEXTURE2D_X(centerCoord)] = contributingSamples < 3 ? 0 : 1;
 }
