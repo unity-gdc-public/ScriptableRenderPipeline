@@ -410,8 +410,10 @@ struct ParticleMeshToPS
             shader.AppendLine(functionsString.ToString());
             functionRegistry.builder.currentNode = null;
 
+            var generateVertex = s_GenerateVertex[vfxInfos.renderingType];
+
             sb.Append(sg.ToString());
-            shader.Append(s_GenerateVertex[vfxInfos.renderingType](pipelineInfos.vertexReturnType, pipelineInfos.vertexInputType));
+            shader.Append(generateVertex.generate(pipelineInfos.vertexReturnType, pipelineInfos.vertexInputType));
             shader.Append("    " + vfxInfos.loadAttributes.Replace("\n", "\n    "));
 
             shader.AppendLine(@"
@@ -429,8 +431,19 @@ struct ParticleMeshToPS
             shader.Append("\t" + vfxInfos.vertexShaderContent.Replace("\n", "\n\t"));
 
             shader.AppendLine(@"
-    float4x4 elementToVFX = GetElementToVFXMatrix(axisX,axisY,axisZ,float3(angleX,angleY,angleZ),float3(pivotX,pivotY,pivotZ),size3,position);
+    float4x4 elementToVFX = GetElementToVFXMatrix(axisX,axisY,axisZ,float3(angleX,angleY,angleZ),float3(pivotX,pivotY,pivotZ),size3,position);");
+            if (generateVertex.planarProcedural) // we generate the normal if needed.
+            {
+                shader.AppendLine(@"
+#ifdef ATTRIBUTES_NEED_NORMAL
+    float normalFlip = (size3.x * size3.y * size3.z) < 0 ? -1 : 1;
+    inputMesh.normalOS = normalize(-transpose(elementToVFX)[2].xyz)) * normalFlip;
+#endif
+#ifdef ATTRIBUTES_NEED_TANGENT
+    inputMesh.tangentOS = normalize(transpose(elementToVFX)[0].xyz);
+#endif
 ");
+            }
 
             shader.Append(pipelineInfos.GetParticleVertexFunctionBottom(varyingAttributes.Select(t => t.name), shaderFunctionName));
             shader.AppendLine("\n#pragma vertex ParticleVert");
@@ -438,12 +451,24 @@ struct ParticleMeshToPS
 
         delegate string GenerateVertexPartDelegate(string returnType, string inputType);
 
-        static readonly Dictionary<VFXTaskType, GenerateVertexPartDelegate> s_GenerateVertex = new Dictionary<VFXTaskType, GenerateVertexPartDelegate>
+
+        struct GenerateVertex
         {
-            { VFXTaskType.ParticleMeshOutput,GenerateVertexPartMesh },
-            { VFXTaskType.ParticleTriangleOutput,GenerateVertexPartTri },
-            { VFXTaskType.ParticleQuadOutput,GenerateVertexPartQuad },
-            { VFXTaskType.ParticleOctagonOutput,GenerateVertexPartOct },
+            public GenerateVertex(GenerateVertexPartDelegate generate, bool planarProcedural)
+            {
+                this.generate = generate;
+                this.planarProcedural = planarProcedural;
+            }
+            public GenerateVertexPartDelegate generate;
+            public bool planarProcedural;
+        }
+
+        static readonly Dictionary<VFXTaskType, GenerateVertex> s_GenerateVertex = new Dictionary<VFXTaskType, GenerateVertex>
+        {
+            { VFXTaskType.ParticleMeshOutput,new GenerateVertex(GenerateVertexPartMesh,false) },
+            { VFXTaskType.ParticleTriangleOutput,new GenerateVertex(GenerateVertexPartTri,true) },
+            { VFXTaskType.ParticleQuadOutput,new GenerateVertex(GenerateVertexPartQuad,true) },
+            { VFXTaskType.ParticleOctagonOutput,new GenerateVertex(GenerateVertexPartOct,true) },
         };
 
         private static string GenerateVertexPartMesh(string returnType,string inputType)
