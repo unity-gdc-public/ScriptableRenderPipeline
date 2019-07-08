@@ -437,10 +437,10 @@ struct ParticleMeshToPS
                 shader.AppendLine(@"
 #ifdef ATTRIBUTES_NEED_NORMAL
     float normalFlip = (size3.x * size3.y * size3.z) < 0 ? -1 : 1;
-    inputMesh.normalOS = normalize(-transpose(elementToVFX)[2].xyz)) * normalFlip;
+    inputMesh.normalOS.xyz = normalize(-transpose(elementToVFX)[2].xyz) * normalFlip;
 #endif
 #ifdef ATTRIBUTES_NEED_TANGENT
-    inputMesh.tangentOS = normalize(transpose(elementToVFX)[0].xyz);
+    inputMesh.tangentOS.xyz = normalize(transpose(elementToVFX)[0].xyz);
 #endif
 ");
             }
