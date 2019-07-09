@@ -141,11 +141,13 @@ all_package_ci:
     image: buildfarm/mac:stable
     flavor: m1.mac
   commands:
-  - core_package
-  - shadergraph_package
-  - lightweight_package
-  - hdrp_package
-  - vfx_package
+  - dir
+  dependencies:
+  - .yamato/upm-ci-packages.yml#core_package
+  - .yamato/upm-ci-packages.yml#shadergraph_package
+  - .yamato/upm-ci-packages.yml#lightweight_package
+  - .yamato/upm-ci-packages.yml#hdrp_package
+  - .yamato/upm-ci-packages.yml#vfx_package
   
   artifacts:
     logs.zip:
