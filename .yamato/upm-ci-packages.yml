@@ -116,9 +116,9 @@ hdrp_package:
 vfx_package:
   name: z_(do not use) Pack and Test vfx
   agent:
-    type: Unity::VM
-    image: package-ci/win10:stable
-    flavor: m1.large
+    type: Unity::VM::osx
+    image: buildfarm/mac:stable
+    flavor: m1.mac
   commands:
   {% for project in projects %}
   {% for editor in editors %}
