@@ -1,5 +1,5 @@
 editors:
-  - version: af24429dcc98
+  - version: trunk
 projects:
   - name: Core
     folder: none
