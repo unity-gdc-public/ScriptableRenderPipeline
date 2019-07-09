@@ -32,7 +32,7 @@ core_package:
   {% for editor in editors %}
   - npm install git+ssh://git@gitlab.cds.internal.unity3d.com:upm-packages/project-templates/upm-template-utils.git#performance-package -g --no-progress
   - cd {{ project.packagename }} && upm-ci package pack
-  - cd {{ project.packagename }} && upm-ci package test --unity-version {{ editor.version }}
+  - cd {{ project.packagename }} && upm-ci package test -u {{ editor.version }}
   {% endfor %}
   {% endfor %}
 
@@ -53,7 +53,7 @@ shadergraph_package:
   {% for editor in editors %}
   - npm install git+ssh://git@gitlab.cds.internal.unity3d.com:upm-packages/project-templates/upm-template-utils.git#performance-package -g --no-progress
   - cd {{ project.packagename }} && upm-ci package pack
-  - cd {{ project.packagename }} && upm-ci package test --unity-version {{ editor.version }}
+  - cd {{ project.packagename }} && upm-ci package test -u {{ editor.version }}
   {% endfor %}
   {% endfor %}
 
@@ -76,7 +76,7 @@ lightweight_package:
   {% for editor in editors %}
   - npm install git+ssh://git@gitlab.cds.internal.unity3d.com:upm-packages/project-templates/upm-template-utils.git#performance-package -g --no-progress
   - cd {{ project.packagename }} && upm-ci package pack
-  - cd {{ project.packagename }} && upm-ci package test --unity-version {{ editor.version }}
+  - cd {{ project.packagename }} && upm-ci package test -u {{ editor.version }}
   {% endfor %}
   {% endfor %}
 
@@ -100,7 +100,7 @@ hdrp_package:
   {% for editor in editors %}
   - npm install git+ssh://git@gitlab.cds.internal.unity3d.com:upm-packages/project-templates/upm-template-utils.git#performance-package -g --no-progress
   - cd {{ project.packagename }} && upm-ci package pack
-  - cd {{ project.packagename }} && upm-ci package test --unity-version {{ editor.version }}
+  - cd {{ project.packagename }} && upm-ci package test -u {{ editor.version }}
   {% endfor %}
   {% endfor %}
 
@@ -124,7 +124,7 @@ vfx_package:
   {% for editor in editors %}
   - npm install git+ssh://git@gitlab.cds.internal.unity3d.com:upm-packages/project-templates/upm-template-utils.git#performance-package -g --no-progress
   - cd {{ project.packagename }} && upm-ci package pack
-  - cd {{ project.packagename }} && upm-ci package test --unity-version {{ editor.version }}
+  - cd {{ project.packagename }} && upm-ci package test -u {{ editor.version }}
   {% endfor %}
   {% endfor %}
 
