@@ -51,7 +51,7 @@ test_core_package_{{ editor.version }}:
 {% endfor %}
 
 pack_shadergraph_package:
-  name: z_(do not use) Pack and Test shadergraph
+  name: z_(do not use) Pack shadergraph
   agent:
     type: Unity::VM::osx
     image: buildfarm/mac:stable
@@ -71,7 +71,7 @@ pack_shadergraph_package:
 
 {% for editor in editors %}
 test_shadergraph_package_{{ editor.version }}:
-  name: z_(do not use) Pack and Test shadergraph
+  name: z_(do not use) Test shadergraph
   agent:
     type: Unity::VM::osx
     image: buildfarm/mac:stable
