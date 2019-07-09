@@ -45,7 +45,7 @@ namespace UnityEditor.ShaderGraph
             return
             @"
             {
-                Out = UnpackNormalmap(In);
+                Out = UnpackNormal(In);
             }
             ";
         }

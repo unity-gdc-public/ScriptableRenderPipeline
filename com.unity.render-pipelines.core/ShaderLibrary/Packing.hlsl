@@ -190,12 +190,22 @@ real3 UnpackNormalmapRGorAG(real4 packedNormal, real scale = 1.0)
     return UnpackNormalAG(packedNormal, scale);
 }
 
-real3 UnpackNormalmap(real4 packedNormal, real scale = 1.0)
+real3 UnpackNormal(real4 packedNormal)
 {
 #if defined(UNITY_NO_DXT5nm)
-    return UnpackNormalRGB(packedNormal, scale);
+    return UnpackNormalRGBNoScale(packedNormal);
 #else
-    return UnpackNormalmapRGorAG(packedNormal, scale);
+    // Compiler will optimize the scale away
+    return UnpackNormalmapRGorAG(packedNormal, 1.0);
+#endif
+}
+
+real3 UnpackNormalScale(real4 packedNormal, real bumpScale)
+{
+#if defined(UNITY_NO_DXT5nm)
+    return UnpackNormalRGB(packedNormal, bumpScale);
+#else
+    return UnpackNormalmapRGorAG(packedNormal, bumpScale);
 #endif
 }
 
