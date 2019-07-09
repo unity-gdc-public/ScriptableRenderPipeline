@@ -6,7 +6,7 @@ projects:
     packagename: com.unity.render-pipelines.core
   - name: LWRP
     folder: LWGraphicsTest
-    packagename: com.unity.visualeffectgraph
+    packagename: com.unity.render-pipelines.lightweight
   - name: ShaderGraph
     folder: ShaderGraph
     packagename: com.unity.shadergraph
