@@ -212,6 +212,10 @@ namespace UnityEditor.VFX
         {
             get
             {
+                foreach( var additional in base.additionalDefines)
+                {
+                    yield return additional;
+                }
                 switch(colorMappingMode)
                 {
                     case ColorMappingMode.Default:

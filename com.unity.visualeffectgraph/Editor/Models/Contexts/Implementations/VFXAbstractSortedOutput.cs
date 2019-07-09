@@ -98,6 +98,8 @@ namespace UnityEditor.VFX
                     yield return "IS_OPAQUE_PARTICLE";
                 else
                     yield return "IS_TRANSPARENT_PARTICLE";
+                if (supportSoftParticles)
+                    yield return "USE_SOFT_PARTICLE";
 
                 VisualEffectResource asset = GetResource();
                 if (asset != null)
