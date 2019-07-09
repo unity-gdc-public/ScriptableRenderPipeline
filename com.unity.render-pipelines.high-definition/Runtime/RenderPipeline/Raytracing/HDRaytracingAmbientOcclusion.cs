@@ -134,8 +134,8 @@ namespace UnityEngine.Rendering.HighDefinition
                         ?? hdCamera.AllocHistoryFrameRT((int)HDCameraFrameHistoryType.RaytracedAmbientOcclusion, AmbientOcclusionHistoryBufferAllocatorFunction, 1);
 
                     // Apply the simple denoiser
-                    HDSimpleDenoiser simpleDenoiser = m_RaytracingManager.GetSimpleDenoiser();
-                    simpleDenoiser.DenoiseBuffer(cmd, hdCamera, m_IntermediateBuffer, ambientOcclusionHistory, outputTexture, aoSettings.filterRadius.value, singleChannel: true);
+                    HDDiffuseDenoiser diffuseDenoiser = m_RaytracingManager.GetDiffuseDenoiser();
+                    diffuseDenoiser.DenoiseBuffer(cmd, hdCamera, m_IntermediateBuffer, ambientOcclusionHistory, outputTexture, aoSettings.filterRadius.value);
                 }
                 else
                 {
