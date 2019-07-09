@@ -18,7 +18,7 @@ testplatforms:
     args: --suite=editor --platform=editmode
 mobiles:
   - name: iOS
-    type: Unity::mobile::ios
+    type: Unity::mobile::iPadPro
     image: slough-ops/macos-10.14-xcode
     flavor: b1.large
 projects:
@@ -94,6 +94,8 @@ projects:
    - pip install unity-downloader-cli --extra-index-url https://artifactory.eu-cph-1.unityops.net/api/pypi/common-python/simple
    - git clone git@github.cds.internal.unity3d.com:unity/utr.git utr
    - unity-downloader-cli -b {{ editor.version }} -p MacEditor -c editor -c {{ mobile.name }} --wait
+   - brew install lsusb
+   - lsusb
    #- >
    #   %ANDROID_SDK_ROOT%\platform-tools\adb.exe connect %BOKKEN_DEVICE_IP%
    #- powershell %ANDROID_SDK_ROOT%\platform-tools\adb.exe devices
