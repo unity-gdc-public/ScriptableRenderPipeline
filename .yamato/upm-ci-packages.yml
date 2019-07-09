@@ -28,14 +28,11 @@ core_package:
     image: buildfarm/mac:stable
     flavor: m1.mac
   commands:
-  {% for project in projects %}
   {% for editor in editors %}
   - npm install git+ssh://git@gitlab.cds.internal.unity3d.com:upm-packages/project-templates/upm-template-utils.git#performance-package -g --no-progress
-  - cd {{ project.packagename }} && upm-ci package pack
-  - cd {{ project.packagename }} && upm-ci package test -u {{ editor.version }}
+  - cd com.unity.render-pipelines.core && upm-ci package pack
+  - cd com.unity.render-pipelines.core && upm-ci package test -u {{ editor.version }}
   {% endfor %}
-  {% endfor %}
-
   artifacts:
     logs.zip:
       paths:
@@ -49,14 +46,11 @@ shadergraph_package:
     image: buildfarm/mac:stable
     flavor: m1.mac
   commands:
-  {% for project in projects %}
   {% for editor in editors %}
   - npm install git+ssh://git@gitlab.cds.internal.unity3d.com:upm-packages/project-templates/upm-template-utils.git#performance-package -g --no-progress
-  - cd {{ project.packagename }} && upm-ci package pack
-  - cd {{ project.packagename }} && upm-ci package test -u {{ editor.version }}
+  - cd com.unity.shadergraph && upm-ci package pack
+  - cd com.unity.shadergraph && upm-ci package test -u {{ editor.version }}
   {% endfor %}
-  {% endfor %}
-
   dependencies:
     - .yamato/upm-ci-packages.yml#core_package
   artifacts:
@@ -72,14 +66,11 @@ lightweight_package:
     image: buildfarm/mac:stable
     flavor: m1.mac
   commands:
-  {% for project in projects %}
   {% for editor in editors %}
   - npm install git+ssh://git@gitlab.cds.internal.unity3d.com:upm-packages/project-templates/upm-template-utils.git#performance-package -g --no-progress
-  - cd {{ project.packagename }} && upm-ci package pack
-  - cd {{ project.packagename }} && upm-ci package test -u {{ editor.version }}
+  - cd com.unity.render-pipelines.lightweight && upm-ci package pack
+  - cd com.unity.render-pipelines.lightweight && upm-ci package test -u {{ editor.version }}
   {% endfor %}
-  {% endfor %}
-
   dependencies:
   - .yamato/upm-ci-packages.yml#core_package
   - .yamato/upm-ci-packages.yml#shadergraph_package
@@ -96,14 +87,11 @@ hdrp_package:
     image: buildfarm/mac:stable
     flavor: m1.mac
   commands:
-  {% for project in projects %}
   {% for editor in editors %}
   - npm install git+ssh://git@gitlab.cds.internal.unity3d.com:upm-packages/project-templates/upm-template-utils.git#performance-package -g --no-progress
-  - cd {{ project.packagename }} && upm-ci package pack
-  - cd {{ project.packagename }} && upm-ci package test -u {{ editor.version }}
+  - cd com.unity.render-pipelines.high-definition && upm-ci package pack
+  - cd com.unity.render-pipelines.high-definition && upm-ci package test -u {{ editor.version }}
   {% endfor %}
-  {% endfor %}
-
   dependencies:
   - .yamato/upm-ci-packages.yml#core_package
   - .yamato/upm-ci-packages.yml#shadergraph_package
@@ -120,14 +108,11 @@ vfx_package:
     image: buildfarm/mac:stable
     flavor: m1.mac
   commands:
-  {% for project in projects %}
   {% for editor in editors %}
   - npm install git+ssh://git@gitlab.cds.internal.unity3d.com:upm-packages/project-templates/upm-template-utils.git#performance-package -g --no-progress
-  - cd {{ project.packagename }} && upm-ci package pack
-  - cd {{ project.packagename }} && upm-ci package test -u {{ editor.version }}
+  - cd com.unity.visualeffectgraph && upm-ci package pack
+  - cd com.unity.visualeffectgraph && upm-ci package test -u {{ editor.version }}
   {% endfor %}
-  {% endfor %}
-
   artifacts:
     logs.zip:
       paths:
@@ -147,8 +132,7 @@ all_package_ci:
   - .yamato/upm-ci-packages.yml#shadergraph_package
   - .yamato/upm-ci-packages.yml#lightweight_package
   - .yamato/upm-ci-packages.yml#hdrp_package
-  - .yamato/upm-ci-packages.yml#vfx_package
-  
+  - .yamato/upm-ci-packages.yml#vfx_package  
   artifacts:
     logs.zip:
       paths:
