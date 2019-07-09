@@ -159,7 +159,14 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         LightLayers = 30,
         [FrameSettingsField(1, autoName: ExposureControl, customOrderInGroup: 32)]
         ExposureControl = 32,
-        SpecularLighting = 33,
+        [FrameSettingsField(1, autoName: EnableReflectionProbe, customOrderInGroup: 33)]
+        EnableReflectionProbe = 33,
+        [FrameSettingsField(1, autoName: EnablePlanarProbe, customOrderInGroup: 34)]
+        EnablePlanarProbe = 35,
+        [FrameSettingsField(1, autoName: ReplaceDiffuseForIndirect, customOrderInGroup: 35)]
+        ReplaceDiffuseForIndirect = 36,
+        [FrameSettingsField(1, autoName: EnableSkyLighting, customOrderInGroup: 36)]
+        EnableSkyLighting = 37,
 
         //async settings from 40 to 59
         [FrameSettingsField(2, autoName: AsyncCompute)]
@@ -278,7 +285,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 (uint)FrameSettingsField.FPTLForForwardOpaque,
                 (uint)FrameSettingsField.BigTilePrepass,
                 (uint)FrameSettingsField.TransparentsWriteMotionVector,
-                (uint)FrameSettingsField.SpecularLighting,
+                (uint)FrameSettingsField.EnableReflectionProbe,
+                (uint)FrameSettingsField.EnablePlanarProbe,
+                (uint)FrameSettingsField.EnableSkyLighting,
             }),
             lodBias = 1,
         };
@@ -324,11 +333,12 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 (uint)FrameSettingsField.ComputeMaterialVariants,
                 (uint)FrameSettingsField.FPTLForForwardOpaque,
                 (uint)FrameSettingsField.BigTilePrepass,
-                (uint)FrameSettingsField.SpecularLighting,
+                (uint)FrameSettingsField.EnableReflectionProbe,
+                (uint)FrameSettingsField.EnableSkyLighting,
             }),
             lodBias = 1,
         };
-        /// <summary>Default FrameSettings for baked or custom ReflectionProbe/PlanarReflectionProbe renderer.</summary>
+        /// <summary>Default FrameSettings for baked or custom ReflectionProbe renderer.</summary>
         public static readonly FrameSettings defaultCustomOrBakeReflectionProbe = new FrameSettings()
         {
             bitDatas = new BitArray128(new uint[] {
@@ -369,7 +379,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 (uint)FrameSettingsField.ComputeMaterialVariants,
                 (uint)FrameSettingsField.FPTLForForwardOpaque,
                 (uint)FrameSettingsField.BigTilePrepass,
-                (uint)FrameSettingsField.SpecularLighting,
+                (uint)FrameSettingsField.ReplaceDiffuseForIndirect,
             }),
             lodBias = 1,
         };
@@ -448,9 +458,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             bool preview = HDUtils.IsRegularPreviewCamera(camera);
             bool sceneViewFog = CoreUtils.IsSceneViewFogEnabled(camera);
 
-            // XRTODO: fix it
-            bool stereoInstancing = camera.stereoEnabled && (XRGraphics.stereoRenderingMode == XRGraphics.StereoRenderingMode.SinglePassInstanced);
-
             // When rendering reflection probe we disable specular as it is view dependent
             sanitazedFrameSettings.bitDatas[(int)FrameSettingsField.Reflection] = !reflection;
 
@@ -521,10 +528,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             sanitazedFrameSettings.bitDatas[(int)FrameSettingsField.ContactShadowsAsync] &= async;
             sanitazedFrameSettings.bitDatas[(int)FrameSettingsField.VolumeVoxelizationsAsync] &= async;
 
-            // XRTODO: fix indirect deferred pass with instancing
-            sanitazedFrameSettings.bitDatas[(int)FrameSettingsField.DeferredTile] &= !stereoInstancing;
-            sanitazedFrameSettings.bitDatas[(int)FrameSettingsField.ComputeLightEvaluation] &= !stereoInstancing;
-
             // Deferred opaque are always using Fptl. Forward opaque can use Fptl or Cluster, transparent use cluster.
             // When MSAA is enabled we disable Fptl as it become expensive compare to cluster
             // In HD, MSAA is only supported for forward only rendering, no MSAA in deferred mode (for code complexity reasons)
@@ -536,12 +539,12 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         /// <param name="camera">The camera rendering.</param>
         /// <param name="additionalData">Additional data of the camera rendering.</param>
         /// <param name="hdrpAsset">HDRenderPipelineAsset contening default FrameSettings.</param>
-        public static void AggregateFrameSettings(ref FrameSettings aggregatedFrameSettings, Camera camera, HDAdditionalCameraData additionalData, HDRenderPipelineAsset hdrpAsset)
+        public static void AggregateFrameSettings(ref FrameSettings aggregatedFrameSettings, Camera camera, HDAdditionalCameraData additionalData, HDRenderPipelineAsset hdrpAsset, HDRenderPipelineAsset defaultHdrpAsset)
             => AggregateFrameSettings(
                 ref aggregatedFrameSettings,
                 camera,
                 additionalData,
-                ref hdrpAsset.GetDefaultFrameSettings(additionalData?.defaultFrameSettings ?? FrameSettingsRenderType.Camera), //fallback on Camera for SceneCamera and PreviewCamera
+                ref defaultHdrpAsset.GetDefaultFrameSettings(additionalData?.defaultFrameSettings ?? FrameSettingsRenderType.Camera), //fallback on Camera for SceneCamera and PreviewCamera
                 hdrpAsset.currentPlatformRenderPipelineSettings
                 );
 

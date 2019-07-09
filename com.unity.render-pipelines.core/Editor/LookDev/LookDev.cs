@@ -34,18 +34,17 @@ namespace UnityEditor.Rendering.Experimental.LookDev
         static Context defaultContext
             => UnityEngine.ScriptableObject.CreateInstance<Context>();
 
-        public static EnvironmentLibrary currentEnvironmentLibrary { get; private set; }
-
         //[TODO: not compatible with multiple displayer. To rework if needed]
-        public static IViewDisplayer currentDisplayer => s_ViewDisplayer;
+        public static IViewDisplayer currentViewDisplayer => s_ViewDisplayer;
+        public static IEnvironmentDisplayer currentEnvironmentDisplayer => s_EnvironmentDisplayer;
 
         public static bool open { get; private set; }
-        
+
         /// <summary>
         /// Does LookDev is supported with the current render pipeline?
         /// </summary>
         public static bool supported => dataProvider != null;
-        
+
         public static void ResetConfig()
             => currentContext = defaultContext;
 
@@ -64,7 +63,7 @@ namespace UnityEditor.Rendering.Experimental.LookDev
             if (last != null)
                 currentContext = last;
         }
-        
+
         public static void SaveConfig(string path = lastRenderingDataSavePath)
         {
             if (currentContext != null && !currentContext.Equals(null))
@@ -119,10 +118,12 @@ namespace UnityEditor.Rendering.Experimental.LookDev
                     + (RenderPipelineManager.currentPipeline == null ? "No SRP in use" : RenderPipelineManager.currentPipeline.ToString()));
             }
         }
-        
+
         static void ConfigureRenderer(bool reloadWithTemporaryID)
         {
+            s_Stages?.Dispose(); //clean previous occurrence on reloading
             s_Stages = new StageCache(dataProvider, currentContext);
+            s_Compositor?.Dispose(); //clean previous occurrence on reloading
             s_Compositor = new Compositer(s_ViewDisplayer, currentContext, dataProvider, s_Stages);
         }
 
@@ -132,6 +133,10 @@ namespace UnityEditor.Rendering.Experimental.LookDev
             {
                 s_Compositor?.Dispose();
                 s_Compositor = null;
+                s_Stages?.Dispose();
+                s_Stages = null;
+                s_ViewDisplayer = null;
+                //currentContext = null;
 
                 //release editorInstanceIDs
                 currentContext.GetViewContent(ViewIndex.First).CleanTemporaryObjectIndexes();
@@ -140,12 +145,6 @@ namespace UnityEditor.Rendering.Experimental.LookDev
                 SaveConfig();
 
                 open = false;
-
-                //free references for memory cleaning
-                s_ViewDisplayer = null;
-                s_Stages = null;
-                s_Compositor = null;
-                //currentContext = null;
             };
             s_ViewDisplayer.OnLayoutChanged += (layout, envPanelOpen) =>
             {
@@ -191,7 +190,7 @@ namespace UnityEditor.Rendering.Experimental.LookDev
         {
             s_EnvironmentDisplayer.OnChangingEnvironmentLibrary += currentContext.UpdateEnvironmentLibrary;
         }
-        
+
         static void ReloadStage(bool reloadWithTemporaryID)
         {
             currentContext.GetViewContent(ViewIndex.First).LoadAll(reloadWithTemporaryID);
@@ -206,7 +205,7 @@ namespace UnityEditor.Rendering.Experimental.LookDev
             s_Stages.UpdateSceneLighting(index, dataProvider);
             s_ViewDisplayer.Repaint();
         }
-        
+
         /// <summary>Update the rendered element with element in the context</summary>
         /// <param name="index">The index of the stage to update</param>
         public static void SaveContextChangeAndApply(ViewIndex index)

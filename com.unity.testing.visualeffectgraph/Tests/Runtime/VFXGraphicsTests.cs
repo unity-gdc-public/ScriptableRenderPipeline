@@ -15,7 +15,7 @@ using System.Reflection;
 #endif
 using NUnit.Framework;
 using Object = UnityEngine.Object;
-using UnityEngine.Experimental.VFX.Utility;
+using UnityEngine.VFX.Utility;
 
 namespace UnityEngine.VFX.Test
 {
@@ -110,7 +110,7 @@ namespace UnityEngine.VFX.Test
                 }
                 var audioSources = Resources.FindObjectsOfTypeAll<AudioSource>();
 #endif
-                var paramBinders = Resources.FindObjectsOfTypeAll<VFXParameterBinder>();
+                var paramBinders = Resources.FindObjectsOfTypeAll<VFXPropertyBinder>();
                 foreach (var paramBinder in paramBinders)
                 {
                     var binders = paramBinder.GetParameterBinders<VFXBinderBase>();
@@ -146,7 +146,7 @@ namespace UnityEngine.VFX.Test
                     if (!ExcludedTestsButKeepLoadScene.Any(o => testCase.ScenePath.Contains(o)) &&
                         !(SystemInfo.graphicsDeviceType == GraphicsDeviceType.Metal && UnstableMetalTests.Any(o => testCase.ScenePath.Contains(o))))
                     {
-                        ImageAssert.AreEqual(testCase.ReferenceImage, actual, new ImageComparisonSettings() { AverageCorrectnessThreshold = 10e-5f });
+                        ImageAssert.AreEqual(testCase.ReferenceImage, actual, new ImageComparisonSettings() { AverageCorrectnessThreshold = 30e-5f });
                     }
                     else
                     {

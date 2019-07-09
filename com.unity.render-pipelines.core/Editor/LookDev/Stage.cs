@@ -18,16 +18,23 @@ namespace UnityEditor.Rendering.Experimental.LookDev
         private readonly List<GameObject> m_GameObjects = new List<GameObject>();
         private readonly List<GameObject> m_PersistentGameObjects = new List<GameObject>();
         private readonly Camera m_Camera;
+        private readonly Light m_SunLight;
 
         /// <summary>Get access to the stage's camera</summary>
         public Camera camera => m_Camera;
+
+        /// <summary>Get access to the stage's light</summary>
+        public Light sunLight => m_SunLight;
 
         /// <summary>Get access to the stage's scene</summary>
         public Scene scene => m_PreviewScene;
 
         private StageRuntimeInterface SRI;
         public StageRuntimeInterface runtimeInterface
-            => SRI ?? (SRI = new StageRuntimeInterface(CreateGameObjectIntoStage, () => camera));
+            => SRI ?? (SRI = new StageRuntimeInterface(
+                CreateGameObjectIntoStage,
+                () => camera,
+                () => sunLight));
 
         /// <summary>
         /// Construct a new stage to let your object live.
@@ -41,7 +48,7 @@ namespace UnityEditor.Rendering.Experimental.LookDev
 
             m_PreviewScene = EditorSceneManager.NewPreviewScene();
             m_PreviewScene.name = sceneName;
-            
+
             var camGO = EditorUtility.CreateGameObjectWithHideFlags("Look Dev Camera", HideFlags.HideAndDontSave, typeof(Camera));
             MoveIntoStage(camGO, true); //position will be updated right before rendering
             camGO.layer = k_PreviewCullingLayerIndex;
@@ -54,6 +61,13 @@ namespace UnityEditor.Rendering.Experimental.LookDev
             m_Camera.renderingPath = RenderingPath.DeferredShading;
             m_Camera.useOcclusionCulling = false;
             m_Camera.scene = m_PreviewScene;
+
+            var lightGO = EditorUtility.CreateGameObjectWithHideFlags("Look Dev Sun", HideFlags.HideAndDontSave, typeof(Light));
+            MoveIntoStage(lightGO, true); //position will be updated right before rendering
+            m_SunLight = lightGO.GetComponent<Light>();
+            m_SunLight.type = LightType.Directional;
+            m_SunLight.shadows = LightShadows.Soft;
+            m_SunLight.intensity = 0f;
         }
 
         /// <summary>
@@ -193,7 +207,7 @@ namespace UnityEditor.Rendering.Experimental.LookDev
             foreach (Light light in m_Camera.GetComponentsInChildren<Light>())
                 light.enabled = visible;
         }
-        
+
         private bool disposedValue = false; // To detect redundant calls
 
         void CleanUp()
@@ -204,11 +218,11 @@ namespace UnityEditor.Rendering.Experimental.LookDev
                     SRI.SRPData = null;
                 SRI = null;
                 EditorSceneManager.ClosePreviewScene(m_PreviewScene);
-                
+
                 disposedValue = true;
             }
         }
-        
+
         ~Stage() => CleanUp();
 
         /// <summary>Clear and close the stage's scene.</summary>
@@ -218,7 +232,7 @@ namespace UnityEditor.Rendering.Experimental.LookDev
             GC.SuppressFinalize(this);
         }
     }
-    
+
     class StageCache : IDisposable
     {
         const string firstStageName = "LookDevFirstView";
@@ -242,7 +256,7 @@ namespace UnityEditor.Rendering.Experimental.LookDev
             };
             initialized = true;
         }
-        
+
         Stage InitStage(ViewIndex index, IDataProvider dataProvider)
         {
             Stage stage;
@@ -279,7 +293,7 @@ namespace UnityEditor.Rendering.Experimental.LookDev
             if (viewContent.viewedObjectReference != null && !viewContent.viewedObjectReference.Equals(null))
                 viewContent.viewedInstanceInPreview = stage.InstantiateIntoStage(viewContent.viewedObjectReference);
         }
-        
+
         public void UpdateSceneLighting(ViewIndex index, IDataProvider provider)
         {
             Stage stage = this[index];
@@ -288,7 +302,7 @@ namespace UnityEditor.Rendering.Experimental.LookDev
                 environment?.sky,
                 stage.runtimeInterface);
         }
-        
+
         private bool disposedValue = false; // To detect redundant calls
 
         void CleanUp()

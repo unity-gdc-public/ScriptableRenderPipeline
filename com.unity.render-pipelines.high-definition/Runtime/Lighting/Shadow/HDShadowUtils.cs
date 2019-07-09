@@ -9,6 +9,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
     public static class HDShadowUtils
     {
         public static readonly float k_MinShadowNearPlane = 0.0001f;
+        public static readonly float k_MaxShadowNearPlane = 10.0f;
 
         public static float Asfloat(uint val) { unsafe { return *((float*)&val); } }
         public static float Asfloat(int val)  { unsafe { return *((float*)&val); } }
@@ -24,16 +25,16 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             if (hdAsset == null)
                 return 1;
 
-            // Currently only PCF 3x3 is used for deferred rendering so if we're in deferred return 3
+            // Currently we force MEDIUM on deferred, so PCF 5x5 is used.
             if (camera.frameSettings.litShaderMode == LitShaderMode.Deferred)
-                return 3;
+                return 5;
 
-            switch (hdAsset.currentPlatformRenderPipelineSettings.hdShadowInitParams.shadowQuality)
+            switch (hdAsset.currentPlatformRenderPipelineSettings.hdShadowInitParams.shadowFilteringQuality)
             {
                 // Warning: these values have to match the algorithms used for shadow filtering (in HDShadowAlgorithm.hlsl)
-                case HDShadowQuality.Low:
+                case HDShadowFilteringQuality.Low:
                     return 3; // PCF 3x3
-                case HDShadowQuality.Medium:
+                case HDShadowFilteringQuality.Medium:
                     return 5; // PCF 5x5
                 default:
                     return 1; // Any non PCF algorithms
