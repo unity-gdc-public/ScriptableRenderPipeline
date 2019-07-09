@@ -123,7 +123,8 @@ all_package_ci:
     image: buildfarm/mac:stable
     flavor: m1.mac
   commands:
-  - npm install git+ssh://git@gitlab.cds.internal.unity3d.com:upm-packages/project-templates/upm-template-utils.git#performance-package -g --no-progress
+  - npm install upm-ci-utils@stable -g --registry https://api.bintray.com/npm/unity/unity-npm 
+  
   - cd com.unity.render-pipelines.core && upm-ci package pack
   - cd com.unity.render-pipelines.core && upm-ci package test -u af24429dcc98
 
