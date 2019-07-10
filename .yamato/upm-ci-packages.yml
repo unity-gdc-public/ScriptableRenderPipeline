@@ -1,5 +1,6 @@
 editors:
   - version: 2019.3
+  - version: af24429dcc98
 ---
 
 pack_core_package:
