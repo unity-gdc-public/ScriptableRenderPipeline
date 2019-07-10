@@ -96,13 +96,7 @@ projects:
    - unity-downloader-cli -b {{ editor.version }} -p MacEditor -c editor -c {{ mobile.name }} --wait
    - brew install lsusb
    - lsusb
-   #- >
-   #   %ANDROID_SDK_ROOT%\platform-tools\adb.exe connect %BOKKEN_DEVICE_IP%
-   #- powershell %ANDROID_SDK_ROOT%\platform-tools\adb.exe devices
-   - utr\utr --suite=playmode --platform={{ mobile.name }} --testproject=TestProjects\{{ project.folder }} --editor-location=MacEditor --artifacts_path=upm-ci~\test-results --scripting-backend=il2cpp
-   #- start /WAIT %CD%\TestProjects\{{ project.folder }}\WindowsEditor\Unity -cleanTestPrefs -batchmode -automated -upmNoDefaultPackages -enableAllModules -runTests -buildTarget Android -projectPath .\Time -logFile %CD%\TestArtifacts\Editor_EditorLog.txt -testResults %CD%\TestArtifacts\Android_TestResults.xml -testPlatform Android
-   #- sleep 1000000000
-   #- start %ANDROID_SDK_ROOT%\platform-tools\adb.exe kill-server
+   - utr\utr --suite=playmode --platform={{ mobile.name }} --testproject=TestProjects/{{ project.folder }} --editor-location=MacEditor --artifacts_path=upm-ci~/test-results --scripting-backend=il2cpp
   artifacts:
     logs:
       paths:
