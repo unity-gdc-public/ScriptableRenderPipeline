@@ -139,10 +139,9 @@ Light GetMainLight(float4 shadowCoord)
     return light;
 }
 
-Light GetAdditionalLight(int i, float3 positionWS)
+// Fills a light struct given a perObjectLightIndex
+Light GetAdditionalPerObjectLight(int perObjectLightIndex, float3 positionWS)
 {
-    int perObjectLightIndex = GetPerObjectLightIndex(i);
-
     // Abstraction over Light input constants
 #if USE_STRUCTURED_BUFFER_FOR_LIGHT_DATA
     float3 lightPositionWS = _AdditionalLightsBuffer[perObjectLightIndex].position.xyz;
@@ -190,6 +189,14 @@ Light GetAdditionalLight(int i, float3 positionWS)
     return light;
 }
 
+// Fills a light struct given a loop i index. This will convert the i
+// index to a perObjectLightIndex
+Light GetAdditionalLight(int i, float3 positionWS)
+{
+    int perObjectLightIndex = GetPerObjectLightIndex(i);
+    return GetAdditionalPerObjectLight(perObjectLightIndex, positionWS);
+}
+
 int GetAdditionalLightsCount()
 {
     // TODO: we need to expose in SRP api an ability for the pipeline cap the amount of lights
@@ -197,6 +204,15 @@ int GetAdditionalLightsCount()
     // This would be helpful to support baking exceeding lights in SH as well
     return min(_AdditionalLightsCount.x, unity_LightData.y);
 }
+
+#define BEGIN_LIGHT_LOOP(light, positionWS) \
+    int pixelLightCount = GetAdditionalLightsCount(); \
+    int perObjectIndices[MAX_PEROBJECT_LIGHTS] = (int[MAX_PEROBJECT_LIGHTS])unity_LightIndices; \
+    for (int lightIndex = 0; lightIndex < pixelLightCount; ++lightIndex) \
+    { \
+        Light light = GetAdditionalPerObjectLight(perObjectIndices[lightIndex], positionWS); \
+
+#define END_LIGHT_LOOP }
 
 ///////////////////////////////////////////////////////////////////////////////
 //                         BRDF Functions                                    //
@@ -509,13 +525,10 @@ half3 VertexLighting(float3 positionWS, half3 normalWS)
     half3 vertexLightColor = half3(0.0, 0.0, 0.0);
 
 #ifdef _ADDITIONAL_LIGHTS_VERTEX
-    int pixelLightCount = GetAdditionalLightsCount();
-    for (int i = 0; i < pixelLightCount; ++i)
-    {
-        Light light = GetAdditionalLight(i, positionWS);
-        half3 lightColor = light.color * light.distanceAttenuation;
-        vertexLightColor += LightingLambert(lightColor, light.direction, normalWS);
-    }
+    BEGIN_LIGHT_LOOP(light, positionWS)
+    half3 lightColor = light.color * light.distanceAttenuation;
+    vertexLightColor += LightingLambert(lightColor, light.direction, normalWS);
+    END_LIGHT_LOOP
 #endif
 
     return vertexLightColor;
@@ -538,12 +551,9 @@ half4 UniversalFragmentPBR(InputData inputData, half3 albedo, half metallic, hal
     color += LightingPhysicallyBased(brdfData, mainLight, inputData.normalWS, inputData.viewDirectionWS);
 
 #ifdef _ADDITIONAL_LIGHTS
-    int pixelLightCount = GetAdditionalLightsCount();
-    for (int i = 0; i < pixelLightCount; ++i)
-    {
-        Light light = GetAdditionalLight(i, inputData.positionWS);
-        color += LightingPhysicallyBased(brdfData, light, inputData.normalWS, inputData.viewDirectionWS);
-    }
+    BEGIN_LIGHT_LOOP(light, inputData.positionWS)
+    color += LightingPhysicallyBased(brdfData, light, inputData.normalWS, inputData.viewDirectionWS);
+    END_LIGHT_LOOP
 #endif
 
 #ifdef _ADDITIONAL_LIGHTS_VERTEX
@@ -564,14 +574,11 @@ half4 UniversalFragmentBlinnPhong(InputData inputData, half3 diffuse, half4 spec
     half3 specularColor = LightingSpecular(attenuatedLightColor, mainLight.direction, inputData.normalWS, inputData.viewDirectionWS, specularGloss, smoothness);
 
 #ifdef _ADDITIONAL_LIGHTS
-    int pixelLightCount = GetAdditionalLightsCount();
-    for (int i = 0; i < pixelLightCount; ++i)
-    {
-        Light light = GetAdditionalLight(i, inputData.positionWS);
-        half3 attenuatedLightColor = light.color * (light.distanceAttenuation * light.shadowAttenuation);
-        diffuseColor += LightingLambert(attenuatedLightColor, light.direction, inputData.normalWS);
-        specularColor += LightingSpecular(attenuatedLightColor, light.direction, inputData.normalWS, inputData.viewDirectionWS, specularGloss, smoothness);
-    }
+    BEGIN_LIGHT_LOOP(light, inputData.positionWS)
+    half3 attenuatedLightColor = light.color * (light.distanceAttenuation * light.shadowAttenuation);
+    diffuseColor += LightingLambert(attenuatedLightColor, light.direction, inputData.normalWS);
+    specularColor += LightingSpecular(attenuatedLightColor, light.direction, inputData.normalWS, inputData.viewDirectionWS, specularGloss, smoothness);
+    END_LIGHT_LOOP
 #endif
 
 #ifdef _ADDITIONAL_LIGHTS_VERTEX

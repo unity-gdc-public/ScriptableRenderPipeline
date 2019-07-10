@@ -1,9 +1,12 @@
 #ifndef UNIVERSAL_INPUT_INCLUDED
 #define UNIVERSAL_INPUT_INCLUDED
 
-#define MAX_VISIBLE_LIGHTS 16
+#define MAX_VISIBLE_LIGHTS 256
+#define MAX_PEROBJECT_LIGHTS 8
 
-#if defined(SHADER_API_GLES) || defined(SHADER_API_GLES3)
+// Currently we have some perfromance issues with StructuredBuffers in mobile.
+// For now only support storing lights in StructuredBuffer on non-mobile platoforms.
+#if defined(SHADER_API_MOBILE)
 #define USE_STRUCTURED_BUFFER_FOR_LIGHT_DATA 0
 #else
 #define USE_STRUCTURED_BUFFER_FOR_LIGHT_DATA 1

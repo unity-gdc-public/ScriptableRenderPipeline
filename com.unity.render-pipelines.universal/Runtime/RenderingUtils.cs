@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Runtime.InteropServices;
 using UnityEngine.Rendering.PostProcessing;
 using UnityEngine.Scripting.APIUpdating;
 
@@ -68,11 +67,9 @@ namespace UnityEngine.Rendering.Universal
 
         internal static bool useStructuredBuffer
         {
-            get
-            {
-                GraphicsDeviceType gfxDeviceType = SystemInfo.graphicsDeviceType;
-                return !(gfxDeviceType == GraphicsDeviceType.OpenGLES3 || gfxDeviceType == GraphicsDeviceType.OpenGLES2);
-            }
+            // Currently we have some perfromance issues with StructuredBuffers in mobile.
+            // For now only support storing lights in StructuredBuffer on non-mobile platoforms.
+            get => !Application.isMobilePlatform;
         }
 
         static Material s_ErrorMaterial;
