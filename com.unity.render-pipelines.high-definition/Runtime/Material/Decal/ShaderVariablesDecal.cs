@@ -1,5 +1,4 @@
-
-namespace UnityEngine.Experimental.Rendering.HDPipeline
+namespace UnityEngine.Rendering.HighDefinition
 {
     [GenerateHLSL(needAccessors = false, omitStructDeclaration = true)]
     public struct ShaderVariablesDecal

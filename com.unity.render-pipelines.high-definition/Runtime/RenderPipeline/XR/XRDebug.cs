@@ -1,9 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using UnityEngine.Rendering;
 
-namespace UnityEngine.Experimental.Rendering.HDPipeline
+namespace UnityEngine.Rendering.HighDefinition
 {
     public enum XRDebugMode
     {
@@ -56,7 +55,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         }
     }
 
-    public partial class XRSystem
+    internal partial class XRSystem
     {
         private readonly string debugVolumeName = "XRDebugVolume";
 

@@ -1,6 +1,4 @@
-using UnityEngine;
-
-namespace UnityEngine.Experimental.Rendering.HDPipeline
+namespace UnityEngine.Rendering.HighDefinition
 {
     //-----------------------------------------------------------------------------
     // structure definition
@@ -56,8 +54,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         public float   lightDimmer;
         public float   volumetricLightDimmer;   // Replaces 'lightDimer'
-        public float   angleScale;              // Sun disk highlight
-        public float   angleOffset;             // Sun disk highlight
 
         public Vector3 forward;
         public int     cookieIndex;             // -1 if unused (TODO: 16 bit)
@@ -68,18 +64,25 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public Vector3 up;                      // Rescaled by (2 / shapeHeight)
         public int     shadowIndex;             // -1 if unused (TODO: 16 bit)
 
+        public int     screenSpaceShadowIndex;
+
         public Vector3 color;
         public int     contactShadowMask;      // 0 if unused (TODO: 16 bit)
 
+        public Vector3 shadowTint;              // Use to tint shadow color
         public float   shadowDimmer;
+
         public float   volumetricShadowDimmer;  // Replaces 'shadowDimmer'
         public int     nonLightMappedOnly;      // Used with ShadowMask (TODO: use a bitfield)
+        [SurfaceDataAttributes(precision = FieldPrecision.Real)]
         public float   minRoughness;            // Hack
 
+        [SurfaceDataAttributes(precision = FieldPrecision.Real)]
         public Vector4 shadowMaskSelector;      // Used with ShadowMask feature
 
         public float   diffuseDimmer;
         public float   specularDimmer;
+        public int     interactsWithSky;        // bool...
     };
 
     [GenerateHLSL(PackingRules.Exact, false)]
@@ -92,13 +95,16 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         public float   lightDimmer;
         public float   volumetricLightDimmer;   // Replaces 'lightDimer'
+        [SurfaceDataAttributes(precision = FieldPrecision.Real)]
         public float   angleScale;              // Spot light
+        [SurfaceDataAttributes(precision = FieldPrecision.Real)]
         public float   angleOffset;             // Spot light
 
         public Vector3 forward;
         public GPULightType lightType;          // TODO: move this up?
 
         public Vector3 right;                   // If spot: rescaled by cot(outerHalfAngle); if projector: rescaled by (2 / shapeWidth)
+        [SurfaceDataAttributes(precision = FieldPrecision.Real)]
         public float   range;
 
         public Vector3 up;                      // If spot: rescaled by cot(outerHalfAngle); if projector: rescaled by (2 / shapeHeight)
@@ -113,15 +119,20 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public int     contactShadowMask;       // negative if unused (TODO: 16 bit)
 
         // TODO: Instead of doing this, we should pack the ray traced shadow index into the tile cookie for instance
-        public int     rayTracedAreaShadowIndex;
+        public int     screenSpaceShadowIndex;
+
+        public Vector3 shadowTint;              // Use to tint shadow color
 
         public float   shadowDimmer;
         public float   volumetricShadowDimmer;  // Replaces 'shadowDimmer'
         public int     nonLightMappedOnly;      // Used with ShadowMask feature (TODO: use a bitfield)
+        [SurfaceDataAttributes(precision = FieldPrecision.Real)]
         public float   minRoughness;            // This is use to give a small "area" to punctual light, as if we have a light with a radius.
 
+        [SurfaceDataAttributes(precision = FieldPrecision.Real)]
         public Vector4 shadowMaskSelector;      // Used with ShadowMask feature
 
+        [SurfaceDataAttributes(precision = FieldPrecision.Real)]
         public Vector2 size;                    // Used by area (X = length or width, Y = height) and punctual lights (X = radius)
         public float   diffuseDimmer;
         public float   specularDimmer;
@@ -163,6 +174,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         // Sphere: extents.x = sphere radius
         public Vector3 proxyExtents;
         // User can chose if they use This is use in case we want to force infinite projection distance (i.e no projection);
+        [SurfaceDataAttributes(precision = FieldPrecision.Real)]
         public float minProjectionDistance;
 
         public Vector3 proxyPositionRWS;
@@ -184,7 +196,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public Vector3 blendNormalDistancePositive;
         public Vector3 blendNormalDistanceNegative;
 
+        [SurfaceDataAttributes(precision = FieldPrecision.Real)]
         public Vector3 boxSideFadePositive;
+        [SurfaceDataAttributes(precision = FieldPrecision.Real)]
         public Vector3 boxSideFadeNegative;
         public float weight;
         public float multiplier;

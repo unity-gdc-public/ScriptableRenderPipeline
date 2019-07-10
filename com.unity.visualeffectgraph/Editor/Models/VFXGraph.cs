@@ -3,9 +3,9 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using UnityEditor.Experimental.VFX;
+using UnityEditor.VFX;
 using UnityEngine;
-using UnityEngine.Experimental.VFX;
+using UnityEngine.VFX;
 using UnityEngine.Profiling;
 using System.Reflection;
 
@@ -405,6 +405,13 @@ namespace UnityEditor.VFX
             if (cause == VFXModel.InvalidationCause.kStructureChanged)
             {
                 UpdateSubAssets();
+                if( model == this)
+                    VFXSubgraphContext.CallOnGraphChanged(this);
+            }
+
+            if( cause == VFXModel.InvalidationCause.kSettingChanged && model is VFXParameter)
+            {
+                VFXSubgraphContext.CallOnGraphChanged(this);
             }
 
             if (cause != VFXModel.InvalidationCause.kExpressionInvalidated &&
@@ -551,16 +558,13 @@ namespace UnityEditor.VFX
             }
         }
 
-        void SubgraphDirty(VisualEffectObject subgraph,bool expressionsChanged)
+        void SubgraphDirty(VisualEffectObject subgraph)
         {
             if (m_SubgraphDependencies != null && m_SubgraphDependencies.Contains(subgraph))
             {
-                if (expressionsChanged)
-                {
-                    RecurseSubgraphRecreateCopy(this);
-                    compiledData.Compile(m_CompilationMode, m_ForceShaderValidation);
-                    m_ExpressionGraphDirty = false;
-                }
+                RecurseSubgraphRecreateCopy(this);
+                compiledData.Compile(m_CompilationMode, m_ForceShaderValidation);
+                m_ExpressionGraphDirty = false;
 
                 m_ExpressionValuesDirty = false;
             }
@@ -622,9 +626,16 @@ namespace UnityEditor.VFX
                 {
                     compiledData.UpdateValues();
                 }
+
                 if (considerGraphDirty)
                     m_ExpressionGraphDirty = false;
                 m_ExpressionValuesDirty = false;    
+            }
+            else if(m_ExpressionGraphDirty && !preventRecompilation)
+            {
+                BuildSubgraphDependencies();
+                RecurseSubgraphRecreateCopy(this);
+                m_ExpressionGraphDirty = false;
             }
             if(!preventDependencyRecompilation && m_DependentDirty)
             {
@@ -633,7 +644,7 @@ namespace UnityEditor.VFX
                     var obj = GetResource().visualEffectObject;
                     foreach (var graph in GetAllGraphs<VisualEffectAsset>())
                     {
-                        graph.SubgraphDirty(obj, m_ExpressionGraphDirty);
+                        graph.SubgraphDirty(obj);
                     }
                     m_DependentDirty = false;
                 }

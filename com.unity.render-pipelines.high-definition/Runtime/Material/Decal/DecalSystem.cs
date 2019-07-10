@@ -3,9 +3,8 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine.Assertions;
 using UnityEngine.Experimental.Rendering;
-using UnityEngine.Rendering;
 
-namespace UnityEngine.Experimental.Rendering.HDPipeline
+namespace UnityEngine.Rendering.HighDefinition
 {
     public class DecalSystem
     {
@@ -269,7 +268,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         // to work on Vulkan Mobile?
         // Core\CoreRP\ShaderLibrary\UnityInstancing.hlsl
-        // #if defined(SHADER_API_VULKAN) && defined(SHADER_API_MOBILE)
+        // #if (defined(SHADER_API_VULKAN) && defined(SHADER_API_MOBILE)) || defined(SHADER_API_SWITCH)
         //      #define UNITY_INSTANCED_ARRAY_SIZE  250
         private const int kDrawIndexedBatchSize = 250;
 
@@ -838,7 +837,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 Array.Copy(value.resultIndices, m_ResultIndices, m_NumResults);
             }
         }
-		
+
 		void SetupMipStreamingSettings(Texture texture, bool allMips)
 		{
 			if (texture)
@@ -846,23 +845,34 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 				if (texture.dimension == UnityEngine.Rendering.TextureDimension.Tex2D)
 				{
 					Texture2D tex2D = (texture as Texture2D);
-					if (allMips)
-						tex2D.requestedMipmapLevel = 0;
-					else
-						tex2D.ClearRequestedMipmapLevel();
+                    if (tex2D)
+                    {
+                        if (allMips)
+                            tex2D.requestedMipmapLevel = 0;
+                        else
+                            tex2D.ClearRequestedMipmapLevel();
+                    }
 				}
 			}
 		}
 
+        void SetupMipStreamingSettings(Material material, bool allMips)
+        {
+            if (material != null)
+            {
+                if (IsHDRenderPipelineDecal(material.shader.name))
+                {
+                    SetupMipStreamingSettings(material.GetTexture("_BaseColorMap"), allMips);
+                    SetupMipStreamingSettings(material.GetTexture("_NormalMap"), allMips);
+                    SetupMipStreamingSettings(material.GetTexture("_MaskMap"), allMips);
+                }
+            }
+        }
+
         DecalHandle AddDecal(Matrix4x4 localToWorld, Quaternion rotation, Matrix4x4 sizeOffset, float drawDistance, float fadeScale, Vector4 uvScaleBias, bool affectsTransparency, Material material, int layerMask, float fadeFactor)
         {
-			if (material != null)
-			{
-				SetupMipStreamingSettings(material.GetTexture("_BaseColorMap"), true);
-				SetupMipStreamingSettings(material.GetTexture("_NormalMap"), true);
-				SetupMipStreamingSettings(material.GetTexture("_MaskMap"), true);
-			}
-				
+            SetupMipStreamingSettings(material, true);
+
             DecalSet decalSet = null;
             int key = material != null ? material.GetInstanceID() : kNullMaterialIndex;
             if (!m_DecalSets.TryGetValue(key, out decalSet))
@@ -896,6 +906,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 decalSet.RemoveDecal(handle);
                 if (decalSet.Count == 0)
                 {
+                    SetupMipStreamingSettings(decalSet.KeyMaterial, false);
+
                     m_DecalSets.Remove(key);
                 }
             }

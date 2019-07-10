@@ -1,6 +1,4 @@
-using UnityEngine.Rendering;
-
-namespace UnityEngine.Experimental.Rendering.HDPipeline
+namespace UnityEngine.Rendering.HighDefinition
 {
     public abstract class MRTBufferManager
     {
@@ -27,6 +25,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 m_RTIDs[i] = m_RTs[i].nameID;
             }
             return m_RTIDs;
+        }
+
+        public RTHandleSystem.RTHandle[] GetBuffers()
+        {
+            return m_RTs;
         }
 
         public RTHandleSystem.RTHandle GetBuffer(int index)
