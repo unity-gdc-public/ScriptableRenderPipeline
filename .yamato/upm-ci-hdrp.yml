@@ -96,7 +96,7 @@ projects:
    - unity-downloader-cli -b {{ editor.version }} -p MacEditor -c editor -c {{ mobile.name }} --wait
    - brew install lsusb
    - lsusb
-   - utr\utr --suite=playmode --platform={{ mobile.name }} --testproject=TestProjects/{{ project.folder }} --editor-location=MacEditor --artifacts_path=upm-ci~/test-results --scripting-backend=il2cpp
+   - utr/utr --suite=playmode --platform={{ mobile.name }} --testproject=TestProjects/{{ project.folder }} --editor-location=MacEditor --artifacts_path=upm-ci~/test-results --scripting-backend=il2cpp
   artifacts:
     logs:
       paths:
