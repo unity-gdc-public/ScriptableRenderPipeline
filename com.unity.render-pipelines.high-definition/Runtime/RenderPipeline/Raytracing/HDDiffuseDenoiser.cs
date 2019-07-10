@@ -1,8 +1,7 @@
-using UnityEngine;
 using UnityEngine.Rendering;
-using System.Collections.Generic;
+using UnityEngine.Rendering.HighDefinition;
 
-namespace UnityEngine.Experimental.Rendering.HDPipeline
+namespace UnityEngine.Experimental.Rendering.HighDefinition
 {
     using RTHandle = RTHandleSystem.RTHandle;
     public class HDDiffuseDenoiser

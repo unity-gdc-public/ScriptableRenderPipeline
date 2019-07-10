@@ -51,7 +51,7 @@ void ValidateHistory(uint2 groupThreadId : SV_GroupThreadID, uint2 groupId : SV_
     }
 
     // Get the closest pixel coord
-    float2 closest = GetClosestFragment(posInputs);
+    float2 closest = GetClosestFragment(posInputs.positionSS.xy);
 
     // Decode the velocity of the pixel
     float2 velocity = float2(0.0, 0.0);
@@ -128,7 +128,7 @@ void TEMPORAL_ACCUMULATION(uint2 groupThreadId : SV_GroupThreadID, uint2 groupId
 
     PositionInputs posInputs = GetPositionInput(centerCoord, _ScreenSize.zw, depth, UNITY_MATRIX_I_VP, UNITY_MATRIX_V);
 
-    float2 closest = GetClosestFragment(posInputs);
+    float2 closest = GetClosestFragment(posInputs.positionSS.xy);
 
     float2 velocity = float2(0.0, 0.0);
     DecodeMotionVector(LOAD_TEXTURE2D_X(_CameraMotionVectorsTexture, closest), velocity);

@@ -2,6 +2,7 @@ using System.Linq;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
+using UnityEngine.Experimental.Rendering.HighDefinition;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
