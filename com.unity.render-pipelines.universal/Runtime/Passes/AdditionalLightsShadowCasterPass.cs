@@ -73,10 +73,9 @@ namespace UnityEngine.Rendering.Universal
             // Loops through all visible lights and cache the valid shadow caster ones. 
             for (int i = 0; i < visibleLights.Length && shadowCastingLightsCount < additionalLightsCount; ++i)
             {
+                VisibleLight shadowLight = visibleLights[i];
                 if (IsValidShadowCastingLight(ref renderingData.lightData, i))
                 {
-                    VisibleLight shadowLight = visibleLights[i];
-
                     if (renderingData.cullResults.GetShadowCasterBounds(i, out var bounds))
                     {
                         bool success = ShadowUtils.ExtractSpotLightMatrix(ref renderingData.cullResults,
@@ -97,8 +96,8 @@ namespace UnityEngine.Rendering.Universal
                     }
                 }
 
-                // Skip main light index
-                if (i != renderingData.lightData.mainLightIndex)
+                // Directional lights are not rendered per-object, remove them from the list.
+                if (shadowLight.lightType != LightType.Directional)
                 {
                     // -1 means this light doesn't cast shadows so there's no shadow casted slot in the shadowmap atlas
                     m_AdditionalShadowCastingLightIndicesMap.Add(-1);
