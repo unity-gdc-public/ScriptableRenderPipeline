@@ -97,8 +97,12 @@ namespace UnityEngine.Rendering.Universal
                     }
                 }
 
-                // -1 means this light doesn't cast shadows so there's no shadow casted slot in the shadowmap atlas
-                m_AdditionalShadowCastingLightIndicesMap.Add(-1);
+                // Skip main light index
+                if (i != renderingData.lightData.mainLightIndex)
+                {
+                    // -1 means this light doesn't cast shadows so there's no shadow casted slot in the shadowmap atlas
+                    m_AdditionalShadowCastingLightIndicesMap.Add(-1);
+                }
             }
 
             if (shadowCastingLightsCount == 0)
