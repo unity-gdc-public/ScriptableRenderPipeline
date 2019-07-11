@@ -156,6 +156,7 @@ test_hdrp_package_{{ editor.version }}:
   dependencies:
     - .yamato/upm-ci-packages.yml#pack_core_package
     - .yamato/upm-ci-packages.yml#pack_shadergraph_package
+    - .yamato/upm-ci-packages.yml#pack_vfx_package
     - .yamato/upm-ci-packages.yml#pack_hdrp_package
   artifacts:
     logs:
