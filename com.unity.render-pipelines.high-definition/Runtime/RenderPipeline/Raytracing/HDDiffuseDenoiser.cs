@@ -4,7 +4,7 @@ using UnityEngine.Rendering.HighDefinition;
 namespace UnityEngine.Experimental.Rendering.HighDefinition
 {
     using RTHandle = RTHandleSystem.RTHandle;
-    public class HDDiffuseDenoiser
+    class HDDiffuseDenoiser
     {
 #if ENABLE_RAYTRACING
         ComputeShader m_SimpleDenoiserCS;
