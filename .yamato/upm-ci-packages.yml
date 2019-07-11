@@ -1,7 +1,7 @@
 editors:
   - version: 2019.3
+  
 ---
-
 pack_core_package:
   name: z_(do not use) Pack core
   agent:
@@ -43,6 +43,10 @@ pack_shadergraph_package:
   commands:
     - npm install upm-ci-utils@stable -g --registry https://api.bintray.com/npm/unity/unity-npm
     - upm-ci package pack --package-path com.unity.shadergraph
+  dependencies:
+  {% for editor in editors %}
+    - .yamato/upm-ci-packages.yml#test_core_package_{{ editor.version }}
+  {% endfor %}
   artifacts:
     packages:
       paths:
@@ -84,8 +88,10 @@ pack_lightweight_package:
     - npm install upm-ci-utils@stable -g --registry https://api.bintray.com/npm/unity/unity-npm
     - upm-ci package pack --package-path com.unity.render-pipelines.lightweight
   dependencies:
+  {% for editor in editors %}
     - .yamato/upm-ci-packages.yml#test_core_package_{{ editor.version }}
     - .yamato/upm-ci-packages.yml#test_shadergraph_package_{{ editor.version }}
+  {% endfor %}
   artifacts:
     packages:
       paths:
@@ -124,8 +130,10 @@ pack_hdrp_package:
     - npm install upm-ci-utils@stable -g --registry https://api.bintray.com/npm/unity/unity-npm
     - upm-ci package pack --package-path com.unity.render-pipelines.high-definition
   dependencies:
+  {% for editor in editors %}
     - .yamato/upm-ci-packages.yml#test_core_package_{{ editor.version }}
     - .yamato/upm-ci-packages.yml#test_shadergraph_package_{{ editor.version }}
+  {% endfor %}
   artifacts:
     packages:
       paths:
