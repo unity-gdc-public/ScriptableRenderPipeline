@@ -264,13 +264,13 @@ half3 EnvironmentBRDF(BRDFData brdfData, half3 indirectDiffuse, half3 indirectSp
 // * NDF [Modified] GGX
 // * Modified Kelemen and Szirmay-​Kalos for Visibility term
 // * Fresnel approximated with 1/LdotH
-half3 DirectBDRF(BRDFData brdfData, half3 normalWS, half3 lightDirectionWS, float3 viewDirectionWS)
+half3 DirectBDRF(BRDFData brdfData, half3 normalWS, half3 lightDirectionWS, half3 viewDirectionWS)
 {
 #ifndef _SPECULARHIGHLIGHTS_OFF
-    float3 dirVec = SafeNormalize(lightDirectionWS + viewDirectionWS);
+    float3 halfDir = SafeNormalize(float3(lightDirectionWS) + float3(viewDirectionWS));
 
-    float NoH = saturate(dot(normalWS, dirVec));
-    float LoH = saturate(dot(lightDirectionWS, dirVec));
+    half NoH = saturate(dot(normalWS, halfDir));
+    half LoH = saturate(dot(lightDirectionWS, halfDir));
 
     // GGX Distribution multiplied by combined approximation of Visibility and Fresnel
     // BRDFspec = (D * V * F) / 4.0
@@ -282,16 +282,16 @@ half3 DirectBDRF(BRDFData brdfData, half3 normalWS, half3 lightDirectionWS, floa
     // Final BRDFspec = roughness² / ( NoH² * (roughness² - 1) + 1 )² * (LoH² * (roughness + 0.5) * 4.0)
     // We further optimize a few light invariant terms
     // brdfData.normalizationTerm = (roughness + 0.5) * 4.0 rewritten as roughness * 4.0 + 2.0 to a fit a MAD.
-    float d = NoH * NoH * brdfData.roughness2MinusOne + 1.00001f;
+    half d = NoH * NoH * brdfData.roughness2MinusOne + 1.00001h;
 
-    float LoH2 = LoH * LoH;
-    float specularTerm = brdfData.roughness2 / ((d * d) * max(0.1f, LoH2) * brdfData.normalizationTerm);
+    half LoH2 = LoH * LoH;
+    half specularTerm = brdfData.roughness2 / ((d * d) * max(0.1h, LoH2) * brdfData.normalizationTerm);
 
     // on mobiles (where half actually means something) denominator have risk of overflow
     // clamp below was added specifically to "fix" that, but dx compiler (we convert bytecode to metal/gles)
     // sees that specularTerm have only non-negative terms, so it skips max(0,..) in clamp (leaving only min(100,...))
 #if defined (SHADER_API_MOBILE)
-    specularTerm = specularTerm - FLT_MIN;
+    specularTerm = specularTerm - HALF_MIN;
     specularTerm = clamp(specularTerm, 0.0, 100.0); // Prevent FP16 overflow on mobiles
 #endif
 
@@ -369,7 +369,7 @@ half3 SampleLightmap(float2 lightmapUV, half3 normalWS)
     // However, lightweight pipeline already transformed those coords in vertex. We pass half4(1, 1, 0, 0) and
     // the compiler will optimize the transform away.
     half4 transformCoords = half4(1, 1, 0, 0);
-        
+
 #ifdef DIRLIGHTMAP_COMBINED
     return SampleDirectionalLightmap(TEXTURE2D_ARGS(unity_Lightmap, samplerunity_Lightmap),
         TEXTURE2D_ARGS(unity_LightmapInd, samplerunity_Lightmap),

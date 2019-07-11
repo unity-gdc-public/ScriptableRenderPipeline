@@ -24,11 +24,11 @@ struct Varyings
 
 #ifdef _NORMALMAP
     float4 normalWS                  : TEXCOORD3;    // xyz: normal, w: viewDir.x
-    half4 tangentWS                 : TEXCOORD4;    // xyz: tangent, w: viewDir.y
-    half4 bitangentWS                : TEXCOORD5;    // xyz: bitangent, w: viewDir.z
+    float4 tangentWS                 : TEXCOORD4;    // xyz: tangent, w: viewDir.y
+    float4 bitangentWS                : TEXCOORD5;    // xyz: bitangent, w: viewDir.z
 #else
     float3 normalWS                  : TEXCOORD3;
-    half3 viewDirWS                 : TEXCOORD4;
+    float3 viewDirWS                 : TEXCOORD4;
 #endif
 
     half4 fogFactorAndVertexLight   : TEXCOORD6; // x: fogFactor, yzw: vertex light
@@ -102,7 +102,7 @@ Varyings LitPassVertex(Attributes input)
     output.normalWS = NormalizeNormalPerVertex(normalInput.normalWS);
     output.viewDirWS = viewDirWS;
 #endif
-    
+
     OUTPUT_LIGHTMAP_UV(input.lightmapUV, unity_LightmapST, output.lightmapUV);
     OUTPUT_SH(output.normalWS.xyz, output.vertexSH);
 

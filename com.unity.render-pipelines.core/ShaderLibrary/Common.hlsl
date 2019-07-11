@@ -988,17 +988,9 @@ bool HasFlag(uint bitfield, uint flag)
 }
 
 // Normalize that account for vectors with zero length
-#if !defined(SHADER_API_PSSL)
-half3 SafeNormalize(half3 inVec)
+real3 SafeNormalize(float3 inVec)
 {
-    half dp3 = max(HALF_MIN, dot(inVec, inVec));
-    return inVec * rsqrt(dp3);
-}
-#endif
-
-float3 SafeNormalize(float3 inVec)
-{
-    float dp3 = max(FLT_MIN, dot(inVec, inVec));
+    float dp3 = max(REAL_MIN, dot(inVec, inVec));
     return inVec * rsqrt(dp3);
 }
 
