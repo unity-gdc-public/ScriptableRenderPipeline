@@ -133,6 +133,7 @@ pack_hdrp_package:
   {% for editor in editors %}
     - .yamato/upm-ci-packages.yml#test_core_package_{{ editor.version }}
     - .yamato/upm-ci-packages.yml#test_shadergraph_package_{{ editor.version }}
+    - .yamato/upm-ci-packages.yml#test_vfx_package_{{ editor.version }}
   {% endfor %}
   artifacts:
     packages:
