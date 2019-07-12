@@ -1,9 +1,7 @@
-using UnityEngine.Rendering;
-
-namespace UnityEngine.Experimental.Rendering.HDPipeline
+namespace UnityEngine.Rendering.HighDefinition
 {
     [GenerateHLSL(needAccessors = false, omitStructDeclaration = true)]
-    public unsafe struct ShaderVariablesLightLoop
+    unsafe struct ShaderVariablesLightLoop
     {
         public const int s_MaxEnv2DLight = 32;
 

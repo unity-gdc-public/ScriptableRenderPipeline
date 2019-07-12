@@ -1,11 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using UnityEditor;
-using UnityEngine.Experimental.Rendering.HDPipeline.Attributes;
-using UnityEngine.Rendering;
+using UnityEngine.Rendering.HighDefinition.Attributes;
 
-namespace UnityEngine.Experimental.Rendering.HDPipeline
+namespace UnityEngine.Rendering.HighDefinition
 {
     [GenerateHLSL]
     public enum FullScreenDebugMode
@@ -136,8 +134,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 .Select(t => new GUIContent(t))
                 .ToArray();
             s_MsaaSamplesDebugValues = (int[])Enum.GetValues(typeof(MSAASamples));
-
-            XRDebugMenu.Init();
 
             m_Data = new DebugData();
         }
@@ -737,8 +733,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             {
                 new DebugUI.EnumField { displayName = "Freeze Camera for culling", getter = () => data.debugCameraToFreeze, setter = value => data.debugCameraToFreeze = value, enumNames = s_CameraNamesStrings, enumValues = s_CameraNamesValues, getIndex = () => data.debugCameraToFreezeEnumIndex, setIndex = value => data.debugCameraToFreezeEnumIndex = value },
             });
-
-            XRDebugMenu.AddWidgets(widgetList, RefreshRenderingDebug);
 
             m_DebugRenderingItems = widgetList.ToArray();
             var panel = DebugManager.instance.GetPanel(k_PanelRendering, true);
