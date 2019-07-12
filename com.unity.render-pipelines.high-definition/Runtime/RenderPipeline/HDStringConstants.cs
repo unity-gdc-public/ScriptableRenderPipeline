@@ -1,6 +1,6 @@
 namespace UnityEngine.Rendering.HighDefinition
 {
-    public static class HDShaderPassNames
+    static class HDShaderPassNames
     {
         // ShaderPass string - use to have consistent name through the code
         public static readonly string s_EmptyStr = "";
@@ -71,7 +71,7 @@ namespace UnityEngine.Rendering.HighDefinition
     // Pre-hashed shader ids - naming conventions are a bit off in this file as we use the same
     // fields names as in the shaders for ease of use...
     // TODO: Would be nice to clean this up at some point
-    public static class HDShaderIDs
+    static class HDShaderIDs
     {
         public static readonly int _ZClip = Shader.PropertyToID("_ZClip");
 
@@ -206,7 +206,7 @@ namespace UnityEngine.Rendering.HighDefinition
         public static readonly int _CosTime             = Shader.PropertyToID("_CosTime");
         public static readonly int unity_DeltaTime      = Shader.PropertyToID("unity_DeltaTime");
         public static readonly int _TimeParameters      = Shader.PropertyToID("_TimeParameters");
-        public static readonly int _LastTimeParameters  = Shader.PropertyToID("_LastTimeParameters");
+        public static readonly int _LastTimeParameters  = Shader.PropertyToID("_LastTimeParameters");        
 
         public static readonly int _EnvLightSkyEnabled = Shader.PropertyToID("_EnvLightSkyEnabled");
         public static readonly int _AmbientOcclusionParam = Shader.PropertyToID("_AmbientOcclusionParam");
@@ -373,7 +373,6 @@ namespace UnityEngine.Rendering.HighDefinition
         public static readonly int _LightLayersTexture = Shader.PropertyToID("_LightLayersTexture");
         public static readonly int _DistortionTexture = Shader.PropertyToID("_DistortionTexture");
         public static readonly int _ColorPyramidTexture = Shader.PropertyToID("_ColorPyramidTexture");
-        public static readonly int _ColorPyramidSize = Shader.PropertyToID("_ColorPyramidSize");
         public static readonly int _ColorPyramidScale = Shader.PropertyToID("_ColorPyramidScale");
         public static readonly int _ColorPyramidUvScaleAndLimitPrevFrame = Shader.PropertyToID("_ColorPyramidUvScaleAndLimitPrevFrame");
         public static readonly int _DepthPyramidScale = Shader.PropertyToID("_DepthPyramidScale");
@@ -394,6 +393,7 @@ namespace UnityEngine.Rendering.HighDefinition
         public static readonly int _BlitScaleBias = Shader.PropertyToID("_BlitScaleBias");
         public static readonly int _BlitMipLevel = Shader.PropertyToID("_BlitMipLevel");
         public static readonly int _BlitScaleBiasRt = Shader.PropertyToID("_BlitScaleBiasRt");
+        public static readonly int _BlitTexArraySlice = Shader.PropertyToID("_BlitTexArraySlice");
 
         public static readonly int _WorldScales = Shader.PropertyToID("_WorldScales");
         public static readonly int _FilterKernels = Shader.PropertyToID("_FilterKernels");
@@ -789,7 +789,7 @@ namespace UnityEngine.Rendering.HighDefinition
     }
 
     // Shared material property names
-    public static class HDMaterialProperties
+    static class HDMaterialProperties
     {
         // Stencil properties
         public const string kStencilRef = "_StencilRef";

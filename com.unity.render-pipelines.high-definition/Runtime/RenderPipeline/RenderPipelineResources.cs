@@ -108,8 +108,6 @@ namespace UnityEngine.Rendering.HighDefinition
             public Shader hdriSkyPS;
             [Reload("Runtime/Sky/HDRISky/IntegrateHDRISky.shader")]
             public Shader integrateHdriSkyPS;
-            [Reload("Runtime/Sky/ProceduralSky/ProceduralSky.shader")]
-            public Shader proceduralSkyPS;
             [Reload("Skybox/Cubemap", ReloadAttribute.Package.Builtin)]
             public Shader skyboxCubemapPS;
             [Reload("Runtime/Sky/GradientSky/GradientSky.shader")]
@@ -146,6 +144,8 @@ namespace UnityEngine.Rendering.HighDefinition
             public ComputeShader clearUIntTextureCS;
 
             // XR
+            [Reload("Runtime/ShaderLibrary/XRMirrorView.shader")]
+            public Shader xrMirrorViewPS;
             [Reload("Runtime/ShaderLibrary/XROcclusionMesh.shader")]
             public Shader xrOcclusionMeshPS;
 
@@ -292,6 +292,9 @@ namespace UnityEngine.Rendering.HighDefinition
             public Texture2D   SMAASearchTex;
             [Reload("Runtime/RenderPipelineResources/Texture/SMAA/AreaTex.tga")]
             public Texture2D   SMAAAreaTex;
+
+            [Reload("Runtime/RenderPipelineResources/Texture/DefaultHDRISky.exr")]
+            public Cubemap     defaultHDRISky;
         }
 
         [Serializable, ReloadGroup]
