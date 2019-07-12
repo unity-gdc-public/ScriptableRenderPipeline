@@ -267,10 +267,10 @@ half3 EnvironmentBRDF(BRDFData brdfData, half3 indirectDiffuse, half3 indirectSp
 half3 DirectBDRF(BRDFData brdfData, half3 normalWS, half3 lightDirectionWS, half3 viewDirectionWS)
 {
 #ifndef _SPECULARHIGHLIGHTS_OFF
-    float3 halfDir = SafeNormalize(float3(lightDirectionWS) + float3(viewDirectionWS));
+    float3 dirVec = SafeNormalize(float3(lightDirectionWS) + float3(viewDirectionWS));
 
-    half NoH = saturate(dot(normalWS, halfDir));
-    half LoH = saturate(dot(lightDirectionWS, halfDir));
+    half NoH = saturate(dot(normalWS, dirVec));
+    half LoH = saturate(dot(lightDirectionWS, dirVec));
 
     // GGX Distribution multiplied by combined approximation of Visibility and Fresnel
     // BRDFspec = (D * V * F) / 4.0
