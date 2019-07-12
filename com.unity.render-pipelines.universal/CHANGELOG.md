@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [7.1.0] - 2019-XX-XX
+### Changed
+- Increased lights limits for the forward renderer. Now it supports 8 per-object lights. It supports 64 visible lights in mobile and 1024 in all other platforms.
 
 ## [7.0.0] - 2019-07-10
 ### Universal Render Pipeline
