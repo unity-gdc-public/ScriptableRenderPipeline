@@ -45,29 +45,6 @@ struct Light
     half    shadowAttenuation;
 };
 
-int GetPerObjectLightIndexOffset()
-{
-#if USE_STRUCTURED_BUFFER_FOR_LIGHT_DATA
-    return unity_LightData.x;
-#else
-    return 0;
-#endif
-}
-
-int GetPerObjectLightIndex(int index)
-{
-#if USE_STRUCTURED_BUFFER_FOR_LIGHT_DATA
-    int offset = unity_LightData.x;
-    return _AdditionalLightsIndices[offset + index];
-#else
-    // The following code is more optimal than indexing unity_4LightIndices0.
-    // Conditional moves are branch free even on mali-400
-    half2 lightIndex2 = (index < 2.0h) ? unity_LightIndices[0].xy : unity_LightIndices[0].zw;
-    half i_rem = (index < 2.0h) ? index : index - 2.0h;
-    return (i_rem < 1.0h) ? lightIndex2.x : lightIndex2.y;
-#endif
-}
-
 ///////////////////////////////////////////////////////////////////////////////
 //                        Attenuation Functions                               /
 ///////////////////////////////////////////////////////////////////////////////
@@ -188,8 +165,32 @@ Light GetAdditionalPerObjectLight(int perObjectLightIndex, float3 positionWS)
     return light;
 }
 
+int GetPerObjectLightIndexOffset()
+{
+#if USE_STRUCTURED_BUFFER_FOR_LIGHT_DATA
+    return unity_LightData.x;
+#else
+    return 0;
+#endif
+}
+
+int GetPerObjectLightIndex(int index)
+{
+#if USE_STRUCTURED_BUFFER_FOR_LIGHT_DATA
+    int offset = unity_LightData.x;
+    return _AdditionalLightsIndices[offset + index];
+#else
+    // Maintaned for compatibility reasons. Use BEGIN_LIGHT_LOOP / END_LIGHT_LOOP instead.
+    // The cast below will be done inside the light loop if this function is called from GetAdditionalLight below.
+    // This is bad for performance.
+    int perObjectIndices[MAX_PEROBJECT_LIGHTS] = (int[MAX_PEROBJECT_LIGHTS])unity_LightIndices;
+    return perObjectIndices[index];
+#endif
+}
+
 // Fills a light struct given a loop i index. This will convert the i
 // index to a perObjectLightIndex
+// Note: BEGIN_LIGHT_LOOP / END_LIGHT_LOOP instead
 Light GetAdditionalLight(int i, float3 positionWS)
 {
     int perObjectLightIndex = GetPerObjectLightIndex(i);
