@@ -2,7 +2,7 @@ using System;
 using System.Linq;
 using UnityEngine;
 
-namespace UnityEditor.Experimental.Rendering.HDPipeline
+namespace UnityEditor.Rendering.HighDefinition
 {
     partial class HDLightUI
     {
@@ -79,25 +79,20 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             public readonly GUIContent volumetricShadowDimmer = new GUIContent("Shadow Dimmer", "Dims the volumetric shadows this Light casts.");
 
             // Additional shadow data
+            public readonly GUIContent useShadowQualityResolution = new GUIContent("Use Quality Settings", "Allows to the resolution from the set of predetermined resolutions specified in the quality settings.");
             public readonly GUIContent shadowResolution = new GUIContent("Resolution", "Sets the rendered resolution of the shadow maps. A higher resolution increases the fidelity of shadows at the cost of GPU performance and memory usage.");
             public readonly GUIContent shadowFadeDistance = new GUIContent("Fade Distance", "Sets the distance at which Shadows fade before HDRP culls them completely. This minimizes popping.");
             public readonly GUIContent shadowDimmer = new GUIContent("Dimmer", "Dims the shadows this Light casts.");
             public readonly GUIContent shadowTint = new GUIContent("Tint", "Tint the shadows. This option affect dynamic shadows, contact shadows and shadow mask. It don't affect baked shadows.");
             public readonly GUIContent contactShadows = new GUIContent("Enable", "Enable support for Contact Shadows on this Light. This is better for lights with a lot of visible shadows.");
             public readonly GUIContent shadowUpdateMode = new GUIContent("Update Mode", "Sets the frequency of update for the shadow map.");
-
+            public readonly GUIContent useCustomSpotLightShadowCone = new GUIContent("Custom Spot Angle", "If selected, the custom spot angle will be used for shadow map rendering.");
+            public readonly GUIContent customSpotLightShadowCone = new GUIContent("Shadow Angle", "Custom angle used for shadow map rendering.");
 
             // Bias control
-            public readonly GUIContent viewBiasMin = new GUIContent("View Bias");
-            public readonly GUIContent viewBiasMax = new GUIContent("View Bias Max");
-            public readonly GUIContent viewBiasScale = new GUIContent("View Bias Scale");
-            public readonly GUIContent normalBiasMin = new GUIContent("Normal Bias");
-            public readonly GUIContent normalBiasMax = new GUIContent("Normal Bias Max");
-            public readonly GUIContent normalBiasScale = new GUIContent("Normal Bias Scale");
-            public readonly GUIContent sampleBiasScale = new GUIContent("Sample Bias Scale");
-            public readonly GUIContent edgeLeakFixup = new GUIContent("Edge Leak Fixup");
-            public readonly GUIContent edgeToleranceNormal = new GUIContent("Edge Tolerance Normal");
-            public readonly GUIContent edgeTolerance = new GUIContent("Edge Tolerance");
+            public readonly GUIContent constantScale = new GUIContent("Constant Depth Bias");
+
+            public readonly GUIContent normalBias = new GUIContent("Normal Bias");
 
             // Shadow filter settings
             public readonly GUIContent shadowSoftness = new GUIContent("Shadow Softness", "Size of the penumbra.");

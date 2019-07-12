@@ -1,8 +1,7 @@
 using System;
 using System.Diagnostics;
-using UnityEngine.Rendering;
 
-namespace UnityEngine.Experimental.Rendering.HDPipeline
+namespace UnityEngine.Rendering.HighDefinition
 {
     // Keep this class first in the file. Otherwise it seems that the script type is not registered properly.
     public abstract class AtmosphericScattering : VolumeComponent
@@ -27,21 +26,21 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         [Tooltip("Sets the distance at which HDRP uses the maximum mip image of the blurred sky texture as the fog color.")]
         public MinFloatParameter     mipFogFar = new MinFloatParameter(1000.0f, 0.0f);
 
-        public abstract void PushShaderParameters(HDCamera hdCamera, CommandBuffer cmd);
+        internal abstract void PushShaderParameters(HDCamera hdCamera, CommandBuffer cmd);
 
-        public void PushShaderParametersCommon(HDCamera hdCamera, CommandBuffer cmd, FogType type)
+        internal void PushShaderParametersCommon(HDCamera hdCamera, CommandBuffer cmd, FogType type)
         {
             Debug.Assert(hdCamera.frameSettings.IsEnabled(FrameSettingsField.AtmosphericScattering));
 
-            int pbrSkyAtmosphereFlag = 0;
+            int physicallyBasedSkyAtmosphereFlag = 0;
 
             var visualEnvironment = VolumeManager.instance.stack.GetComponent<VisualEnvironment>();
             Debug.Assert(visualEnvironment != null);
 
             // The PBR sky contributes to atmospheric scattering.
-            pbrSkyAtmosphereFlag = visualEnvironment.skyType.value == (int)SkyType.PhysicallyBased ? 128 : 0;
+            physicallyBasedSkyAtmosphereFlag = visualEnvironment.skyType.value == (int)SkyType.PhysicallyBased ? 128 : 0;
 
-            cmd.SetGlobalInt(HDShaderIDs._AtmosphericScatteringType, pbrSkyAtmosphereFlag | (int)type);
+            cmd.SetGlobalInt(HDShaderIDs._AtmosphericScatteringType, physicallyBasedSkyAtmosphereFlag | (int)type);
             cmd.SetGlobalFloat(HDShaderIDs._MaxFogDistance, maxFogDistance.value);
 
             // Fog Color
