@@ -174,7 +174,6 @@ Light GetAdditionalPerObjectLight(int perObjectLightIndex, float3 positionWS)
     // First find the probe channel from the light.
     // Then sample `unity_ProbesOcclusion` for the baked occlusion.
     // If the light is not baked, the channel is -1, and we need to apply no occlusion.
-    half4 lightOcclusionProbeInfo = _AdditionalLightsOcclusionProbes[perObjectLightIndex];
 
     // probeChannel is the index in 'unity_ProbesOcclusion' that holds the proper occlusion value.
     int probeChannel = lightOcclusionProbeInfo.x;
