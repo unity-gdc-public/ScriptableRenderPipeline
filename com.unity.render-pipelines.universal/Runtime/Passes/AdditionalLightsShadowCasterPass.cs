@@ -32,6 +32,7 @@ namespace UnityEngine.Rendering.Universal
         List<float> m_AdditionalLightsShadowStrength = new List<float>();
         List<int> m_AdditionalShadowCastingLightIndices = new List<int>();
         List<int> m_AdditionalShadowCastingLightIndicesMap = new List<int>();
+        bool m_SupportsBoxFilterForShadows;
         const string m_ProfilerTag = "Render Additional Shadows";
 
         public AdditionalLightsShadowCasterPass(RenderPassEvent evt)
@@ -50,6 +51,7 @@ namespace UnityEngine.Rendering.Universal
             m_AdditionalShadowsBufferId = Shader.PropertyToID("_AdditionalShadowsBuffer");
             m_AdditionalShadowsIndicesId = Shader.PropertyToID("_AdditionalShadowsIndices");
             m_UseStructuredBuffer = RenderingUtils.useStructuredBuffer;
+            m_SupportsBoxFilterForShadows = Application.isMobilePlatform || SystemInfo.graphicsDeviceType == GraphicsDeviceType.Switch;
         }
 
         public bool Setup(ref RenderingData renderingData)
@@ -311,17 +313,20 @@ namespace UnityEngine.Rendering.Universal
 
             if (softShadows)
             {
-                // Currently only used when SHADER_API_MOBILE
-                cmd.SetGlobalVector(AdditionalShadowsConstantBuffer._AdditionalShadowOffset0,
-                    new Vector4(-invHalfShadowAtlasWidth, -invHalfShadowAtlasHeight, 0.0f, 0.0f));
-                cmd.SetGlobalVector(AdditionalShadowsConstantBuffer._AdditionalShadowOffset1,
-                    new Vector4(invHalfShadowAtlasWidth, -invHalfShadowAtlasHeight, 0.0f, 0.0f));
-                cmd.SetGlobalVector(AdditionalShadowsConstantBuffer._AdditionalShadowOffset2,
-                    new Vector4(-invHalfShadowAtlasWidth, invHalfShadowAtlasHeight, 0.0f, 0.0f));
-                cmd.SetGlobalVector(AdditionalShadowsConstantBuffer._AdditionalShadowOffset3,
-                    new Vector4(invHalfShadowAtlasWidth, invHalfShadowAtlasHeight, 0.0f, 0.0f));
+                if (m_SupportsBoxFilterForShadows)
+                {
+                    cmd.SetGlobalVector(AdditionalShadowsConstantBuffer._AdditionalShadowOffset0,
+                        new Vector4(-invHalfShadowAtlasWidth, -invHalfShadowAtlasHeight, 0.0f, 0.0f));
+                    cmd.SetGlobalVector(AdditionalShadowsConstantBuffer._AdditionalShadowOffset1,
+                        new Vector4(invHalfShadowAtlasWidth, -invHalfShadowAtlasHeight, 0.0f, 0.0f));
+                    cmd.SetGlobalVector(AdditionalShadowsConstantBuffer._AdditionalShadowOffset2,
+                        new Vector4(-invHalfShadowAtlasWidth, invHalfShadowAtlasHeight, 0.0f, 0.0f));
+                    cmd.SetGlobalVector(AdditionalShadowsConstantBuffer._AdditionalShadowOffset3,
+                        new Vector4(invHalfShadowAtlasWidth, invHalfShadowAtlasHeight, 0.0f, 0.0f));
+                }
 
-                // Currently only used when !SHADER_API_MOBILE
+                // Currently only used when !SHADER_API_MOBILE but risky to not set them as it's generic
+                // enough so custom shaders might use it.
                 cmd.SetGlobalVector(AdditionalShadowsConstantBuffer._AdditionalShadowmapSize, new Vector4(invShadowAtlasWidth, invShadowAtlasHeight,
                     shadowData.additionalLightsShadowmapWidth, shadowData.additionalLightsShadowmapHeight));
             }

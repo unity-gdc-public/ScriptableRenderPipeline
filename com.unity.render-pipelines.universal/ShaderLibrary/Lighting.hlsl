@@ -190,7 +190,7 @@ int GetPerObjectLightIndex(int index)
 
 // Fills a light struct given a loop i index. This will convert the i
 // index to a perObjectLightIndex
-// Note: BEGIN_LIGHT_LOOP / END_LIGHT_LOOP instead
+// Note: Deprecated. Use BEGIN_LIGHT_LOOP / END_LIGHT_LOOP instead.
 Light GetAdditionalLight(int i, float3 positionWS)
 {
     int perObjectLightIndex = GetPerObjectLightIndex(i);

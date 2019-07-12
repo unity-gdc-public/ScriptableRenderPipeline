@@ -37,14 +37,6 @@ float4 _MainLightPosition;
 half4 _MainLightColor;
 
 half4 _AdditionalLightsCount;
-#if !USE_STRUCTURED_BUFFER_FOR_LIGHT_DATA
-float4 _AdditionalLightsPosition[MAX_VISIBLE_LIGHTS];
-half4 _AdditionalLightsColor[MAX_VISIBLE_LIGHTS];
-half4 _AdditionalLightsAttenuation[MAX_VISIBLE_LIGHTS];
-half4 _AdditionalLightsSpotDir[MAX_VISIBLE_LIGHTS];
-half4 _AdditionalLightsOcclusionProbes[MAX_VISIBLE_LIGHTS];
-#endif
-
 #if USE_STRUCTURED_BUFFER_FOR_LIGHT_DATA
 struct LightShaderData
 {
@@ -56,6 +48,12 @@ struct LightShaderData
 };
 StructuredBuffer<LightShaderData> _AdditionalLightsBuffer;
 StructuredBuffer<int> _AdditionalLightsIndices;
+#else
+float4 _AdditionalLightsPosition[MAX_VISIBLE_LIGHTS];
+half4 _AdditionalLightsColor[MAX_VISIBLE_LIGHTS];
+half4 _AdditionalLightsAttenuation[MAX_VISIBLE_LIGHTS];
+half4 _AdditionalLightsSpotDir[MAX_VISIBLE_LIGHTS];
+half4 _AdditionalLightsOcclusionProbes[MAX_VISIBLE_LIGHTS];
 #endif
 
 #define UNITY_MATRIX_M     unity_ObjectToWorld

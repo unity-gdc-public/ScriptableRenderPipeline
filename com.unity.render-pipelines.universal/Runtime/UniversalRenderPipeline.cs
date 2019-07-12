@@ -62,7 +62,6 @@ namespace UnityEngine.Rendering.Universal
         }
 
         // Amount of Lights that can be shaded per object (in the for loop in the shader)
-        // This uses unity_4LightIndices to store an array of 4 light indices
         public static int maxPerObjectLights
         {
             get => 8;

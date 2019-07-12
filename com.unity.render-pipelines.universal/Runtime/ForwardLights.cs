@@ -42,7 +42,6 @@ namespace UnityEngine.Rendering.Universal
         
         public ForwardLights()
         {
-            GraphicsDeviceType gfxDeviceType = SystemInfo.graphicsDeviceType;
             m_UseStructuredBuffer = RenderingUtils.useStructuredBuffer;
 
             LightConstantBuffer._MainLightPosition = Shader.PropertyToID("_MainLightPosition");
@@ -202,7 +201,7 @@ namespace UnityEngine.Rendering.Universal
             m_MixedLightingSetup = MixedLightingSetup.None;
 
             // Main light has an optimized shader path for main light. This will benefit games that only care about a single light.
-            // Lightweight pipeline also supports only a single shadow light, if available it will be the main light.
+            // Universal pipeline also supports only a single shadow light, if available it will be the main light.
             SetupMainLightConstants(cmd, ref lightData);
             SetupAdditionalLightConstants(cmd, cullResults, ref lightData);
         }
