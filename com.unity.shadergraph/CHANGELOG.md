@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [7.1.0] - 2019-XX-XX
 ### Changed
 - New Shader Graph windows are now docked to either existing Shader Graph windows, or to the Scene View.
+- `Normal Reconstruct Z` node is now compatible with both fragment and vertex stages. 
+- `Position` node now draws the correct label for **Absolute World**. 
 
 ## [7.0.0] - 2019-07-10
 ### Added
