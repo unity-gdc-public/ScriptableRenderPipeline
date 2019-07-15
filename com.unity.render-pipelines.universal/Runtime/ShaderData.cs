@@ -33,7 +33,7 @@ namespace UnityEngine.Rendering.Universal
         {
         }
 
-        public static ShaderData instance
+        internal static ShaderData instance
         {
             get
             {
