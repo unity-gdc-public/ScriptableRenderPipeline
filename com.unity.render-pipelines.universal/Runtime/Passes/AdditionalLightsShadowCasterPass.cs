@@ -70,8 +70,7 @@ namespace UnityEngine.Rendering.Universal
             if (m_AdditionalLightSlices == null || m_AdditionalLightSlices.Length < additionalLightsCount)
                 m_AdditionalLightSlices = new ShadowSliceData[additionalLightsCount];
 
-            bool anyShadows = false;
-            // Loops through all visible lights and cache the valid shadow caster ones. 
+            int validShadowCastingLights = 0;
             for (int i = 0; i < visibleLights.Length && m_AdditionalShadowCastingLightIndices.Count < additionalLightsCount; ++i)
             {
                 VisibleLight shadowLight = visibleLights[i];
@@ -99,7 +98,7 @@ namespace UnityEngine.Rendering.Universal
                             m_AdditionalShadowCastingLightIndices.Add(i);
                             m_AdditionalLightsShadowStrength.Add(shadowLight.light.shadowStrength);
                             isValidShadowSlice = true;
-                            anyShadows = true;
+                            validShadowCastingLights++;
                         }
                     }
                 }
@@ -134,32 +133,35 @@ namespace UnityEngine.Rendering.Universal
                 }
             }
 
-            int shadowCastingLightsCount = m_AdditionalShadowCastingLightIndices.Count;
-
-            // we need to also check for anyShadows because when using uniform arrays we
-            // reserve space for shadow casting lights even when they are invalid.
-            if (!(anyShadows && shadowCastingLightsCount > 0))
+            // Lights that need to be rendered in the shadowmap atlas
+            if (validShadowCastingLights == 0)
                 return false;
 
             int atlasWidth = renderingData.shadowData.additionalLightsShadowmapWidth;
             int atlasHeight = renderingData.shadowData.additionalLightsShadowmapHeight;
-            int sliceResolution = ShadowUtils.GetMaxTileResolutionInAtlas(atlasWidth, atlasHeight, shadowCastingLightsCount);
+            int sliceResolution = ShadowUtils.GetMaxTileResolutionInAtlas(atlasWidth, atlasHeight, validShadowCastingLights);
+
+            // In the UI we only allow for square shadowmap atlas. Here we check if we can fit
+            // all shadow slices into half resolution of the atlas and adjust height to have tighter packing.
+            int maximumSlices = (m_ShadowmapWidth / sliceResolution) * (m_ShadowmapHeight / sliceResolution);
+            if (validShadowCastingLights <= (maximumSlices / 2))
+                m_ShadowmapHeight /= 2;
 
             int shadowSlicesPerRow = (atlasWidth / sliceResolution);
             float oneOverAtlasWidth = 1.0f / m_ShadowmapWidth;
             float oneOverAtlasHeight = 1.0f / m_ShadowmapHeight;
 
-            // We bake scale and bias to each shadowmap in the atlas in the matrix.
-            // saves some instructions in shader.
-            for (int i = 0; i < shadowCastingLightsCount; ++i)
+            int sliceIndex = 0;
+            int shadowCastingLightsBufferCount = m_AdditionalShadowCastingLightIndices.Count;
+            for (int i = 0; i < shadowCastingLightsBufferCount; ++i)
             {
                 // we can skip the slice if strength is zero. Some slices with zero
                 // strength exists when using uniform array path.
                 if (Mathf.Approximately(m_AdditionalLightsShadowStrength[i], 0.0f))
                     continue;
-
-                m_AdditionalLightSlices[i].offsetX = (i % shadowSlicesPerRow) * sliceResolution;
-                m_AdditionalLightSlices[i].offsetY = (i / shadowSlicesPerRow) * sliceResolution;
+                
+                m_AdditionalLightSlices[i].offsetX = (sliceIndex % shadowSlicesPerRow) * sliceResolution;
+                m_AdditionalLightSlices[i].offsetY = (sliceIndex / shadowSlicesPerRow) * sliceResolution;
                 m_AdditionalLightSlices[i].resolution = sliceResolution;
 
                 Matrix4x4 sliceTransform = Matrix4x4.identity;
@@ -168,8 +170,10 @@ namespace UnityEngine.Rendering.Universal
                 sliceTransform.m03 = m_AdditionalLightSlices[i].offsetX * oneOverAtlasWidth;
                 sliceTransform.m13 = m_AdditionalLightSlices[i].offsetY * oneOverAtlasHeight;
 
-                // Apply shadow slice scale and offset
+                // We bake scale and bias to each shadow map in the atlas in the matrix.
+                // saves some instructions in shader.
                 m_AdditionalLightSlices[i].shadowTransform = sliceTransform * m_AdditionalLightSlices[i].shadowTransform;
+                sliceIndex++;
             }
 
             return true;

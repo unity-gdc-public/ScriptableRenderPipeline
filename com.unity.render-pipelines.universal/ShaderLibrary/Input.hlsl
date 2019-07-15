@@ -4,8 +4,8 @@
 #define MAX_VISIBLE_LIGHTS 64
 #define MAX_PEROBJECT_LIGHTS 8
 
-// Currently we have some perfromance issues with StructuredBuffers in mobile.
-// For now only support storing lights in StructuredBuffer on non-mobile platoforms.
+// Currently we have some performance issues with StructuredBuffers in mobile.
+// For now only support storing lights in StructuredBuffer on non-mobile platforms.
 #if defined(SHADER_API_MOBILE)
 #define USE_STRUCTURED_BUFFER_FOR_LIGHT_DATA 0
 #else

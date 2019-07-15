@@ -58,8 +58,8 @@ namespace UnityEngine.Rendering.Universal
 
         internal static bool useStructuredBuffer
         {
-            // Currently we have some perfromance issues with StructuredBuffers in mobile.
-            // For now only support storing lights in StructuredBuffer on non-mobile platoforms.
+            // Currently we have some performance issues with StructuredBuffers in mobile.
+            // For now only support storing lights in StructuredBuffer on non-mobile platforms.
             get => !Application.isMobilePlatform;
         }
 
