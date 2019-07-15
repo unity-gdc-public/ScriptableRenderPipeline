@@ -238,7 +238,7 @@ publish_all:
   commands:
   - npm install upm-ci-utils@stable -g --registry https://api.bintray.com/npm/unity/unity-npm
 {% for package in projects %}
-  - upm-ci package publish --package-path {{package.packagename }}
+  - upm-ci package publish --package-path {{ package.packagename }}
 {% endfor %}
   artifacts:
     artifacts:
