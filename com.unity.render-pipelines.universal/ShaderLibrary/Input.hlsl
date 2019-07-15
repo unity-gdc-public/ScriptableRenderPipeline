@@ -1,7 +1,7 @@
 #ifndef UNIVERSAL_INPUT_INCLUDED
 #define UNIVERSAL_INPUT_INCLUDED
 
-#define MAX_VISIBLE_LIGHTS 64
+#define MAX_VISIBLE_LIGHTS 32
 #define MAX_PEROBJECT_LIGHTS 8
 
 // Currently we have some performance issues with StructuredBuffers in mobile.
