@@ -292,11 +292,6 @@ namespace UnityEditor.ShaderGraph.Drawing
                     continue;
 
                 var renderData = GetRenderData(node.tempId);
-                renderData.previewMode = PreviewMode.Preview3D;
-                if (node.previewMode == PreviewMode.Preview2D)
-                {
-                    renderData.previewMode = PreviewMode.Preview2D;
-                }
 
                 CollectShaderProperties(node, renderData);
 
@@ -442,6 +437,8 @@ namespace UnityEditor.ShaderGraph.Drawing
                 ShaderUtil.ClearCachedData(renderData.shaderData.shader);
                 // Always explicitly use pass 0 for preview shaders
                 BeginCompile(renderData, results.shader, 0);
+                //get the preview mode from generated results
+                renderData.previewMode = results.previewMode;
             }
 
             ShaderUtil.allowAsyncCompilation = wasAsyncAllowed;

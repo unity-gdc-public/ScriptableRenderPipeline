@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [7.1.0] - 2019-XX-XX
 ### Changed
 - New Shader Graph windows are now docked to either existing Shader Graph windows, or to the Scene View.
+- Node previews now inherit preview type correctly.
 
 ## [7.0.0] - 2019-07-10
 ### Added
