@@ -283,10 +283,10 @@ namespace UnityEngine.Rendering.Universal
 
             if (m_UseStructuredBuffer)
             {
-                NativeArray<ShaderData.ShadowData> shadowBufferData = new NativeArray<ShaderData.ShadowData>(shadowLightsCount, Allocator.Temp);
+                NativeArray<ShaderInput.ShadowData> shadowBufferData = new NativeArray<ShaderInput.ShadowData>(shadowLightsCount, Allocator.Temp);
                 for (int i = 0; i < shadowLightsCount; ++i)
                 {
-                    ShaderData.ShadowData data;
+                    ShaderInput.ShadowData data;
                     data.worldToShadowMatrix = m_AdditionalLightSlices[i].shadowTransform;
                     data.shadowStrength = m_AdditionalLightsShadowStrength[i];
                     shadowBufferData[i] = data;

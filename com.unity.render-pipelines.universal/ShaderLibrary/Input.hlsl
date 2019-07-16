@@ -4,6 +4,8 @@
 #define MAX_VISIBLE_LIGHTS 32
 #define MAX_PEROBJECT_LIGHTS 8
 
+#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/ShaderTypes.cs.hlsl"
+
 // Currently we have some performance issues with StructuredBuffers in mobile.
 // For now only support storing lights in StructuredBuffer on non-mobile platforms.
 #if defined(SHADER_API_MOBILE)
@@ -38,15 +40,7 @@ half4 _MainLightColor;
 
 half4 _AdditionalLightsCount;
 #if USE_STRUCTURED_BUFFER_FOR_LIGHT_DATA
-struct LightShaderData
-{
-    float4 position;
-    float4 color;
-    float4 attenuation;
-    float4 spotDirection;
-    float4 occlusionProbeChannels;
-};
-StructuredBuffer<LightShaderData> _AdditionalLightsBuffer;
+StructuredBuffer<LightData> _AdditionalLightsBuffer;
 StructuredBuffer<int> _AdditionalLightsIndices;
 #else
 float4 _AdditionalLightsPosition[MAX_VISIBLE_LIGHTS];
@@ -69,7 +63,7 @@ half4 _AdditionalLightsOcclusionProbes[MAX_VISIBLE_LIGHTS];
 #define UNITY_MATRIX_IT_MV transpose(mul(UNITY_MATRIX_I_M, UNITY_MATRIX_I_V))
 #define UNITY_MATRIX_MVP   mul(UNITY_MATRIX_VP, UNITY_MATRIX_M)
 
-#include "UnityInput.hlsl"
+#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/UnityInput.hlsl"
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/UnityInstancing.hlsl"
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/SpaceTransforms.hlsl"
 

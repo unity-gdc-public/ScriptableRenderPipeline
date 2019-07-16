@@ -5,23 +5,6 @@ namespace UnityEngine.Rendering.Universal
 {
     class ShaderData : IDisposable
     {
-        [StructLayout(LayoutKind.Sequential)]
-        internal struct LightData
-        {
-            public Vector4 position;
-            public Vector4 color;
-            public Vector4 attenuation;
-            public Vector4 spotDirection;
-            public Vector4 occlusionProbeChannels;
-        }
-
-        [StructLayout(LayoutKind.Sequential)]
-        internal struct ShadowData
-        {
-            public Matrix4x4 worldToShadowMatrix;
-            public float shadowStrength;
-        }
-
         static ShaderData m_Instance = null;
         ComputeBuffer m_LightDataBuffer = null;
         ComputeBuffer m_LightIndicesBuffer = null;
@@ -54,7 +37,7 @@ namespace UnityEngine.Rendering.Universal
 
         internal ComputeBuffer GetLightDataBuffer(int size)
         {
-            return GetOrUpdateBuffer<LightData>(ref m_LightDataBuffer, size);
+            return GetOrUpdateBuffer<ShaderInput.LightData>(ref m_LightDataBuffer, size);
         }
 
         internal ComputeBuffer GetLightIndicesBuffer(int size)
@@ -64,7 +47,7 @@ namespace UnityEngine.Rendering.Universal
 
         internal ComputeBuffer GetShadowDataBuffer(int size)
         {
-            return GetOrUpdateBuffer<ShadowData>(ref m_ShadowDataBuffer, size);
+            return GetOrUpdateBuffer<ShaderInput.ShadowData>(ref m_ShadowDataBuffer, size);
         }
 
         internal ComputeBuffer GetShadowIndicesBuffer(int size)

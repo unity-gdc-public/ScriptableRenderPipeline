@@ -1,4 +1,3 @@
-using UnityEngine;
 using UnityEngine.Experimental.GlobalIllumination;
 using Unity.Collections;
 
@@ -224,13 +223,13 @@ namespace UnityEngine.Rendering.Universal
             {
                 if (m_UseStructuredBuffer)
                 {
-                    NativeArray<ShaderData.LightData> additionalLightsData = new NativeArray<ShaderData.LightData>(additionalLightsCount, Allocator.Temp);
+                    NativeArray<ShaderInput.LightData> additionalLightsData = new NativeArray<ShaderInput.LightData>(additionalLightsCount, Allocator.Temp);
                     for (int i = 0, lightIter = 0; i < lights.Length && lightIter < maxAdditionalLightsCount; ++i)
                     {
                         VisibleLight light = lights[i];
                         if (lightData.mainLightIndex != i && light.lightType != LightType.Directional)
                         {
-                            ShaderData.LightData data;
+                            ShaderInput.LightData data;
                             InitializeLightConstants(lights, i,
                                 out data.position, out data.color, out data.attenuation,
                                 out data.spotDirection, out data.occlusionProbeChannels);

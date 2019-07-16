@@ -41,12 +41,7 @@ half4       _MainLightShadowData;    // (x: shadowStrength)
 float4      _MainLightShadowmapSize; // (xy: 1/width and 1/height, zw: width and height)
 
 #if USE_STRUCTURED_BUFFER_FOR_LIGHT_DATA
-struct ShadowShaderData
-{
-    float4x4 worldToShadowMatrix;
-    float shadowStrength;
-};
-StructuredBuffer<ShadowShaderData> _AdditionalShadowsBuffer;
+StructuredBuffer<ShadowData> _AdditionalShadowsBuffer;
 StructuredBuffer<int> _AdditionalShadowsIndices;
 #else
 float4x4    _AdditionalLightsWorldToShadow[MAX_VISIBLE_LIGHTS];
