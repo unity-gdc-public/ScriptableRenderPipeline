@@ -13,12 +13,14 @@ packages:
       - .yamato/upm-ci-packages.yml#pack_core_package
       - .yamato/upm-ci-packages.yml#pack_shadergraph_package
       - .yamato/upm-ci-packages.yml#pack_lightweight_package
+    hascodependencies: 1
   - name: ShaderGraph
     id: shadergraph
     packagename: com.unity.shadergraph
     dependencies:
       - .yamato/upm-ci-packages.yml#pack_core_package
       - .yamato/upm-ci-packages.yml#pack_shadergraph_package
+    hascodependencies: 1
   - name: HDRP
     id: hdrp
     packagename: com.unity.render-pipelines.high-definition
@@ -27,6 +29,7 @@ packages:
       - .yamato/upm-ci-packages.yml#pack_shadergraph_package
       - .yamato/upm-ci-packages.yml#pack_vfx_package
       - .yamato/upm-ci-packages.yml#pack_hdrp_package
+    hascodependencies: 1
   - name: VFXMain
     id: vfx
     packagename: com.unity.visualeffectgraph
@@ -46,7 +49,7 @@ platforms:
         image: buildfarm/mac:stable
         flavor: m1.mac
       copycmd: cp ./upm-ci~/packages/*.tgz ./.Editor/Unity.app/Contents/Resources/PackageManager/Editor
-      editorpath: ./.Editor
+      editorpath: $HOME/.Editor
 ---
 {% for package in packages %}
 pack_{{ package.id }}:
@@ -74,8 +77,17 @@ test_{{ package.id }}_{{ platform.name }}_{{ editor.version }}:
     image: {{ platform.agent.image }}
     flavor: {{ platform.agent.flavor }}
   commands:
-    - npm install upm-ci-utils@stable -g --registry https://api.bintray.com/npm/unity/unity-npm
+    #- npm install upm-ci-utils@stable -g --registry https://api.bintray.com/npm/unity/unity-npm
+    - git clone --single-branch --branch base-0.13.0/win-short-path git@github.cds.internal.unity3d.com:unity/upm-ci-utils.git ../upm-ci-utils
+    - npm install -g ../upm-ci-utils
+    {% if package.hascodependencies %}
+    - pip install unity-downloader-cli --extra-index-url https://artifactory.eu-cph-1.unityops.net/api/pypi/common-python/simple
+    - unity-downloader-cli -u {{ editor.version }} -c editor --wait
+    - {{ platform.copycmd }}
+    - upm-ci package test -u {{ platform.editorPath }} --package-path {{ package.packagename }}
+    {% else %}
     - upm-ci package test -u {{ editor.version }} --package-path {{ package.packagename }}
+    {% endif %}
   artifacts:
     logs:
       paths:
