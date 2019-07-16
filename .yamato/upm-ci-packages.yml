@@ -125,6 +125,7 @@ test_lightweight_package_{{ editor.version }}:
     - upm-ci package test -u .\.Editor --package-path com.unity.render-pipelines.lightweight
   dependencies:
     - .yamato/upm-ci-packages.yml#pack_universal_package
+    - .yamato/upm-ci-packages.yml#pack_lightweight_package
   artifacts:
     logs:
       paths:
