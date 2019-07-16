@@ -267,7 +267,7 @@ half3 EnvironmentBRDF(BRDFData brdfData, half3 indirectDiffuse, half3 indirectSp
 half3 DirectBDRF(BRDFData brdfData, half3 normalWS, half3 lightDirectionWS, half3 viewDirectionWS)
 {
 #ifndef _SPECULARHIGHLIGHTS_OFF
-    half3 halfDir = SafeNormalize(lightDirectionWS + viewDirectionWS);
+    float3 halfDir = SafeNormalize(float3(lightDirectionWS) + float3(viewDirectionWS));
 
     half NoH = saturate(dot(normalWS, halfDir));
     half LoH = saturate(dot(lightDirectionWS, halfDir));
@@ -465,7 +465,7 @@ half3 LightingLambert(half3 lightColor, half3 lightDir, half3 normal)
 
 half3 LightingSpecular(half3 lightColor, half3 lightDir, half3 normal, half3 viewDir, half4 specular, half smoothness)
 {
-    half3 halfVec = SafeNormalize(lightDir + viewDir);
+    float3 halfVec = SafeNormalize(float3(lightDir) + float3(viewDir));
     half NdotH = saturate(dot(normal, halfVec));
     half modifier = pow(NdotH, smoothness);
     half3 specularReflection = specular.rgb * modifier;
