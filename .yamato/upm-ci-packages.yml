@@ -15,8 +15,6 @@ projects:
     packagename: com.unity.render-pipelines.high-definition-config
   - name: VFXMain
     packagename: com.unity.visualeffectgraph
-  - name: VFX_LWRP
-    packagename: com.unity.visualeffectgraph
 ---
 pack_core_package:
   name: z_(do not use) Pack core
