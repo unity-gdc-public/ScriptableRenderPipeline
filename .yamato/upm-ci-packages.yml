@@ -246,3 +246,25 @@ publish_all:
         - "upm-ci~/packages/*.tgz"
   dependencies:
   - .yamato/upm-ci-packages.yml#all_package_ci
+  
+publish_no_test:
+  name: Publish all packages
+  agent:
+    type: Unity::VM
+    image: package-ci/win10:stable
+    flavor: b1.large
+  commands:
+  - npm install upm-ci-utils@stable -g --registry https://api.bintray.com/npm/unity/unity-npm
+{% for package in projects %}
+  - upm-ci package publish --package-path {{ package.packagename }}
+{% endfor %}
+  artifacts:
+    artifacts:
+      paths:
+        - "upm-ci~/packages/*.tgz"
+  dependencies:
+  - .yamato/upm-ci-packages.yml#pack_core_package
+  - .yamato/upm-ci-packages.yml#pack_shadergraph_package
+  - .yamato/upm-ci-packages.yml#pack_lightweight_package
+  - .yamato/upm-ci-packages.yml#pack_hdrp_package
+  - .yamato/upm-ci-packages.yml#pack_vfx_package
