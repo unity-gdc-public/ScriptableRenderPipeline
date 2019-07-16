@@ -287,6 +287,8 @@ namespace UnityEditor.Graphing
             return false;
         }
 
+        static string s_FloatFormat => "0." + new string('#', 56);
+
         public static string FloatToShaderValue(float value)
         {
             if (Single.IsPositiveInfinity(value))
@@ -297,7 +299,7 @@ namespace UnityEditor.Graphing
                 return "NAN";
             else
             {
-                return value.ToString(CultureInfo.InvariantCulture);
+                return value.ToString(s_FloatFormat, CultureInfo.InvariantCulture);
             }
         }
     }
