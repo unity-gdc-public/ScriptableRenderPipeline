@@ -2,8 +2,8 @@
 using System;
 using NUnit.Framework;
 using UnityEngine;
-using UnityEngine.Experimental.VFX;
-using UnityEditor.Experimental.VFX;
+using UnityEngine.VFX;
+using UnityEditor.VFX;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,7 +11,6 @@ using UnityEditor.VFX.UI;
 using System.IO;
 using UnityEngine.TestTools;
 using UnityEditor.VFX.Block.Test;
-using UnityEditor.VFX;
 
 namespace UnityEditor.VFX.Test
 {
@@ -37,7 +36,7 @@ namespace UnityEditor.VFX.Test
                 AssetDatabase.DeleteAsset(testAssetName);
             }
 
-            var asset = VisualEffectResource.CreateNewAsset(testAssetName);
+            var asset = VisualEffectAssetEditorUtility.CreateNewAsset(testAssetName);
             var resource = asset.GetResource(); // force resource creation
 
             m_ViewController = VFXViewController.GetController(resource);

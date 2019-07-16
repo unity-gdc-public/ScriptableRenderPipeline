@@ -1,8 +1,7 @@
 using System;
-using UnityEngine.Rendering;
-using UnityEngine.Serialization;
+using UnityEngine.Experimental.Rendering;
 
-namespace UnityEngine.Experimental.Rendering.HDPipeline
+namespace UnityEngine.Rendering.HighDefinition
 {
     // RenderPipelineSettings define settings that can't be change during runtime. It is equivalent to the GraphicsSettings of Unity (Tiers + shader variant removal).
     // This allow to allocate resource or not for a given feature.
@@ -27,6 +26,12 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             Both = ForwardOnly | DeferredOnly
         }
 
+        public enum RaytracingTier
+        {
+            Tier1 = 1 << 0,
+            Tier2 = 1 << 1
+        }
+
         public enum ColorBufferFormat
         {
             R11G11B10 = GraphicsFormat.B10G11R11_UFloatPack32,
@@ -44,7 +49,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             supportTransparentBackface = true,
             supportTransparentDepthPrepass = true,
             supportTransparentDepthPostpass = true,
-            supportLowResTransparent = true,
             colorBufferFormat = ColorBufferFormat.R11G11B10,
             supportedLitShaderMode = SupportedLitShaderMode.DeferredOnly,
             supportDecals = true,
@@ -52,12 +56,15 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             supportMotionVectors = true,
             supportRuntimeDebugDisplay = true,
             supportDitheringCrossFade = true,
+            supportTerrainHole = false,
             lightLoopSettings = GlobalLightLoopSettings.@default,
             hdShadowInitParams = HDShadowInitParameters.@default,
             decalSettings = GlobalDecalSettings.@default,
             postProcessSettings = GlobalPostProcessSettings.@default,
             dynamicResolutionSettings = GlobalDynamicResolutionSettings.@default,
-            lowresTransparentSettings = GlobalLowResolutionTransparencySettings.@default
+            lowresTransparentSettings = GlobalLowResolutionTransparencySettings.@default,
+            supportRayTracing = false,
+            supportedRaytracingTier = RaytracingTier.Tier2,
         };
 
         // Lighting
@@ -73,7 +80,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public bool supportTransparentBackface;
         public bool supportTransparentDepthPrepass;
         public bool supportTransparentDepthPostpass;
-        public bool supportLowResTransparent;
         public ColorBufferFormat colorBufferFormat;
         public SupportedLitShaderMode supportedLitShaderMode;
 
@@ -92,7 +98,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public bool supportMotionVectors;
         public bool supportRuntimeDebugDisplay;
         public bool supportDitheringCrossFade;
+        public bool supportTerrainHole;
         public bool supportRayTracing;
+        public RaytracingTier supportedRaytracingTier;
 
         public GlobalLightLoopSettings lightLoopSettings;
         public HDShadowInitParameters hdShadowInitParams;

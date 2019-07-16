@@ -4,7 +4,7 @@
 
 #ifndef HDCAMERA_CS_HLSL
 #define HDCAMERA_CS_HLSL
-// Generated from UnityEngine.Experimental.Rendering.HDPipeline.HDCamera+ViewConstants
+// Generated from UnityEngine.Rendering.HighDefinition.HDCamera+ViewConstants
 // PackingRules = Exact
 struct ViewConstants
 {
@@ -17,6 +17,7 @@ struct ViewConstants
     float4x4 nonJitteredViewProjMatrix;
     float4x4 prevViewProjMatrix;
     float4x4 prevViewProjMatrixNoCameraTrans;
+    float4x4 pixelCoordToViewDirWS;
     float3 worldSpaceCameraPos;
     float pad0;
     float3 worldSpaceCameraPosViewOffset;
