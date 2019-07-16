@@ -5,36 +5,36 @@ packages:
     id: core
     packagename: com.unity.render-pipelines.core
     dependencies:
-      - .yamato/upm-ci-packages.yml#pack_core_package
+      - .yamato/upm-ci-packages.yml#pack_core
   - name: Lightweight
     id: lwrp
     packagename: com.unity.render-pipelines.lightweight
     dependencies:
-      - .yamato/upm-ci-packages.yml#pack_core_package
-      - .yamato/upm-ci-packages.yml#pack_shadergraph_package
-      - .yamato/upm-ci-packages.yml#pack_lightweight_package
+      - .yamato/upm-ci-packages.yml#pack_core
+      - .yamato/upm-ci-packages.yml#pack_shadergraph
+      - .yamato/upm-ci-packages.yml#pack_lightweight
     hascodependencies: 1
   - name: ShaderGraph
     id: shadergraph
     packagename: com.unity.shadergraph
     dependencies:
-      - .yamato/upm-ci-packages.yml#pack_core_package
-      - .yamato/upm-ci-packages.yml#pack_shadergraph_package
+      - .yamato/upm-ci-packages.yml#pack_core
+      - .yamato/upm-ci-packages.yml#pack_shadergraph
     hascodependencies: 1
   - name: HDRP
     id: hdrp
     packagename: com.unity.render-pipelines.high-definition
     dependencies:
-      - .yamato/upm-ci-packages.yml#pack_core_package
-      - .yamato/upm-ci-packages.yml#pack_shadergraph_package
-      - .yamato/upm-ci-packages.yml#pack_vfx_package
-      - .yamato/upm-ci-packages.yml#pack_hdrp_package
+      - .yamato/upm-ci-packages.yml#pack_core
+      - .yamato/upm-ci-packages.yml#pack_shadergraph
+      - .yamato/upm-ci-packages.yml#pack_vfx
+      - .yamato/upm-ci-packages.yml#pack_hdrp
     hascodependencies: 1
   - name: VFXMain
     id: vfx
     packagename: com.unity.visualeffectgraph
     dependencies:
-      - .yamato/upm-ci-packages.yml#pack_vfx_package
+      - .yamato/upm-ci-packages.yml#pack_vfx
 platforms:
     - name: win
       agent:
