@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 - Cube LUT support in Tonemapping. Cube LUT helpers for external grading are available in the Post-processing Sample package.
+- Enable XR SDK occlusion meshes
 
 ## [7.0.0] - 2019-07-10
 
