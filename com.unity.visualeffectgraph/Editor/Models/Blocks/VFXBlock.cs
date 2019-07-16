@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using UnityEngine.Experimental.VFX;
+using UnityEngine.VFX;
 using Type = System.Type;
 
 namespace UnityEditor.VFX
@@ -12,6 +12,15 @@ namespace UnityEditor.VFX
         {
             m_UICollapsed = false;
         }
+
+        public static T CreateImplicitBlock<T>(VFXData data) where T : VFXBlock
+        {
+            var block = ScriptableObject.CreateInstance<T>();
+            block.m_TransientData = data;
+            return block;
+        }
+
+        private VFXData m_TransientData = null;
 
         [SerializeField]
         protected bool m_Disabled = false;
@@ -25,19 +34,43 @@ namespace UnityEditor.VFX
                 Invalidate(InvalidationCause.kStructureChanged);
             }
         }
+        public virtual bool isValid
+        {
+            get
+            {
+                if (GetParent() == null) return true; // a block is invalid only if added to incompatible context.
+                return (compatibleContexts & GetParent().contextType) == GetParent().contextType;
+            }
+        }
 
         public abstract VFXContextType compatibleContexts { get; }
         public abstract VFXDataType compatibleData { get; }
         public virtual IEnumerable<VFXAttributeInfo> attributes { get { return Enumerable.Empty<VFXAttributeInfo>(); } }
-        public virtual IEnumerable<VFXNamedExpression> parameters { get { return GetExpressionsFromSlots(this); }}
+        public virtual IEnumerable<VFXNamedExpression> parameters { get { return GetExpressionsFromSlots(this); } }
         public virtual IEnumerable<string> includes { get { return Enumerable.Empty<string>(); } }
         public virtual string source { get { return null; } }
 
-        protected VFXData GetData()
+        public IEnumerable<VFXAttributeInfo> mergedAttributes
+        {
+            get
+            {
+                 var attribs = new Dictionary< VFXAttribute, VFXAttributeMode >();
+                 foreach (var a in attributes)
+                 {
+                     VFXAttributeMode mode = VFXAttributeMode.None;
+                     attribs.TryGetValue(a.attrib, out mode);
+                     mode |= a.mode;
+                     attribs[a.attrib] = mode;
+                 }
+                 return attribs.Select(kvp => new VFXAttributeInfo(kvp.Key,kvp.Value));
+            }
+        }
+
+        public VFXData GetData()
         {
             if (GetParent() != null)
                 return GetParent().GetData();
-            return null;
+            return m_TransientData;
         }
 
         public sealed override VFXCoordinateSpace GetOutputSpaceFromSlot(VFXSlot slot)

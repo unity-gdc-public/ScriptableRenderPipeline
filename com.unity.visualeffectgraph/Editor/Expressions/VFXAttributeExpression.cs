@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using UnityEngine.Experimental.VFX;
+using UnityEngine.VFX;
 
 namespace UnityEditor.VFX
 {
@@ -21,37 +21,41 @@ namespace UnityEditor.VFX
         public static readonly float kDefaultSize = 0.1f;
 
         public static readonly VFXAttribute Seed                = new VFXAttribute("seed", VFXValueType.Uint32);
-        public static readonly VFXAttribute OldPosition         = new VFXAttribute("oldPosition", VFXValueType.Float3);
-        public static readonly VFXAttribute Position            = new VFXAttribute("position", VFXValueType.Float3);
-        public static readonly VFXAttribute Velocity            = new VFXAttribute("velocity", VFXValueType.Float3);
-        public static readonly VFXAttribute Direction           = new VFXAttribute("direction", VFXValue.Constant(new Vector3(0.0f, 0.0f, 1.0f)));
+        public static readonly VFXAttribute OldPosition         = new VFXAttribute("oldPosition", VFXValueType.Float3, VFXVariadic.False, SpaceableType.Position);
+        public static readonly VFXAttribute Position            = new VFXAttribute("position", VFXValueType.Float3, VFXVariadic.False, SpaceableType.Position);
+        public static readonly VFXAttribute Velocity            = new VFXAttribute("velocity", VFXValueType.Float3, VFXVariadic.False, SpaceableType.Vector);
+        public static readonly VFXAttribute Direction           = new VFXAttribute("direction", VFXValue.Constant(new Vector3(0.0f, 0.0f, 1.0f)), VFXVariadic.False, SpaceableType.Vector);
         public static readonly VFXAttribute Color               = new VFXAttribute("color", VFXValue.Constant(Vector3.one));
         public static readonly VFXAttribute Alpha               = new VFXAttribute("alpha", VFXValue.Constant(1.0f));
-        public static readonly VFXAttribute SizeX               = new VFXAttribute("sizeX", VFXValue.Constant(kDefaultSize), VFXVariadic.BelongsToVariadic);
-        public static readonly VFXAttribute SizeY               = new VFXAttribute("sizeY", VFXValue.Constant(kDefaultSize), VFXVariadic.BelongsToVariadic);
-        public static readonly VFXAttribute SizeZ               = new VFXAttribute("sizeZ", VFXValue.Constant(kDefaultSize), VFXVariadic.BelongsToVariadic);
-        public static readonly VFXAttribute Lifetime            = new VFXAttribute("lifetime", VFXValueType.Float);
+        public static readonly VFXAttribute Size                = new VFXAttribute("size", VFXValue.Constant(kDefaultSize));
+        public static readonly VFXAttribute ScaleX              = new VFXAttribute("scaleX", VFXValue.Constant(1.0f), VFXVariadic.BelongsToVariadic);
+        public static readonly VFXAttribute ScaleY              = new VFXAttribute("scaleY", VFXValue.Constant(1.0f), VFXVariadic.BelongsToVariadic);
+        public static readonly VFXAttribute ScaleZ              = new VFXAttribute("scaleZ", VFXValue.Constant(1.0f), VFXVariadic.BelongsToVariadic);
+        public static readonly VFXAttribute Lifetime            = new VFXAttribute("lifetime", VFXValue.Constant(1.0f));
         public static readonly VFXAttribute Age                 = new VFXAttribute("age", VFXValueType.Float);
         public static readonly VFXAttribute AngleX              = new VFXAttribute("angleX", VFXValueType.Float, VFXVariadic.BelongsToVariadic);
         public static readonly VFXAttribute AngleY              = new VFXAttribute("angleY", VFXValueType.Float, VFXVariadic.BelongsToVariadic);
         public static readonly VFXAttribute AngleZ              = new VFXAttribute("angleZ", VFXValueType.Float, VFXVariadic.BelongsToVariadic);
-        public static readonly VFXAttribute AngularVelocity     = new VFXAttribute("angularVelocity", VFXValueType.Float);
+        public static readonly VFXAttribute AngularVelocityX    = new VFXAttribute("angularVelocityX", VFXValueType.Float, VFXVariadic.BelongsToVariadic);
+        public static readonly VFXAttribute AngularVelocityY    = new VFXAttribute("angularVelocityY", VFXValueType.Float, VFXVariadic.BelongsToVariadic);
+        public static readonly VFXAttribute AngularVelocityZ    = new VFXAttribute("angularVelocityZ", VFXValueType.Float, VFXVariadic.BelongsToVariadic);
         public static readonly VFXAttribute TexIndex            = new VFXAttribute("texIndex", VFXValueType.Float);
         public static readonly VFXAttribute PivotX              = new VFXAttribute("pivotX", VFXValue.Constant(0.0f), VFXVariadic.BelongsToVariadic);
         public static readonly VFXAttribute PivotY              = new VFXAttribute("pivotY", VFXValue.Constant(0.0f), VFXVariadic.BelongsToVariadic);
         public static readonly VFXAttribute PivotZ              = new VFXAttribute("pivotZ", VFXValue.Constant(0.0f), VFXVariadic.BelongsToVariadic);
         public static readonly VFXAttribute ParticleId          = new VFXAttribute("particleId", VFXValueType.Uint32);
-        public static readonly VFXAttribute ParticleIndex       = new VFXAttribute("particleIndex", VFXValueType.Uint32);
-        public static readonly VFXAttribute AxisX               = new VFXAttribute("axisX", VFXValue.Constant(Vector3.right));
-        public static readonly VFXAttribute AxisY               = new VFXAttribute("axisY", VFXValue.Constant(Vector3.up));
-        public static readonly VFXAttribute AxisZ               = new VFXAttribute("axisZ", VFXValue.Constant(Vector3.forward));
+        public static readonly VFXAttribute AxisX               = new VFXAttribute("axisX", VFXValue.Constant(Vector3.right), VFXVariadic.False, SpaceableType.Vector);
+        public static readonly VFXAttribute AxisY               = new VFXAttribute("axisY", VFXValue.Constant(Vector3.up), VFXVariadic.False, SpaceableType.Vector);
+        public static readonly VFXAttribute AxisZ               = new VFXAttribute("axisZ", VFXValue.Constant(Vector3.forward), VFXVariadic.False, SpaceableType.Vector);
         public static readonly VFXAttribute Alive               = new VFXAttribute("alive", VFXValue.Constant(true));
         public static readonly VFXAttribute Mass                = new VFXAttribute("mass", VFXValue.Constant(1.0f));
-        public static readonly VFXAttribute TargetPosition      = new VFXAttribute("targetPosition", VFXValueType.Float3);
+        public static readonly VFXAttribute TargetPosition      = new VFXAttribute("targetPosition", VFXValueType.Float3, VFXVariadic.False, SpaceableType.Position);
         public static readonly VFXAttribute EventCount          = new VFXAttribute("eventCount", VFXValueType.Uint32);
+        public static readonly VFXAttribute SpawnTime           = new VFXAttribute("spawnTime", VFXValueType.Float);
+
 
         public static readonly VFXAttribute[] AllAttribute = VFXReflectionHelper.CollectStaticReadOnlyExpression<VFXAttribute>(typeof(VFXAttribute));
-        public static readonly VFXAttribute[] AllAttributeReadOnly = new VFXAttribute[] { Seed, ParticleId, ParticleIndex };
+        public static readonly VFXAttribute[] AllAttributeReadOnly = new VFXAttribute[] { Seed, ParticleId, SpawnTime };
         public static readonly VFXAttribute[] AllAttributeWriteOnly = new VFXAttribute[] { EventCount };
         public static readonly VFXAttribute[] AllAttributeLocalOnly = new VFXAttribute[] { EventCount };
 
@@ -66,9 +70,10 @@ namespace UnityEditor.VFX
 
         public static readonly VFXAttribute[] AllVariadicAttribute = new VFXAttribute[]
         {
-            new VFXAttribute("size", VFXValue.Constant(new Vector3(kDefaultSize, kDefaultSize, kDefaultSize)), VFXVariadic.True),
             new VFXAttribute("angle", VFXValueType.Float3, VFXVariadic.True),
-            new VFXAttribute("pivot", VFXValueType.Float3, VFXVariadic.True)
+            new VFXAttribute("angularVelocity", VFXValueType.Float3, VFXVariadic.True),
+            new VFXAttribute("pivot", VFXValueType.Float3, VFXVariadic.True),
+            new VFXAttribute("scale", VFXValue.Constant(new Vector3((float)ScaleX.value.GetContent(), (float)ScaleY.value.GetContent(), (float)ScaleZ.value.GetContent())), VFXVariadic.True)
         };
 
         public static readonly string[] AllVariadic = AllVariadicAttribute.Select(e => e.name).ToArray();
@@ -93,18 +98,21 @@ namespace UnityEditor.VFX
             }
         }
 
-        public VFXAttribute(string name, VFXValueType type, VFXVariadic variadic = VFXVariadic.False)
+        public VFXAttribute(string name, VFXValueType type, VFXVariadic variadic = VFXVariadic.False, SpaceableType space = SpaceableType.None)
+            : this(name, GetValueFromType(type), variadic, space)
         {
-            this.name = name;
-            this.value = GetValueFromType(type);
-            this.variadic = variadic;
         }
 
-        public VFXAttribute(string name, VFXValue value, VFXVariadic variadic = VFXVariadic.False)
+        public VFXAttribute(string name, VFXValue value, VFXVariadic variadic = VFXVariadic.False, SpaceableType space = SpaceableType.None)
         {
             this.name = name;
             this.value = value;
             this.variadic = variadic;
+            this.space = space;
+            if (space != SpaceableType.None && variadic != VFXVariadic.False)
+            {
+                throw new InvalidOperationException("Can't mix spaceable and variadic attributes : " + name);
+            }
         }
 
         public static VFXAttribute Find(string attributeName)
@@ -120,9 +128,20 @@ namespace UnityEditor.VFX
             throw new ArgumentException(string.Format("Unable to find attribute expression : {0}", attributeName));
         }
 
+        public static bool Exist(string attributeName)
+        {
+            bool exist = Array.Exists(AllAttribute, e => e.name == attributeName);
+
+            if (!exist)
+                exist = Array.Exists(AllVariadicAttribute, e => e.name == attributeName);
+
+            return exist;
+        }
+
         public string name;
         public VFXValue value;
         public VFXVariadic variadic;
+        public SpaceableType space;
 
         public VFXValueType type
         {
@@ -164,9 +183,12 @@ namespace UnityEditor.VFX
         Y = 1,
         Z = 2,
         XY = 3,
-        XYZ = 4
+        XZ = 4,
+        YZ = 5,
+        XYZ = 6
     };
-    #pragma warning disable 0659
+
+#pragma warning disable 0659
     sealed class VFXAttributeExpression : VFXExpression
     {
         public VFXAttributeExpression(VFXAttribute attribute, VFXAttributeLocation location = VFXAttributeLocation.Current) : base(Flags.PerElement)

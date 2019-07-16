@@ -7,7 +7,7 @@ using UnityEditor.Graphing;
 namespace UnityEditor.ShaderGraph
 {
     [Title("Input", "Basic", "Vector 2")]
-    public class Vector2Node : AbstractMaterialNode, IGeneratesBodyCode, IPropertyFromNode
+    class Vector2Node : AbstractMaterialNode, IGeneratesBodyCode, IPropertyFromNode
     {
         [SerializeField]
         private Vector2 m_Value = Vector2.zero;
@@ -27,10 +27,6 @@ namespace UnityEditor.ShaderGraph
             UpdateNodeAfterDeserialization();
         }
 
-        public override string documentationURL
-        {
-            get { return "https://github.com/Unity-Technologies/ShaderGraph/wiki/Vector-2-Node"; }
-        }
 
         public sealed override void UpdateNodeAfterDeserialization()
         {
@@ -40,21 +36,20 @@ namespace UnityEditor.ShaderGraph
             RemoveSlotsNameNotMatching(new[] { OutputSlotId, InputSlotXId, InputSlotYId });
         }
 
-        public void GenerateNodeCode(ShaderGenerator visitor, GraphContext graphContext, GenerationMode generationMode)
+        public void GenerateNodeCode(ShaderStringBuilder sb, GraphContext graphContext, GenerationMode generationMode)
         {
             var inputXValue = GetSlotValue(InputSlotXId, generationMode);
             var inputYValue = GetSlotValue(InputSlotYId, generationMode);
             var outputName = GetVariableNameForSlot(OutputSlotId);
 
-            var s = string.Format("{0}2 {1} = {0}2({2},{3});",
-                    precision,
+            var s = string.Format("$precision2 {0} = $precision2({1}, {2});",
                     outputName,
                     inputXValue,
                     inputYValue);
-            visitor.AddShaderChunk(s, false);
+            sb.AppendLine(s);
         }
 
-        public IShaderProperty AsShaderProperty()
+        public AbstractShaderProperty AsShaderProperty()
         {
             var slotX = FindInputSlot<Vector1MaterialSlot>(InputSlotXId);
             var slotY = FindInputSlot<Vector1MaterialSlot>(InputSlotYId);

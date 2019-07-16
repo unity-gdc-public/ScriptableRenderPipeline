@@ -2,12 +2,13 @@ using System;
 using System.Reflection;
 using UnityEngine;
 using UnityEditor.Graphing;
-using UnityEngine.Experimental.UIElements;
+
+using UnityEngine.UIElements;
 
 namespace UnityEditor.ShaderGraph.Drawing.Controls
 {
     [AttributeUsage(AttributeTargets.Property)]
-    public class ChannelEnumMaskControlAttribute : Attribute, IControlAttribute
+    class ChannelEnumMaskControlAttribute : Attribute, IControlAttribute
     {
         string m_Label;
         int m_SlotId;
@@ -24,9 +25,9 @@ namespace UnityEditor.ShaderGraph.Drawing.Controls
         }
     }
 
-    public class ChannelEnumMaskControlView : VisualElement, INodeModificationListener
+    class ChannelEnumMaskControlView : VisualElement, AbstractMaterialNodeModificationListener
     {
-        GUIContent m_Label;
+        string m_Label;
         AbstractMaterialNode m_Node;
         PropertyInfo m_PropertyInfo;
         IMGUIContainer m_Container;
@@ -34,20 +35,23 @@ namespace UnityEditor.ShaderGraph.Drawing.Controls
 
         public ChannelEnumMaskControlView(string label, int slotId, AbstractMaterialNode node, PropertyInfo propertyInfo)
         {
-            AddStyleSheetPath("Styles/Controls/ChannelEnumMaskControlView");
+            styleSheets.Add(Resources.Load<StyleSheet>("Styles/Controls/ChannelEnumMaskControlView"));
             m_Node = node;
             m_PropertyInfo = propertyInfo;
             m_SlotId = slotId;
             //if (!propertyInfo.PropertyType.IsEnum)
             //throw new ArgumentException("Property must be an enum.", "propertyInfo");
-            m_Label = new GUIContent(label ?? ObjectNames.NicifyVariableName(propertyInfo.Name));
+            m_Label = label;
             m_Container = new IMGUIContainer(OnGUIHandler);
             Add(m_Container);
         }
 
         void OnGUIHandler()
         {
+            GUILayout.BeginHorizontal();
+            GUILayout.Label(m_Label);
             UpdatePopup();
+            GUILayout.EndHorizontal();
         }
 
         public void OnNodeModified(ModificationScope scope)
@@ -66,7 +70,7 @@ namespace UnityEditor.ShaderGraph.Drawing.Controls
                 string[] popupEntries = new string[channelCount];
                 for (int i = 0; i < popupEntries.Length; i++)
                     popupEntries[i] = enumEntryNames[i];
-                value = EditorGUILayout.MaskField(m_Label, value, popupEntries);
+                value = EditorGUILayout.MaskField("", value, popupEntries, GUILayout.Width(80f));
 
                 if (changeCheckScope.changed)
                 {

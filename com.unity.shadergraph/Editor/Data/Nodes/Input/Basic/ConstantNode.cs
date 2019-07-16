@@ -6,7 +6,7 @@ using UnityEditor.Graphing;
 
 namespace UnityEditor.ShaderGraph
 {
-    public enum ConstantType
+    enum ConstantType
     {
         PI,
         TAU,
@@ -16,7 +16,7 @@ namespace UnityEditor.ShaderGraph
     };
 
     [Title("Input", "Basic", "Constant")]
-    public class ConstantNode : AbstractMaterialNode, IGeneratesBodyCode
+    class ConstantNode : AbstractMaterialNode, IGeneratesBodyCode
     {
         static Dictionary<ConstantType, float> m_constantList = new Dictionary<ConstantType, float>
         {
@@ -53,20 +53,17 @@ namespace UnityEditor.ShaderGraph
             UpdateNodeAfterDeserialization();
         }
 
-        public override string documentationURL
-        {
-            get { return "https://github.com/Unity-Technologies/ShaderGraph/wiki/Constant-Node"; }
-        }
-
         public sealed override void UpdateNodeAfterDeserialization()
         {
             AddSlot(new Vector1MaterialSlot(kOutputSlotId, kOutputSlotName, kOutputSlotName, SlotType.Output, 0));
             RemoveSlotsNameNotMatching(new[] { kOutputSlotId });
         }
 
-        public void GenerateNodeCode(ShaderGenerator visitor, GraphContext graphContext, GenerationMode generationMode)
+        public void GenerateNodeCode(ShaderStringBuilder sb, GraphContext graphContext, GenerationMode generationMode)
         {
-            visitor.AddShaderChunk(precision + " " + GetVariableNameForNode() + " = " + m_constantList[constant].ToString(CultureInfo.InvariantCulture) + ";", true);
+            sb.AppendLine(string.Format("$precision {0} = {1};"
+                , GetVariableNameForNode()
+                , m_constantList[constant].ToString(CultureInfo.InvariantCulture)));
         }
 
         public override string GetVariableNameForSlot(int slotId)

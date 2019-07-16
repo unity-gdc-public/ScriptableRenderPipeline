@@ -3,7 +3,7 @@
 #ifndef LIGHTWEIGHT_SHADER_VARIABLES_INCLUDED
 #define LIGHTWEIGHT_SHADER_VARIABLES_INCLUDED
 
-#if defined(STEREO_INSTANCING_ON) && (defined(SHADER_API_D3D11) || defined(SHADER_API_GLES3) || defined(SHADER_API_GLCORE) || defined(SHADER_API_PSSL))
+#if defined(STEREO_INSTANCING_ON) && (defined(SHADER_API_D3D11) || defined(SHADER_API_GLES3) || defined(SHADER_API_GLCORE) || defined(SHADER_API_PSSL) || defined(SHADER_API_VULKAN))
 #define UNITY_STEREO_INSTANCING_ENABLED
 #endif
 
@@ -38,6 +38,7 @@ float4 _Time; // (t/20, t, t*2, t*3)
 float4 _SinTime; // sin(t/8), sin(t/4), sin(t/2), sin(t)
 float4 _CosTime; // cos(t/8), cos(t/4), cos(t/2), cos(t)
 float4 unity_DeltaTime; // dt, 1/dt, smoothdt, 1/smoothdt
+float4 _TimeParameters; // t, sin(t), cos(t)
 
 #if !defined(USING_STEREO_MATRICES)
 float3 _WorldSpaceCameraPos;
@@ -97,14 +98,14 @@ CBUFFER_START(UnityPerDraw)
 float4x4 unity_ObjectToWorld;
 float4x4 unity_WorldToObject;
 float4 unity_LODFade; // x is the fade value ranging within [0,1]. y is x quantized into 16 levels
-float4 unity_WorldTransformParams; // w is usually 1.0, or -1.0 for odd-negative scale transforms
-float4 unity_RenderingLayer;
+half4 unity_WorldTransformParams; // w is usually 1.0, or -1.0 for odd-negative scale transforms
 
 // Light Indices block feature
 // These are set internally by the engine upon request by RendererConfiguration.
-real4 unity_LightIndicesOffsetAndCount;
-real4 unity_4LightIndices0;
-real4 unity_4LightIndices1;
+real4 unity_LightData;
+real4 unity_LightIndices[2];
+
+half4 unity_ProbesOcclusion;
 
 // Reflection Probe 0 block feature
 // HDR environment map decode instructions
@@ -124,7 +125,7 @@ real4 unity_SHBb;
 real4 unity_SHC;
 CBUFFER_END
 
-#if defined(UNITY_STEREO_MULTIVIEW_ENABLED) || ((defined(UNITY_SINGLE_PASS_STEREO) || defined(UNITY_STEREO_INSTANCING_ENABLED)) && (defined(SHADER_API_GLCORE) || defined(SHADER_API_GLES3) || defined(SHADER_API_METAL)))
+#if defined(UNITY_STEREO_MULTIVIEW_ENABLED) || ((defined(UNITY_SINGLE_PASS_STEREO) || defined(UNITY_STEREO_INSTANCING_ENABLED)) && (defined(SHADER_API_GLCORE) || defined(SHADER_API_GLES3) || defined(SHADER_API_METAL) || defined(SHADER_API_VULKAN)))
     #define GLOBAL_CBUFFER_START(name)    cbuffer name {
     #define GLOBAL_CBUFFER_END            }
 #else

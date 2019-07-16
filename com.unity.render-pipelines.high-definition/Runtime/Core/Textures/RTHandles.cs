@@ -9,26 +9,27 @@ namespace UnityEngine.Experimental.Rendering
 
         public static int maxWidth { get { return s_DefaultInstance.GetMaxWidth(); } }
         public static int maxHeight { get { return s_DefaultInstance.GetMaxHeight(); } }
+        public static RTHandleProperties rtHandleProperties { get { return s_DefaultInstance.rtHandleProperties; } }
+        public static RTHandleSystem defaultRTHandleSystem { get { return s_DefaultInstance; } }
 
         public static RTHandleSystem.RTHandle Alloc(
             int width,
             int height,
             int slices = 1,
             DepthBits depthBufferBits = DepthBits.None,
-            RenderTextureFormat colorFormat = RenderTextureFormat.Default,
+            GraphicsFormat colorFormat = GraphicsFormat.R8G8B8A8_SRGB,
             FilterMode filterMode = FilterMode.Point,
             TextureWrapMode wrapMode = TextureWrapMode.Repeat,
             TextureDimension dimension = TextureDimension.Tex2D,
-            bool sRGB = true,
             bool enableRandomWrite = false,
             bool useMipMap = false,
             bool autoGenerateMips = true,
+            bool isShadowMap = false,
             int anisoLevel = 1,
             float mipMapBias = 0,
             MSAASamples msaaSamples = MSAASamples.None,
             bool bindTextureMS = false,
             bool useDynamicScale = false,
-            VRTextureUsage vrUsage = VRTextureUsage.None,
             RenderTextureMemoryless memoryless = RenderTextureMemoryless.None,
             string name = ""
             )
@@ -42,16 +43,15 @@ namespace UnityEngine.Experimental.Rendering
                 filterMode,
                 wrapMode,
                 dimension,
-                sRGB,
                 enableRandomWrite,
                 useMipMap,
                 autoGenerateMips,
+                isShadowMap,
                 anisoLevel,
                 mipMapBias,
                 msaaSamples,
                 bindTextureMS,
                 useDynamicScale,
-                vrUsage,
                 memoryless,
                 name
                 );
@@ -61,20 +61,19 @@ namespace UnityEngine.Experimental.Rendering
             Vector2 scaleFactor,
             int slices = 1,
             DepthBits depthBufferBits = DepthBits.None,
-            RenderTextureFormat colorFormat = RenderTextureFormat.Default,
+            GraphicsFormat colorFormat = GraphicsFormat.R8G8B8A8_SRGB,
             FilterMode filterMode = FilterMode.Point,
             TextureWrapMode wrapMode = TextureWrapMode.Repeat,
             TextureDimension dimension = TextureDimension.Tex2D,
-            bool sRGB = true,
             bool enableRandomWrite = false,
             bool useMipMap = false,
             bool autoGenerateMips = true,
+            bool isShadowMap = false,
             int anisoLevel = 1,
             float mipMapBias = 0,
             bool enableMSAA = false,
             bool bindTextureMS = false,
             bool useDynamicScale = false,
-            VRTextureUsage vrUsage = VRTextureUsage.None,
             RenderTextureMemoryless memoryless = RenderTextureMemoryless.None,
             string name = ""
             )
@@ -87,16 +86,15 @@ namespace UnityEngine.Experimental.Rendering
                 filterMode,
                 wrapMode,
                 dimension,
-                sRGB,
                 enableRandomWrite,
                 useMipMap,
                 autoGenerateMips,
+                isShadowMap,
                 anisoLevel,
                 mipMapBias,
                 enableMSAA,
                 bindTextureMS,
                 useDynamicScale,
-                vrUsage,
                 memoryless,
                 name
                 );
@@ -106,20 +104,19 @@ namespace UnityEngine.Experimental.Rendering
             ScaleFunc scaleFunc,
             int slices = 1,
             DepthBits depthBufferBits = DepthBits.None,
-            RenderTextureFormat colorFormat = RenderTextureFormat.Default,
+            GraphicsFormat colorFormat = GraphicsFormat.R8G8B8A8_SRGB,
             FilterMode filterMode = FilterMode.Point,
             TextureWrapMode wrapMode = TextureWrapMode.Repeat,
             TextureDimension dimension = TextureDimension.Tex2D,
-            bool sRGB = true,
             bool enableRandomWrite = false,
             bool useMipMap = false,
             bool autoGenerateMips = true,
+            bool isShadowMap = false,
             int anisoLevel = 1,
             float mipMapBias = 0,
             bool enableMSAA = false,
             bool bindTextureMS = false,
             bool useDynamicScale = false,
-            VRTextureUsage vrUsage = VRTextureUsage.None,
             RenderTextureMemoryless memoryless = RenderTextureMemoryless.None,
             string name = ""
             )
@@ -132,20 +129,31 @@ namespace UnityEngine.Experimental.Rendering
                 filterMode,
                 wrapMode,
                 dimension,
-                sRGB,
                 enableRandomWrite,
                 useMipMap,
                 autoGenerateMips,
+                isShadowMap,
                 anisoLevel,
                 mipMapBias,
                 enableMSAA,
                 bindTextureMS,
                 useDynamicScale,
-                vrUsage,
                 memoryless,
                 name
                 );
         }
+
+        public static RTHandleSystem.RTHandle Alloc(Texture tex)
+        {
+            return s_DefaultInstance.Alloc(tex);
+        }
+
+        public static RTHandleSystem.RTHandle Alloc(RTHandleSystem.RTHandle tex)
+        {
+            Debug.LogError("Allocation a RTHandle from another one is forbidden.");
+            return null;
+        }
+
 
         public static void Initialize(
             int width,
@@ -167,17 +175,9 @@ namespace UnityEngine.Experimental.Rendering
             s_DefaultInstance.Release(rth);
         }
 
-        public static void ResetReferenceSize(
-            int width,
-            int height,
-            MSAASamples msaaSamples
-            )
+        public static void SetHardwareDynamicResolutionState(bool hwDynamicResRequested)
         {
-            s_DefaultInstance.ResetReferenceSize(
-                width,
-                height,
-                msaaSamples
-                );
+            s_DefaultInstance.SetHardwareDynamicResolutionState(hwDynamicResRequested);
         }
 
         public static void SetReferenceSize(

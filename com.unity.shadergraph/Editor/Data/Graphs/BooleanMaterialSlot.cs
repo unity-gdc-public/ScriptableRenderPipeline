@@ -3,12 +3,13 @@ using System.Collections.Generic;
 using UnityEditor.Graphing;
 using UnityEditor.ShaderGraph.Drawing.Slots;
 using UnityEngine;
-using UnityEngine.Experimental.UIElements;
+
+using UnityEngine.UIElements;
 
 namespace UnityEditor.ShaderGraph
 {
     [Serializable]
-    public class BooleanMaterialSlot : MaterialSlot, IMaterialSlotHasValue<bool>
+    class BooleanMaterialSlot : MaterialSlot, IMaterialSlotHasValue<bool>
     {
         [SerializeField]
         private bool m_Value;
@@ -46,7 +47,7 @@ namespace UnityEditor.ShaderGraph
             set { m_Value = value; }
         }
 
-        protected override string ConcreteSlotValueAsVariable(AbstractMaterialNode.OutputPrecision precision)
+        protected override string ConcreteSlotValueAsVariable()
         {
             return (value ? 1 : 0).ToString();
         }

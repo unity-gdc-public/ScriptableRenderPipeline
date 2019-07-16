@@ -4,6 +4,19 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
     {
         ColorBufferMipChain,
         VolumetricLighting,
+        Exposure,
+        TemporalAntialiasing,
+        DepthOfFieldCoC,
+        Normal,
+        Depth,
+        AmbientOcclusion,
+#if ENABLE_RAYTRACING
+        RaytracedAmbientOcclusion,
+        RaytracedShadow,
+        RaytracedAreaAnalytic,
+        RaytracedReflection,
+        RaytracedIndirectDiffuse,
+#endif
         Count
     }
 }

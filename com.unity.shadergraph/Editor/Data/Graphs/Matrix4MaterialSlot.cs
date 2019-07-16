@@ -3,12 +3,12 @@ using System.Collections.Generic;
 using UnityEditor.Graphing;
 using UnityEditor.ShaderGraph.Drawing.Slots;
 using UnityEngine;
-using UnityEngine.Experimental.UIElements;
+using UnityEngine.UIElements;
 
 namespace UnityEditor.ShaderGraph
 {
     [Serializable]
-    public class Matrix4MaterialSlot : MaterialSlot, IMaterialSlotHasValue<Matrix4x4>
+    class Matrix4MaterialSlot : MaterialSlot, IMaterialSlotHasValue<Matrix4x4>
     {
         [SerializeField]
         private Matrix4x4 m_Value = Matrix4x4.identity;
@@ -44,9 +44,9 @@ namespace UnityEditor.ShaderGraph
             set { m_Value = value; }
         }
 
-        protected override string ConcreteSlotValueAsVariable(AbstractMaterialNode.OutputPrecision precision)
+        protected override string ConcreteSlotValueAsVariable()
         {
-            return precision + "4x4 (1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1)";
+            return "$precision4x4 (1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1)";
         }
 
         public override void AddDefaultProperty(PropertyCollector properties, GenerationMode generationMode)
@@ -72,7 +72,7 @@ namespace UnityEditor.ShaderGraph
             var pp = new PreviewProperty(PropertyType.Matrix4)
             {
                 name = name,
-                vector4Value = new Vector4(value.GetRow(0).x, value.GetRow(0).y, value.GetRow(0).z, value.GetRow(0).w),
+                matrixValue = value
             };
             properties.Add(pp);
         }

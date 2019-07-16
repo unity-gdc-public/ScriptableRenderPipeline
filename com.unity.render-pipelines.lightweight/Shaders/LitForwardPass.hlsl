@@ -60,10 +60,7 @@ void InitializeInputData(Varyings input, half3 normalTS, out InputData inputData
 #endif
 
     inputData.normalWS = NormalizeNormalPerPixel(inputData.normalWS);
-
-#if SHADER_HINT_NICE_QUALITY
     viewDirWS = SafeNormalize(viewDirWS);
-#endif
 
     inputData.viewDirectionWS = viewDirWS;
 #if defined(_MAIN_LIGHT_SHADOWS) && !defined(_RECEIVE_SHADOWS_OFF)
@@ -86,27 +83,23 @@ Varyings LitPassVertex(Attributes input)
     Varyings output = (Varyings)0;
 
     UNITY_SETUP_INSTANCE_ID(input);
+    UNITY_TRANSFER_INSTANCE_ID(input, output);
     UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
 
     VertexPositionInputs vertexInput = GetVertexPositionInputs(input.positionOS.xyz);
     VertexNormalInputs normalInput = GetVertexNormalInputs(input.normalOS, input.tangentOS);
     half3 viewDirWS = GetCameraPositionWS() - vertexInput.positionWS;
-
-#if !SHADER_HINT_NICE_QUALITY
-    viewDirWS = SafeNormalize(viewDirWS);
-#endif
-
     half3 vertexLight = VertexLighting(vertexInput.positionWS, normalInput.normalWS);
     half fogFactor = ComputeFogFactor(vertexInput.positionCS.z);
 
-    output.uv = TRANSFORM_TEX(input.texcoord, _MainTex);
+    output.uv = TRANSFORM_TEX(input.texcoord, _BaseMap);
 
 #ifdef _NORMALMAP
     output.normalWS = half4(normalInput.normalWS, viewDirWS.x);
     output.tangentWS = half4(normalInput.tangentWS, viewDirWS.y);
     output.bitangentWS = half4(normalInput.bitangentWS, viewDirWS.z);
 #else
-    output.normalWS = normalInput.normalWS;
+    output.normalWS = NormalizeNormalPerVertex(normalInput.normalWS);
     output.viewDirWS = viewDirWS;
 #endif
     
@@ -131,6 +124,7 @@ Varyings LitPassVertex(Attributes input)
 // Used in Standard (Physically Based) shader
 half4 LitPassFragment(Varyings input) : SV_Target
 {
+    UNITY_SETUP_INSTANCE_ID(input);
     UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
 
     SurfaceData surfaceData;

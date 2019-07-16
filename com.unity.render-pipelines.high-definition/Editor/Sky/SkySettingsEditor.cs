@@ -1,7 +1,5 @@
-using System.Collections;
-using UnityEngine;
 using UnityEditor;
-using UnityEditor.Experimental.Rendering;
+using UnityEditor.Rendering;
 
 namespace UnityEngine.Experimental.Rendering.HDPipeline
 {
@@ -42,7 +40,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         protected void CommonSkySettingsGUI()
         {
-            
+
             if ((m_CommonUIElementsMask & (uint)SkySettingsUIElement.IndentExposureAndMultiplier) != 0)
                 EditorGUI.indentLevel++;
             if ((m_CommonUIElementsMask & (uint)SkySettingsUIElement.Exposure) != 0)
@@ -57,7 +55,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             if ((m_CommonUIElementsMask & (uint)SkySettingsUIElement.UpdateMode) != 0)
             {
                 PropertyField(m_EnvUpdateMode);
-                if (!m_EnvUpdateMode.value.hasMultipleDifferentValues && m_EnvUpdateMode.value.intValue == (int)EnvironementUpdateMode.Realtime)
+                if (!m_EnvUpdateMode.value.hasMultipleDifferentValues && m_EnvUpdateMode.value.intValue == (int)EnvironmentUpdateMode.Realtime)
                 {
                     EditorGUI.indentLevel++;
                     PropertyField(m_EnvUpdatePeriod);

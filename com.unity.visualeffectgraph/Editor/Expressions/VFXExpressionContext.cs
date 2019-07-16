@@ -4,7 +4,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.Profiling;
-using UnityEngine.Experimental.VFX;
+using UnityEngine.VFX;
 
 namespace UnityEditor.VFX
 {
@@ -121,7 +121,9 @@ namespace UnityEditor.VFX
                     {
                         var parent = Compile(e);
 
-                        if (Has(VFXExpressionContextOption.GPUDataTransformation) && expression.Is(VFXExpression.Flags.PerElement) && !parent.Is(VFXExpression.Flags.PerElement))
+                        if (Has(VFXExpressionContextOption.GPUDataTransformation)
+                            && expression.IsAny(VFXExpression.Flags.NotCompilableOnCPU)
+                            && !parent.IsAny(VFXExpression.Flags.NotCompilableOnCPU))
                             parent = InsertGPUTransformation(parent);
 
                         return parent;

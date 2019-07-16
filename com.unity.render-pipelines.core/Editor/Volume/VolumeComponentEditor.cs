@@ -4,9 +4,9 @@ using System.Linq;
 using System.Reflection;
 using UnityEngine;
 using UnityEngine.Assertions;
-using UnityEngine.Experimental.Rendering;
+using UnityEngine.Rendering;
 
-namespace UnityEditor.Experimental.Rendering
+namespace UnityEditor.Rendering
 {
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
     public sealed class VolumeComponentEditorAttribute : Attribute
@@ -27,7 +27,24 @@ namespace UnityEditor.Experimental.Rendering
         public SerializedProperty baseProperty { get; internal set; }
         public SerializedProperty activeProperty { get; internal set; }
 
-        Editor m_Inspector;
+        SerializedProperty m_AdvancedMode;
+
+        public virtual bool hasAdvancedMode => false;
+
+        public bool isInAdvancedMode
+        {
+            get => m_AdvancedMode != null && m_AdvancedMode.boolValue;
+            internal set
+            {
+                if (m_AdvancedMode != null)
+                {
+                    m_AdvancedMode.boolValue = value;
+                    serializedObject.ApplyModifiedProperties();
+                }
+            }
+        }
+
+        protected Editor m_Inspector;
         List<SerializedDataParameter> m_Parameters;
 
         static Dictionary<Type, VolumeParameterDrawer> s_ParameterDrawers;
@@ -49,10 +66,9 @@ namespace UnityEditor.Experimental.Rendering
             s_ParameterDrawers.Clear();
 
             // Look for all the valid parameter drawers
-            var types = CoreUtils.GetAllAssemblyTypes()
+            var types = CoreUtils.GetAllTypesDerivedFrom<VolumeParameterDrawer>()
                 .Where(
-                    t => t.IsSubclassOf(typeof(VolumeParameterDrawer))
-                    && t.IsDefined(typeof(VolumeParameterDrawerAttribute), false)
+                    t => t.IsDefined(typeof(VolumeParameterDrawerAttribute), false)
                     && !t.IsAbstract
                     );
 
@@ -76,6 +92,7 @@ namespace UnityEditor.Experimental.Rendering
             m_Inspector = inspector;
             serializedObject = new SerializedObject(target);
             activeProperty = serializedObject.FindProperty("active");
+            m_AdvancedMode = serializedObject.FindProperty("m_AdvancedMode");
             OnEnable();
         }
 
@@ -84,6 +101,7 @@ namespace UnityEditor.Experimental.Rendering
             m_Parameters = new List<SerializedDataParameter>();
 
             // Grab all valid serializable field on the VolumeComponent
+            // TODO: Should only be done when needed / on demand as this can potentially be wasted CPU when a custom editor is in use
             var fields = target.GetType()
                 .GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
                 .Where(t => t.FieldType.IsSubclassOf(typeof(VolumeParameter)))
@@ -125,20 +143,18 @@ namespace UnityEditor.Experimental.Rendering
 
         public virtual string GetDisplayTitle()
         {
-            return ObjectNames.NicifyVariableName(target.GetType().Name);
+            return target.displayName == "" ? ObjectNames.NicifyVariableName(target.GetType().Name) : target.displayName;
         }
 
         void TopRowFields()
         {
             using (new EditorGUILayout.HorizontalScope())
             {
-                if (GUILayout.Button(CoreEditorUtils.GetContent("All|Toggle all overrides on. To maximize performances you should only toggle overrides that you actually need."), CoreEditorStyles.miniLabelButton, GUILayout.Width(17f), GUILayout.ExpandWidth(false)))
+                if (GUILayout.Button(EditorGUIUtility.TrTextContent("All", "Toggle all overrides on. To maximize performances you should only toggle overrides that you actually need."), CoreEditorStyles.miniLabelButton, GUILayout.Width(17f), GUILayout.ExpandWidth(false)))
                     SetAllOverridesTo(true);
 
-                if (GUILayout.Button(CoreEditorUtils.GetContent("None|Toggle all overrides off."), CoreEditorStyles.miniLabelButton, GUILayout.Width(32f), GUILayout.ExpandWidth(false)))
+                if (GUILayout.Button(EditorGUIUtility.TrTextContent("None", "Toggle all overrides off."), CoreEditorStyles.miniLabelButton, GUILayout.Width(32f), GUILayout.ExpandWidth(false)))
                     SetAllOverridesTo(false);
-
-                GUILayout.FlexibleSpace();
             }
         }
 
@@ -158,7 +174,7 @@ namespace UnityEditor.Experimental.Rendering
 
         protected void PropertyField(SerializedDataParameter property)
         {
-            var title = CoreEditorUtils.GetContent(property.displayName);
+            var title = EditorGUIUtility.TrTextContent(property.displayName);
             PropertyField(property, title);
         }
 
@@ -254,7 +270,7 @@ namespace UnityEditor.Experimental.Rendering
         {
             var overrideRect = GUILayoutUtility.GetRect(17f, 17f, GUILayout.ExpandWidth(false));
             overrideRect.yMin += 4f;
-            property.overrideState.boolValue = GUI.Toggle(overrideRect, property.overrideState.boolValue, CoreEditorUtils.GetContent("|Override this setting for this volume."), CoreEditorStyles.smallTickbox);
+            property.overrideState.boolValue = GUI.Toggle(overrideRect, property.overrideState.boolValue, EditorGUIUtility.TrTextContent("", "Override this setting for this volume."), CoreEditorStyles.smallTickbox);
         }
     }
 }

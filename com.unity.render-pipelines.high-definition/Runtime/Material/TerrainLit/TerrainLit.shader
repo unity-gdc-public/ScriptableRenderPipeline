@@ -1,10 +1,10 @@
-Shader "HDRenderPipeline/TerrainLit"
+Shader "HDRP/TerrainLit"
 {
     Properties
     {
         [HideInInspector] [ToggleUI] _EnableHeightBlend("EnableHeightBlend", Float) = 0.0
         _HeightTransition("Height Transition", Range(0, 1.0)) = 0.0
-
+		
         // TODO: support tri-planar?
         // TODO: support more maps?
         //[HideInInspector] _TexWorldScale0("Tiling", Float) = 1.0
@@ -15,10 +15,15 @@ Shader "HDRenderPipeline/TerrainLit"
         // Following are builtin properties
 
         // Stencil state
+        // Forward
         [HideInInspector] _StencilRef("_StencilRef", Int) = 2 // StencilLightingUsage.RegularLighting
-        [HideInInspector] _StencilWriteMask("_StencilWriteMask", Int) = 7 // StencilMask.Lighting  (fixed at compile time)
-        [HideInInspector] _StencilRefMV("_StencilRefMV", Int) = 128 // StencilLightingUsage.RegularLighting  (fixed at compile time)
-        [HideInInspector] _StencilWriteMaskMV("_StencilWriteMaskMV", Int) = 128 // StencilMask.ObjectsVelocity  (fixed at compile time)
+        [HideInInspector] _StencilWriteMask("_StencilWriteMask", Int) = 3 // StencilMask.Lighting
+        // GBuffer
+        [HideInInspector] _StencilRefGBuffer("_StencilRefGBuffer", Int) = 2 // StencilLightingUsage.RegularLighting
+        [HideInInspector] _StencilWriteMaskGBuffer("_StencilWriteMaskGBuffer", Int) = 3 // StencilMask.Lighting
+        // Depth prepass
+        [HideInInspector] _StencilRefDepth("_StencilRefDepth", Int) = 0 // Nothing
+        [HideInInspector] _StencilWriteMaskDepth("_StencilWriteMaskDepth", Int) = 32 // DoesntReceiveSSR
 
         // Blending state
         [HideInInspector] _ZWrite ("__zw", Float) = 1.0
@@ -28,66 +33,54 @@ Shader "HDRenderPipeline/TerrainLit"
 
         [ToggleUI] _EnableInstancedPerPixelNormal("Instanced per pixel normal", Float) = 1.0
 
+		[HideInInspector] _TerrainHolesTexture("Holes Map (RGB)", 2D) = "white" {}
+		
         // Caution: C# code in BaseLitUI.cs call LightmapEmissionFlagsProperty() which assume that there is an existing "_EmissionColor"
         // value that exist to identify if the GI emission need to be enabled.
         // In our case we don't use such a mechanism but need to keep the code quiet. We declare the value and always enable it.
         // TODO: Fix the code in legacy unity so we can customize the behavior for GI
-        _EmissionColor("Color", Color) = (1, 1, 1)
+        [HideInInspector] _EmissionColor("Color", Color) = (1, 1, 1)
 
         // HACK: GI Baking system relies on some properties existing in the shader ("_MainTex", "_Cutoff" and "_Color") for opacity handling, so we need to store our version of those parameters in the hard-coded name the GI baking system recognizes.
-        _MainTex("Albedo", 2D) = "white" {}
-        _Color("Color", Color) = (1,1,1,1)
+        [HideInInspector] _MainTex("Albedo", 2D) = "white" {}
+        [HideInInspector] _Color("Color", Color) = (1,1,1,1)
 
-        [ToggleUI] _SupportDecals("Support Decals", Float) = 1.0
-        [ToggleUI] _ReceivesSSR("Receives SSR", Float) = 1.0
+        [HideInInspector] [ToggleUI] _SupportDecals("Support Decals", Float) = 1.0
+        [HideInInspector] [ToggleUI] _ReceivesSSR("Receives SSR", Float) = 1.0
     }
 
     HLSLINCLUDE
 
     #pragma target 4.5
-    #pragma only_renderers d3d11 ps4 xboxone vulkan metal
+    #pragma only_renderers d3d11 ps4 xboxone vulkan metal switch
 
-    #pragma shader_feature _TERRAIN_8_LAYERS
-    #pragma shader_feature _TERRAIN_BLEND_HEIGHT
-    #pragma shader_feature _NORMALMAP
-    #pragma shader_feature _MASKMAP
+    // Terrain builtin keywords
+    #pragma shader_feature_local _TERRAIN_8_LAYERS
+    #pragma shader_feature_local _NORMALMAP
+    #pragma shader_feature_local _MASKMAP
+
+    #pragma shader_feature_local _TERRAIN_BLEND_HEIGHT
     // Sample normal in pixel shader when doing instancing
-    #pragma shader_feature _TERRAIN_INSTANCED_PERPIXEL_NORMAL
+    #pragma shader_feature_local _TERRAIN_INSTANCED_PERPIXEL_NORMAL
 
     //#pragma shader_feature _ _LAYER_MAPPING_PLANAR0 _LAYER_MAPPING_TRIPLANAR0
     //#pragma shader_feature _ _LAYER_MAPPING_PLANAR1 _LAYER_MAPPING_TRIPLANAR1
     //#pragma shader_feature _ _LAYER_MAPPING_PLANAR2 _LAYER_MAPPING_TRIPLANAR2
     //#pragma shader_feature _ _LAYER_MAPPING_PLANAR3 _LAYER_MAPPING_TRIPLANAR3
 
-    #pragma shader_feature _DISABLE_DECALS
+    #pragma shader_feature_local _DISABLE_DECALS
 
     //enable GPU instancing support
     #pragma multi_compile_instancing
     #pragma instancing_options assumeuniformscaling nomatrices nolightprobe nolightmap
 
-    //-------------------------------------------------------------------------------------
-    // Define
-    //-------------------------------------------------------------------------------------
-
-    #define UNITY_MATERIAL_LIT // Need to be define before including Material.hlsl
-    #define SURFACE_GRADIENT
-    #define HAVE_MESH_MODIFICATION
-
-    //-------------------------------------------------------------------------------------
-    // Include
-    //-------------------------------------------------------------------------------------
-
-    #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Common.hlsl"
-    #include "Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipeline/ShaderPass/FragInputs.hlsl"
-    #include "Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipeline/ShaderPass/ShaderPass.cs.hlsl"
-
-    //-------------------------------------------------------------------------------------
-    // variable declaration
-    //-------------------------------------------------------------------------------------
+	#pragma multi_compile __ _ALPHATEST_ON
 
     // All our shaders use same name for entry point
     #pragma vertex Vert
     #pragma fragment Frag
+
+    #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/TerrainLit/TerrainLit_Splatmap_Includes.hlsl"
 
     ENDHLSL
 
@@ -110,16 +103,16 @@ Shader "HDRenderPipeline/TerrainLit"
         // Caution: The outline selection in the editor use the vertex shader/hull/domain shader of the first pass declare. So it should not bethe  meta pass.
         Pass
         {
-            Name "GBuffer"  // Name is not used
+            Name "GBuffer"
             Tags { "LightMode" = "GBuffer" } // This will be only for opaque object based on the RenderQueue index
 
             Cull [_CullMode]
-            ZTest[_ZTestGBuffer]
+            ZTest [_ZTestGBuffer]
 
             Stencil
             {
-                WriteMask [_StencilWriteMask]
-                Ref [_StencilRef]
+                WriteMask [_StencilWriteMaskGBuffer]
+                Ref [_StencilRefGBuffer]
                 Comp Always
                 Pass Replace
             }
@@ -136,14 +129,8 @@ Shader "HDRenderPipeline/TerrainLit"
             #pragma multi_compile _ LIGHT_LAYERS
 
             #define SHADERPASS SHADERPASS_GBUFFER
-            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/ShaderLibrary/ShaderVariables.hlsl"
-            #ifdef DEBUG_DISPLAY
-            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Debug/DebugDisplay.hlsl"
-            #endif
-            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Material.hlsl"
-            #include "TerrainLitSharePass.hlsl"
-            #include "TerrainLitData.hlsl"
-            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipeline/ShaderPass/ShaderPassGBuffer.hlsl"
+            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/TerrainLit/TerrainLitTemplate.hlsl"
+            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/TerrainLit/TerrainLit_Splatmap.hlsl"
 
             ENDHLSL
         }
@@ -153,7 +140,7 @@ Shader "HDRenderPipeline/TerrainLit"
         Pass
         {
             Name "META"
-            Tags{ "LightMode" = "Meta" }
+            Tags{ "LightMode" = "META" }
 
             Cull Off
 
@@ -164,11 +151,8 @@ Shader "HDRenderPipeline/TerrainLit"
             // both direct and indirect lighting) will hand up in the "regular" lightmap->LIGHTMAP_ON.
 
             #define SHADERPASS SHADERPASS_LIGHT_TRANSPORT
-            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/ShaderLibrary/ShaderVariables.hlsl"
-            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Material.hlsl"
-            #include "TerrainLitSharePass.hlsl"
-            #include "TerrainLitData.hlsl"
-            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipeline/ShaderPass/ShaderPassLightTransport.hlsl"
+            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/TerrainLit/TerrainLitTemplate.hlsl"
+            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/TerrainLit/TerrainLit_Splatmap.hlsl"
 
             ENDHLSL
         }
@@ -189,12 +173,8 @@ Shader "HDRenderPipeline/TerrainLit"
             HLSLPROGRAM
 
             #define SHADERPASS SHADERPASS_SHADOWS
-            #define USE_LEGACY_UNITY_MATRIX_VARIABLES
-            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/ShaderLibrary/ShaderVariables.hlsl"
-            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Material.hlsl"
-            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Lit/ShaderPass/LitDepthPass.hlsl"
-            #include "TerrainLitData.hlsl"
-            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipeline/ShaderPass/ShaderPassDepthOnly.hlsl"
+            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/TerrainLit/TerrainLitTemplate.hlsl"
+            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/TerrainLit/TerrainLit_Splatmap.hlsl"
 
             ENDHLSL
         }
@@ -206,6 +186,15 @@ Shader "HDRenderPipeline/TerrainLit"
 
             Cull[_CullMode]
 
+            // To be able to tag stencil with disableSSR information for forward
+            Stencil
+            {
+                WriteMask [_StencilWriteMaskDepth]
+                Ref [_StencilRefDepth]
+                Comp Always
+                Pass Replace
+            }
+
             ZWrite On
 
             HLSLPROGRAM
@@ -216,25 +205,23 @@ Shader "HDRenderPipeline/TerrainLit"
             #pragma multi_compile _ WRITE_MSAA_DEPTH
 
             #define SHADERPASS SHADERPASS_DEPTH_ONLY
-            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/ShaderLibrary/ShaderVariables.hlsl"
-            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Material.hlsl"
-
-            #ifdef WRITE_NORMAL_BUFFER // If enabled we need all regular interpolator
-            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Lit/ShaderPass/LitSharePass.hlsl"
-            #else
-            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Lit/ShaderPass/LitDepthPass.hlsl"
+            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/TerrainLit/TerrainLitTemplate.hlsl"
+            #ifdef WRITE_NORMAL_BUFFER
+                #if defined(_NORMALMAP)
+                    #define OVERRIDE_SPLAT_SAMPLER_NAME sampler_Normal0
+                #elif defined(_MASKMAP)
+                    #define OVERRIDE_SPLAT_SAMPLER_NAME sampler_Mask0
+                #endif
             #endif
-
-            #include "TerrainLitData.hlsl"
-            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipeline/ShaderPass/ShaderPassDepthOnly.hlsl"
+            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/TerrainLit/TerrainLit_Splatmap.hlsl"
 
             ENDHLSL
         }
 
         Pass
         {
-            Name "Forward" // Name is not used
-            Tags{ "LightMode" = "Forward" } // This will be only for transparent object based on the RenderQueue index
+            Name "Forward"
+            Tags { "LightMode" = "Forward" } // This will be only for transparent object based on the RenderQueue index
 
             Stencil
             {
@@ -260,27 +247,13 @@ Shader "HDRenderPipeline/TerrainLit"
             #pragma multi_compile DECALS_OFF DECALS_3RT DECALS_4RT
             
             // Supported shadow modes per light type
-            #pragma multi_compile PUNCTUAL_SHADOW_LOW PUNCTUAL_SHADOW_MEDIUM PUNCTUAL_SHADOW_HIGH
-            #pragma multi_compile DIRECTIONAL_SHADOW_LOW DIRECTIONAL_SHADOW_MEDIUM DIRECTIONAL_SHADOW_HIGH
+            #pragma multi_compile SHADOW_LOW SHADOW_MEDIUM SHADOW_HIGH
 
-            // #include "Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipeline/Lighting/Forward.hlsl"
-            //#pragma multi_compile LIGHTLOOP_SINGLE_PASS LIGHTLOOP_TILE_PASS
-            #define LIGHTLOOP_TILE_PASS
             #pragma multi_compile USE_FPTL_LIGHTLIST USE_CLUSTERED_LIGHTLIST
 
             #define SHADERPASS SHADERPASS_FORWARD
-            // In case of opaque we don't want to perform the alpha test, it is done in depth prepass and we use depth equal for ztest (setup from UI)
-            #ifndef _SURFACE_TYPE_TRANSPARENT
-                #define SHADERPASS_FORWARD_BYPASS_ALPHA_TEST
-            #endif
-            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/ShaderLibrary/ShaderVariables.hlsl"
-            #ifdef DEBUG_DISPLAY
-            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Debug/DebugDisplay.hlsl"
-            #endif
-            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Lighting/Lighting.hlsl"
-            #include "TerrainLitSharePass.hlsl"
-            #include "TerrainLitData.hlsl"
-            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipeline/ShaderPass/ShaderPassForward.hlsl"
+            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/TerrainLit/TerrainLitTemplate.hlsl"
+            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/TerrainLit/TerrainLit_Splatmap.hlsl"
 
             ENDHLSL
         }
@@ -289,7 +262,7 @@ Shader "HDRenderPipeline/TerrainLit"
         UsePass "Hidden/Nature/Terrain/Utilities/SELECTION"
     }
 
-    Dependency "BaseMapShader" = "Hidden/HDRenderPipeline/TerrainLit_Basemap"
-    Dependency "BaseMapGenShader" = "Hidden/HDRenderPipeline/TerrainLit_Basemap_Gen"
+    Dependency "BaseMapShader" = "Hidden/HDRP/TerrainLit_Basemap"
+    Dependency "BaseMapGenShader" = "Hidden/HDRP/TerrainLit_BasemapGen"
     CustomEditor "UnityEditor.Experimental.Rendering.HDPipeline.TerrainLitGUI"
 }

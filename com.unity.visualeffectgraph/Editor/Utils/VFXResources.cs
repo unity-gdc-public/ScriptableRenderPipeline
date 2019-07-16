@@ -21,7 +21,7 @@ namespace UnityEditor.VFX
         }
         private static VFXResources s_Instance;
 
-        private const string defaultFileName = "Editor/VFXDefaultResources.asset";
+        private const string defaultFileName = "VFXDefaultResources.asset";
         private static string defaultPath { get { return VisualEffectGraphPackageInfo.assetPackagePath + "/"; } } // Change this to a getter once we handle package mode paths
 
         private static T SafeLoadAssetAtPath<T>(string assetPath) where T : Object
@@ -37,7 +37,15 @@ namespace UnityEditor.VFX
 
         private static void Initialize()
         {
-            var asset = SafeLoadAssetAtPath<VFXResources>(defaultPath + defaultFileName);
+
+            string[] guids = AssetDatabase.FindAssets("t:VFXResources");
+
+
+            VFXResources asset = null;
+
+            if (guids.Length > 0)
+                asset = AssetDatabase.LoadAssetAtPath<VFXResources>(AssetDatabase.GUIDToAssetPath(guids[0]));
+
             if (asset == null)
             {
                 Debug.LogWarning("Could not find " + defaultFileName + ", creating...");
@@ -72,8 +80,25 @@ namespace UnityEditor.VFX
                     new GradientAlphaKey(0.0f, 1.0f),
                 };
 
-                AssetDatabase.CreateAsset(newAsset, defaultPath + defaultFileName);
-                asset = SafeLoadAssetAtPath<VFXResources>(defaultPath + defaultFileName);
+                newAsset.gradientMapRamp = new Gradient();
+                newAsset.gradientMapRamp.colorKeys = new GradientColorKey[]
+                {
+                    new GradientColorKey(new Color(0.0f,    0.0f,   0.0f),  0.0f),
+                    new GradientColorKey(new Color(0.75f,   0.15f,  0.0f),  0.3f),
+                    new GradientColorKey(new Color(1.25f,   0.56f,  0.12f), 0.5f),
+                    new GradientColorKey(new Color(3.5f,    2.0f,   0.5f),  0.7f),
+                    new GradientColorKey(new Color(4.0f,    3.5f,   1.2f),  0.9f),
+                    new GradientColorKey(new Color(12.0f,   10.0f,  2.5f),  1.0f),
+                };
+                newAsset.gradientMapRamp.alphaKeys = new GradientAlphaKey[]
+                {
+                    new GradientAlphaKey(0.0f, 0.0f),
+                    new GradientAlphaKey(1.0f, 1.0f),
+                };
+
+
+                AssetDatabase.CreateAsset(newAsset, "Assets/" + defaultFileName);
+                asset = SafeLoadAssetAtPath<VFXResources>("Assets/" + defaultFileName);
             }
             s_Instance = asset;
         }
@@ -86,6 +111,7 @@ namespace UnityEditor.VFX
         public Mesh mesh;
         public AnimationCurve animationCurve;
         public Gradient gradient;
+        public Gradient gradientMapRamp;
         public Shader shader;
     }
 }

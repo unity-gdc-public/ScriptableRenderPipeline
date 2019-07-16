@@ -5,7 +5,7 @@ using UnityEditor.ShaderGraph.Drawing.Controls;
 
 namespace UnityEditor.ShaderGraph
 {
-    public enum NormalBlendMode
+    enum NormalBlendMode
     {
         Default,
         Reoriented
@@ -13,17 +13,13 @@ namespace UnityEditor.ShaderGraph
 
     [FormerName("UnityEditor.ShaderGraph.BlendNormalRNM")]
     [Title("Artistic", "Normal", "Normal Blend")]
-    public class NormalBlendNode : CodeFunctionNode
+    class NormalBlendNode : CodeFunctionNode
     {
         public NormalBlendNode()
         {
             name = "Normal Blend";
         }
 
-        public override string documentationURL
-        {
-            get { return "https://github.com/Unity-Technologies/ShaderGraph/wiki/Normal-Blend-Node"; }
-        }
 
         [SerializeField]
         private NormalBlendMode m_BlendMode = NormalBlendMode.Default;
@@ -62,7 +58,7 @@ namespace UnityEditor.ShaderGraph
 
             return @"
 {
-    Out = normalize({precision}3(A.rg + B.rg, A.b * B.b));
+    Out = normalize($precision3(A.rg + B.rg, A.b * B.b));
 }
 ";
         }
@@ -76,8 +72,8 @@ namespace UnityEditor.ShaderGraph
             return
                 @"
 {
-	{precision}3 t = A.xyz + {precision}3(0.0, 0.0, 1.0);
-	{precision}3 u = B.xyz * {precision}3(-1.0, -1.0, 1.0);
+	$precision3 t = A.xyz + $precision3(0.0, 0.0, 1.0);
+	$precision3 u = B.xyz * $precision3(-1.0, -1.0, 1.0);
 	Out = (t / t.z) * dot(t, u) - u;
 }
 ";

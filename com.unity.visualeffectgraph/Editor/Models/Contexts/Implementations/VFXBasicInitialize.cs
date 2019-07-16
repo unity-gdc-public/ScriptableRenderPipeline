@@ -1,7 +1,7 @@
 using System.Linq;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Experimental.VFX;
+using UnityEngine.VFX;
 
 namespace UnityEditor.VFX
 {
@@ -11,7 +11,7 @@ namespace UnityEditor.VFX
         [VFXSetting, Delayed]
         private uint capacity = 0; // not serialized here but in VFXDataParticle
 
-        public VFXBasicInitialize() : base(VFXContextType.kInit, VFXDataType.kSpawnEvent, VFXDataType.kParticle) {}
+        public VFXBasicInitialize() : base(VFXContextType.Init, VFXDataType.SpawnEvent, VFXDataType.Particle) {}
         public override string name { get { return "Initialize"; } }
         public override string codeGeneratorTemplate { get { return VisualEffectGraphPackageInfo.assetPackagePath + "/Shaders/VFXInit"; } }
         public override bool codeGeneratorCompute { get { return true; } }
@@ -21,7 +21,7 @@ namespace UnityEditor.VFX
         {
             get
             {
-                if (inputContexts.Any(o => o.contextType == VFXContextType.kSpawnerGPU))
+                if (inputContexts.Any(o => o.contextType == VFXContextType.SpawnerGPU))
                 {
                     yield return "VFX_USE_SPAWNER_FROM_GPU";
                 }
@@ -32,7 +32,29 @@ namespace UnityEditor.VFX
         {
             base.OnEnable();
             capacity = ((VFXDataParticle)GetData()).capacity;
+            GetData().onModified += DataModified;
         }
+
+        protected void OnDisable()
+        {
+            GetData().onModified -= DataModified;
+        }
+
+        void DataModified(VFXObject o)
+        {
+            capacity = ((VFXDataParticle)o).capacity;
+        }
+
+        public override void OnDataChanges(VFXData oldData, VFXData newData)
+        {
+            if(oldData != null)
+                oldData.onModified -= DataModified;
+            base.OnDataChanges(oldData, newData);
+            if( newData != null)
+                newData.onModified += DataModified;
+            DataModified(newData);
+        }
+
 
         protected override void OnInvalidate(VFXModel model, VFXModel.InvalidationCause cause)
         {
@@ -58,7 +80,7 @@ namespace UnityEditor.VFX
         {
             // GPU
             if (target == VFXDeviceTarget.GPU)
-                return VFXExpressionMapper.FromBlocks(activeChildrenWithImplicit);
+                return VFXExpressionMapper.FromBlocks(activeFlattenedChildrenWithImplicit);
 
             // CPU
             var cpuMapper = new VFXExpressionMapper();

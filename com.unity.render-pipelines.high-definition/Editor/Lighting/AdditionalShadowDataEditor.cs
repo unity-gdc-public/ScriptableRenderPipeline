@@ -1,8 +1,8 @@
-using UnityEngine;
 using UnityEngine.Experimental.Rendering;
 
 namespace UnityEditor.Experimental.Rendering.HDPipeline
 {
+#pragma warning disable 618 // Obsolete warning
     [CanEditMultipleObjects]
     // Disable HDRP custom editor to display full shadow settings (only for dev purpose, reset for pr)
     [CustomEditor(typeof(AdditionalShadowData))]
@@ -12,4 +12,5 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         {
         }
     }
+#pragma warning restore 618 // Obsolete warning
 }

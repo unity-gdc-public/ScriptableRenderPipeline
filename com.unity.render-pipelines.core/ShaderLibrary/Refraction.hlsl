@@ -48,7 +48,7 @@ RefractionModelResult RefractionModelSphere(real3 V, float3 positionWS, real3 no
     return result;
 }
 
-RefractionModelResult RefractionModelPlane(real3 V, float3 positionWS, real3 normalWS, real ior, real thickness)
+RefractionModelResult RefractionModelBox(real3 V, float3 positionWS, real3 normalWS, real ior, real thickness)
 {
     // Plane shape model:
     //  We approximate locally the shape of the object as a plane with normal {normalWS} at {positionWS}
@@ -58,7 +58,7 @@ RefractionModelResult RefractionModelPlane(real3 V, float3 positionWS, real3 nor
     real3 R = refract(-V, normalWS, 1.0 / ior);
 
     // Optical depth within the thin plane
-    real dist = thickness / dot(R, -normalWS);
+    real dist = thickness / max(dot(R, -normalWS), 1e-5f);
 
     RefractionModelResult result;
     result.dist = dist;

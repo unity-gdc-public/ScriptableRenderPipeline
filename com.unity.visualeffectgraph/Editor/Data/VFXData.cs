@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using UnityEngine;
-using UnityEditor.Experimental.VFX;
-using UnityEngine.Experimental.VFX;
+using UnityEditor.VFX;
+using UnityEngine.VFX;
 
 namespace UnityEditor.VFX
 {
@@ -39,19 +39,44 @@ namespace UnityEditor.VFX
             get { return m_Owners; }
         }
 
+        public string title;
+
+        public int index
+        {
+            get;set;
+        }
+
+        public string fileName {
+            get {
+                if( ! string.IsNullOrWhiteSpace(title))
+                    return title;
+                int i = this.index;
+                if (i < 0)
+                    return string.Empty;
+                return string.IsNullOrEmpty(title)?string.Format("System {0}",i):title;
+            }
+        }
+
         public IEnumerable<VFXContext> implicitContexts
         {
             get { return Enumerable.Empty<VFXContext>(); }
         }
 
-        public static VFXData CreateDataType(VFXDataType type)
+        public static VFXData CreateDataType(VFXGraph graph,VFXDataType type)
         {
+            VFXData newVFXData;
             switch (type)
             {
-                case VFXDataType.kParticle:     return ScriptableObject.CreateInstance<VFXDataParticle>();
-                case VFXDataType.kMesh:         return ScriptableObject.CreateInstance<VFXDataMesh>();
+                case VFXDataType.Particle:
+                    newVFXData = ScriptableObject.CreateInstance<VFXDataParticle>();
+                    break;
+                case VFXDataType.Mesh:
+                    newVFXData = ScriptableObject.CreateInstance<VFXDataMesh>();
+                    break;
                 default:                        return null;
             }
+            newVFXData.m_Parent = graph;
+            return newVFXData;
         }
 
         public override void OnEnable()
@@ -74,7 +99,18 @@ namespace UnityEditor.VFX
                     }
 
                 if (nbRemoved > 0)
-                    Debug.Log(String.Format("Remove {0} owners that couldnt be deserialized from {1} of type {2}", nbRemoved, name, GetType()));
+                    Debug.LogWarning(String.Format("Remove {0} owners that couldnt be deserialized from {1} of type {2}", nbRemoved, name, GetType()));
+            }
+        }
+
+        public override void Sanitize(int version)
+        {
+            base.Sanitize(version);
+
+            if( m_Parent == null)
+            {
+                string assetPath = AssetDatabase.GetAssetPath(this);
+                m_Parent = VisualEffectResource.GetResourceAtPath(assetPath).GetOrCreateGraph();
             }
         }
 
@@ -92,7 +128,8 @@ namespace UnityEditor.VFX
             Dictionary<VFXContext, VFXContextCompiledData> contextToCompiledData,
             Dictionary<VFXContext, int> contextSpawnToBufferIndex,
             Dictionary<VFXData, int> attributeBuffer,
-            Dictionary<VFXData, int> eventBuffer)
+            Dictionary<VFXData, int> eventBuffer,
+            Dictionary<VFXContext, List<VFXContextLink>[]> effectiveFlowInputLinks)
         {
             // Empty implementation by default
         }
@@ -216,8 +253,8 @@ namespace UnityEditor.VFX
                 InitImplicitContexts();
 
             m_DependenciesIn = new HashSet<VFXData>(
-                m_Contexts.Where(c => c.contextType == VFXContextType.kInit)
-                    .SelectMany(c => c.inputContexts.Where(i => i.contextType == VFXContextType.kSpawnerGPU))
+                m_Contexts.Where(c => c.contextType == VFXContextType.Init)
+                    .SelectMany(c => c.inputContexts.Where(i => i.contextType == VFXContextType.SpawnerGPU))
                     .SelectMany(c => c.allLinkedInputSlot)
                     .Where(s =>
                     {
@@ -264,7 +301,7 @@ namespace UnityEditor.VFX
 
                     var attributes = Enumerable.Empty<VFXAttributeInfo>();
                     attributes = attributes.Concat(context.attributes);
-                    foreach (var block in context.activeChildrenWithImplicit)
+                    foreach (var block in context.activeFlattenedChildrenWithImplicit)
                         attributes = attributes.Concat(block.attributes);
 
                     var mapper = context.GetExpressionMapper(GetCompilationTarget(context));
@@ -298,6 +335,24 @@ namespace UnityEditor.VFX
             DebugLogAttributes();
         }
 
+        public void ProcessDependencies()
+        {
+            ComputeLayer();
+
+            // Update attributes
+            foreach (var childData in m_DependenciesOut)
+            {
+                foreach (var attrib in childData.m_ReadSourceAttributes)
+                { 
+                    if (!m_StoredCurrentAttributes.ContainsKey(attrib))
+                    {
+                        m_LocalCurrentAttributes.Remove(attrib);
+                        m_StoredCurrentAttributes.Add(attrib, 0);
+                    }
+                }
+            }
+        }
+
         private static uint ComputeLayer(IEnumerable<VFXData> dependenciesIn)
         {
             if (dependenciesIn.Any())
@@ -307,7 +362,7 @@ namespace UnityEditor.VFX
             return 0u;
         }
 
-        public void ComputeLayer()
+        private void ComputeLayer()
         {
             if (!m_DependenciesIn.Any() && !m_DependenciesOut.Any())
             {
@@ -329,7 +384,7 @@ namespace UnityEditor.VFX
             m_StoredCurrentAttributes.Clear();
             m_LocalCurrentAttributes.Clear();
             m_ReadSourceAttributes.Clear();
-            if (type == VFXDataType.kParticle)
+            if (type == VFXDataType.Particle)
             {
                 m_ReadSourceAttributes.Add(new VFXAttribute("spawnCount", VFXValueType.Float)); // TODO dirty
             }
@@ -355,7 +410,7 @@ namespace UnityEditor.VFX
                 foreach (var kvp2 in kvp.Value)
                 {
                     var context = kvp2.Key;
-                    if (context.contextType == VFXContextType.kInit
+                    if (context.contextType == VFXContextType.Init
                         &&  (kvp2.Value & VFXAttributeMode.ReadSource) != 0)
                     {
                         readSourceInInit = true;
@@ -371,11 +426,11 @@ namespace UnityEditor.VFX
                         continue;
                     }
 
-                    if (context.contextType != VFXContextType.kInit)
+                    if (context.contextType != VFXContextType.Init)
                         onlyInit = false;
-                    if (context.contextType != VFXContextType.kOutput)
+                    if (context.contextType != VFXContextType.Output)
                         onlyOutput = false;
-                    if (context.contextType != VFXContextType.kUpdate)
+                    if (context.contextType != VFXContextType.Update)
                     {
                         onlyUpdateRead = false;
                         onlyUpdateWrite = false;
@@ -388,13 +443,13 @@ namespace UnityEditor.VFX
                             onlyUpdateRead = false;
                     }
 
-                    if (context.contextType != VFXContextType.kInit) // Init isnt taken into account for key computation
+                    if (context.contextType != VFXContextType.Init) // Init isnt taken into account for key computation
                     {
                         int shift = m_Contexts.IndexOf(context) << 1;
                         int value = 0;
                         if ((kvp2.Value & VFXAttributeMode.Read) != 0)
                             value |= 0x01;
-                        if (((kvp2.Value & VFXAttributeMode.Write) != 0) && context.contextType == VFXContextType.kUpdate)
+                        if (((kvp2.Value & VFXAttributeMode.Write) != 0) && context.contextType == VFXContextType.Update)
                             value |= 0x02;
                         key |= (value << shift);
                     }
@@ -421,7 +476,7 @@ namespace UnityEditor.VFX
             }
         }
 
-        public abstract void GenerateAttributeLayout();
+        public abstract void GenerateAttributeLayout(Dictionary<VFXContext, List<VFXContextLink>[]> effectiveFlowInputLinks);
 
         public abstract string GetAttributeDataDeclaration(VFXAttributeMode mode);
         public abstract string GetLoadAttributeCode(VFXAttribute attrib, VFXAttributeLocation location);
@@ -493,6 +548,9 @@ namespace UnityEditor.VFX
 
         private void DebugLogAttributes()
         {
+            if (!VFXViewPreference.advancedLogs)
+                return;
+
             var builder = new StringBuilder();
 
             builder.AppendLine(string.Format("Attributes for data {0} of type {1}", GetHashCode(), GetType()));
@@ -520,8 +578,8 @@ namespace UnityEditor.VFX
                 foreach (var attrib in m_LocalCurrentAttributes)
                     builder.AppendLine(string.Format("\t\tAttribute {0} {1}", attrib.name, attrib.type));
             }
-            if (VFXViewPreference.advancedLogs)
-                Debug.Log(builder.ToString());
+
+            Debug.Log(builder.ToString());
         }
 
         public uint layer

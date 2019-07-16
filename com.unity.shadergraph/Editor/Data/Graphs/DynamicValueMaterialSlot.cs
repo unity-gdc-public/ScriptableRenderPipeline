@@ -4,12 +4,13 @@ using System.Linq;
 using UnityEditor.Graphing;
 using UnityEditor.ShaderGraph.Drawing.Slots;
 using UnityEngine;
-using UnityEngine.Experimental.UIElements;
+
+using UnityEngine.UIElements;
 
 namespace UnityEditor.ShaderGraph
 {
     [Serializable]
-    public class DynamicValueMaterialSlot : MaterialSlot, IMaterialSlotHasValue<Matrix4x4>
+    class DynamicValueMaterialSlot : MaterialSlot, IMaterialSlotHasValue<Matrix4x4>
     {
         [SerializeField]
         private Matrix4x4 m_Value;
@@ -49,7 +50,14 @@ namespace UnityEditor.ShaderGraph
         public override VisualElement InstantiateControl()
         {
             var labels = k_Labels.Take(concreteValueType.GetChannelCount()).ToArray();
-            return new MultiFloatSlotControlView(owner, labels, () => value.GetRow(0), (newValue) => value = new Matrix4x4(newValue, value.GetRow(1), value.GetRow(2), value.GetRow(3)));
+            return new MultiFloatSlotControlView(owner, labels, () => value.GetRow(0), (newValue) => 
+                value = new Matrix4x4()
+                {
+                    m00 = newValue.x, m01 = newValue.y, m02 = newValue.z, m03 = newValue.w,
+                    m10 = value.m10, m11 = value.m11, m12 = value.m12, m13 = value.m13,
+                    m20 = value.m20, m21 = value.m21, m22 = value.m22, m23 = value.m23,
+                    m30 = value.m30, m31 = value.m31, m32 = value.m32, m33 = value.m33,
+                });
         }
 
         public override SlotValueType valueType { get { return SlotValueType.Dynamic; } }
@@ -75,7 +83,7 @@ namespace UnityEditor.ShaderGraph
             properties.Add(pp);
         }
 
-        protected override string ConcreteSlotValueAsVariable(AbstractMaterialNode.OutputPrecision precision)
+        protected override string ConcreteSlotValueAsVariable()
         {
             var channelCount = SlotValueHelper.GetChannelCount(concreteValueType);
             string values = NodeUtils.FloatToShaderValue(value.m00);
@@ -83,7 +91,7 @@ namespace UnityEditor.ShaderGraph
                 return values;
             for (var i = 1; i < channelCount; i++)
                 values += ", " + NodeUtils.FloatToShaderValue(value.GetRow(0)[i]);
-            return string.Format("{0}{1}({2})", precision, channelCount, values);
+            return string.Format("$precision{0}({1})", channelCount, values);
         }
 
         public override void AddDefaultProperty(PropertyCollector properties, GenerationMode generationMode)
@@ -95,7 +103,7 @@ namespace UnityEditor.ShaderGraph
             if (matOwner == null)
                 throw new Exception(string.Format("Slot {0} either has no owner, or the owner is not a {1}", this, typeof(AbstractMaterialNode)));
 
-            IShaderProperty property;
+            AbstractShaderProperty property;
             switch (concreteValueType)
             {
                 case ConcreteSlotValueType.Vector4:

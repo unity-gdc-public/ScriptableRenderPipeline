@@ -12,21 +12,20 @@
 // if (clampToBorder), samples outside of the buffer return 0 (we perform a smooth fade).
 // Otherwise, the sampler simply clamps the texture coordinate to the edge of the texture.
 // Warning: clamping to border may not work as expected with the quadratic filter due to its extent.
-float4 SampleVBuffer(TEXTURE3D_ARGS(VBuffer, clampSampler),
+float4 SampleVBuffer(TEXTURE3D_PARAM(VBuffer, clampSampler),
                      float2 positionNDC,
-                     float  linearDepth,
+                     float  linearDistance,
                      float4 VBufferResolution,
-                     float2 VBufferSliceCount,
                      float2 VBufferUvScale,
                      float2 VBufferUvLimit,
-                     float4 VBufferDepthEncodingParams,
-                     float4 VBufferDepthDecodingParams,
+                     float4 VBufferDistanceEncodingParams,
+                     float4 VBufferDistanceDecodingParams,
                      bool   quadraticFilterXY,
                      bool   clampToBorder)
 {
     // These are the viewport coordinates.
     float2 uv = positionNDC;
-    float  w  = EncodeLogarithmicDepthGeneralized(linearDepth, VBufferDepthEncodingParams);
+    float  w  = EncodeLogarithmicDepthGeneralized(linearDistance, VBufferDistanceEncodingParams);
 
     bool coordIsInsideFrustum = true;
 
@@ -39,6 +38,18 @@ float4 SampleVBuffer(TEXTURE3D_ARGS(VBuffer, clampSampler),
     }
 
     float4 result = 0;
+
+    #if defined(UNITY_STEREO_INSTANCING_ENABLED)
+        // With XR single-pass instancing, one 3D buffer is used to store all views (split along w)
+        w = (w + unity_StereoEyeIndex) * _VBufferRcpInstancedViewCount;
+
+        // Manually clamp w with a safe limit to avoid linear interpolation from the others views
+        float limitSliceRange = 0.5f * _VBufferRcpSliceCount;
+        float lowerSliceRange = (unity_StereoEyeIndex + 0) * _VBufferRcpInstancedViewCount;
+        float upperSliceRange = (unity_StereoEyeIndex + 1) * _VBufferRcpInstancedViewCount;
+
+        w = clamp(w, lowerSliceRange + limitSliceRange, upperSliceRange - limitSliceRange);
+    #endif
 
     if (coordIsInsideFrustum)
     {
@@ -72,30 +83,29 @@ float4 SampleVBuffer(TEXTURE3D_ARGS(VBuffer, clampSampler),
     return result;
 }
 
-float4 SampleVBuffer(TEXTURE3D_ARGS(VBuffer, clampSampler),
+float4 SampleVBuffer(TEXTURE3D_PARAM(VBuffer, clampSampler),
                      float3   positionWS,
+                     float3   cameraPositionWS,
                      float4x4 viewProjMatrix,
                      float4   VBufferResolution,
-                     float2   VBufferSliceCount,
                      float2   VBufferUvScale,
                      float2   VBufferUvLimit,
-                     float4   VBufferDepthEncodingParams,
-                     float4   VBufferDepthDecodingParams,
+                     float4   VBufferDistanceEncodingParams,
+                     float4   VBufferDistanceDecodingParams,
                      bool     quadraticFilterXY,
                      bool     clampToBorder)
 {
     float2 positionNDC = ComputeNormalizedDeviceCoordinates(positionWS, viewProjMatrix);
-    float  linearDepth = mul(viewProjMatrix, float4(positionWS, 1)).w;
+    float  linearDistance = distance(positionWS, cameraPositionWS);
 
-    return SampleVBuffer(TEXTURE3D_PARAM(VBuffer, clampSampler),
+    return SampleVBuffer(TEXTURE3D_ARGS(VBuffer, clampSampler),
                          positionNDC,
-                         linearDepth,
+                         linearDistance,
                          VBufferResolution,
-                         VBufferSliceCount,
                          VBufferUvScale,
                          VBufferUvLimit,
-                         VBufferDepthEncodingParams,
-                         VBufferDepthDecodingParams,
+                         VBufferDistanceEncodingParams,
+                         VBufferDistanceDecodingParams,
                          quadraticFilterXY,
                          clampToBorder);
 }

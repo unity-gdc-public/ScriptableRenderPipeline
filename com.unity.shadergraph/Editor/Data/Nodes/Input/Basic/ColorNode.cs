@@ -6,14 +6,14 @@ using UnityEditor.Graphing;
 
 namespace UnityEditor.ShaderGraph
 {
-    public enum ColorMode
+    enum ColorMode
     {
         Default,
         HDR
     }
 
     [Title("Input", "Basic", "Color")]
-    public class ColorNode : AbstractMaterialNode, IGeneratesBodyCode, IPropertyFromNode
+    class ColorNode : AbstractMaterialNode, IGeneratesBodyCode, IPropertyFromNode
     {
         public const int OutputSlotId = 0;
         private const string kOutputSlotName = "Out";
@@ -24,10 +24,6 @@ namespace UnityEditor.ShaderGraph
             UpdateNodeAfterDeserialization();
         }
 
-        public override string documentationURL
-        {
-            get { return "https://github.com/Unity-Technologies/ShaderGraph/wiki/Color-Node"; }
-        }
 
         [SerializeField]
         Color m_Color = new Color(UnityEngine.Color.clear, ColorMode.Default);
@@ -78,19 +74,17 @@ namespace UnityEditor.ShaderGraph
             });
         }
 
-        public void GenerateNodeCode(ShaderGenerator visitor, GraphContext graphContext, GenerationMode generationMode)
+        public void GenerateNodeCode(ShaderStringBuilder sb, GraphContext graphContext, GenerationMode generationMode)
         {
             if (generationMode.IsPreview())
                 return;
 
-            visitor.AddShaderChunk(string.Format(
-                    @"{0}4 {1} = IsGammaSpace() ? {0}4({2}, {3}, {4}, {5}) : {0}4(SRGBToLinear({0}3({2}, {3}, {4})), {5});"
-                    , precision
-                    , GetVariableNameForNode()
-                    , NodeUtils.FloatToShaderValue(color.color.r)
-                    , NodeUtils.FloatToShaderValue(color.color.g)
-                    , NodeUtils.FloatToShaderValue(color.color.b)
-                    , NodeUtils.FloatToShaderValue(color.color.a)), true);
+            sb.AppendLine(@"$precision4 {0} = IsGammaSpace() ? $precision4({1}, {2}, {3}, {4}) : $precision4(SRGBToLinear($precision3({1}, {2}, {3})), {4});"
+                , GetVariableNameForNode()
+                , NodeUtils.FloatToShaderValue(color.color.r)
+                , NodeUtils.FloatToShaderValue(color.color.g)
+                , NodeUtils.FloatToShaderValue(color.color.b)
+                , NodeUtils.FloatToShaderValue(color.color.a));
         }
 
         public override string GetVariableNameForSlot(int slotId)
@@ -107,7 +101,7 @@ namespace UnityEditor.ShaderGraph
             });
         }
 
-        public IShaderProperty AsShaderProperty()
+        public AbstractShaderProperty AsShaderProperty()
         {
             return new ColorShaderProperty { value = color.color, colorMode = color.mode };
         }

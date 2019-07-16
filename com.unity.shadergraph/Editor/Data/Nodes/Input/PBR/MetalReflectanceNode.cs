@@ -6,7 +6,7 @@ using UnityEditor.ShaderGraph.Drawing.Controls;
 
 namespace UnityEditor.ShaderGraph
 {
-    public enum MetalMaterialType
+    enum MetalMaterialType
     {
         Iron,
         Silver,
@@ -21,7 +21,7 @@ namespace UnityEditor.ShaderGraph
     };
 
     [Title("Input", "PBR", "Metal Reflectance")]
-    public class MetalReflectanceNode : AbstractMaterialNode, IGeneratesBodyCode
+    class MetalReflectanceNode : AbstractMaterialNode, IGeneratesBodyCode
     {
         public MetalReflectanceNode()
         {
@@ -29,10 +29,6 @@ namespace UnityEditor.ShaderGraph
             UpdateNodeAfterDeserialization();
         }
 
-        public override string documentationURL
-        {
-            get { return "https://github.com/Unity-Technologies/ShaderGraph/wiki/Metal-Reflectance-Node"; }
-        }
 
         [SerializeField]
         private MetalMaterialType m_Material = MetalMaterialType.Iron;
@@ -80,9 +76,9 @@ namespace UnityEditor.ShaderGraph
             RemoveSlotsNameNotMatching(new[] { kOutputSlotId });
         }
 
-        public void GenerateNodeCode(ShaderGenerator visitor, GraphContext graphContext, GenerationMode generationMode)
+        public void GenerateNodeCode(ShaderStringBuilder sb, GraphContext graphContext, GenerationMode generationMode)
         {
-            visitor.AddShaderChunk(string.Format("{0}3 {1} = {0}3{2};", precision, GetVariableNameForSlot(kOutputSlotId), m_MaterialList[material].ToString(CultureInfo.InvariantCulture)), true);
+            sb.AppendLine(string.Format("$precision3 {0} = $precision3{1};", GetVariableNameForSlot(kOutputSlotId), m_MaterialList[material].ToString(CultureInfo.InvariantCulture)));
         }
     }
 }

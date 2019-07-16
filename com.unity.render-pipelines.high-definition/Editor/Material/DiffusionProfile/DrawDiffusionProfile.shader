@@ -1,4 +1,4 @@
-Shader "Hidden/HDRenderPipeline/DrawDiffusionProfile"
+Shader "Hidden/HDRP/DrawDiffusionProfile"
 {
     SubShader
     {
@@ -11,21 +11,20 @@ Shader "Hidden/HDRenderPipeline/DrawDiffusionProfile"
             Blend  Off
 
             HLSLPROGRAM
+            #pragma editor_sync_compilation
             #pragma target 4.5
             #pragma only_renderers d3d11 ps4 xboxone vulkan metal switch
 
             #pragma vertex Vert
             #pragma fragment Frag
 
-            #pragma multi_compile SSS_MODEL_BASIC SSS_MODEL_DISNEY
-
             //-------------------------------------------------------------------------------------
             // Include
             //-------------------------------------------------------------------------------------
 
             #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Common.hlsl"
-            #define USE_LEGACY_UNITY_MATRIX_VARIABLES
             #include "Packages/com.unity.render-pipelines.high-definition/Runtime/ShaderLibrary/ShaderVariables.hlsl"
+            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/ShaderLibrary/EditorShaderVariables.hlsl"
 
             //-------------------------------------------------------------------------------------
             // Inputs & outputs
@@ -52,7 +51,8 @@ Shader "Hidden/HDRenderPipeline/DrawDiffusionProfile"
             Varyings Vert(Attributes input)
             {
                 Varyings output;
-                output.vertex   = TransformWorldToHClip(input.vertex);
+                // We still use the legacy matrices in the editor GUI
+                output.vertex   = mul(unity_MatrixVP, float4(input.vertex, 1));
                 output.texcoord = input.texcoord.xy;
                 return output;
             }

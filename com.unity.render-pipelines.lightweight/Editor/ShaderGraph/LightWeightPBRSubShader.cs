@@ -4,15 +4,15 @@ using System.IO;
 using System.Linq;
 using UnityEditor.Graphing;
 using UnityEditor.ShaderGraph;
-using UnityEngine.Experimental.Rendering;
-using UnityEngine.Experimental.Rendering.LightweightPipeline;
 using UnityEngine.Rendering;
-
-namespace UnityEditor.Experimental.Rendering.LightweightPipeline
+using UnityEngine.Rendering.LWRP;
+    
+namespace UnityEditor.Rendering.LWRP
 {
     [Serializable]
+    [FormerName("UnityEditor.Experimental.Rendering.LightweightPipeline.LightWeightPBRSubShader")]
     [FormerName("UnityEditor.ShaderGraph.LightWeightPBRSubShader")]
-    public class LightWeightPBRSubShader : IPBRSubShader
+    class LightWeightPBRSubShader : IPBRSubShader
     {
         static readonly NeededCoordinateSpace k_PixelCoordinateSpace = NeededCoordinateSpace.World;
 
@@ -79,6 +79,8 @@ namespace UnityEditor.Experimental.Rendering.LightweightPipeline
             }
         };
 
+        public int GetPreviewPassIndex() { return 0; }
+
         public string GetSubshader(IMasterNode masterNode, GenerationMode mode, List<string> sourceAssetDependencyPaths = null)
         {
             if (sourceAssetDependencyPaths != null)
@@ -89,17 +91,26 @@ namespace UnityEditor.Experimental.Rendering.LightweightPipeline
 
             var templatePath = GetTemplatePath("lightweightPBRForwardPass.template");
             var extraPassesTemplatePath = GetTemplatePath("lightweightPBRExtraPasses.template");
+            var lightweight2DPath = GetTemplatePath("lightweight2DPBRPass.template");
             if (!File.Exists(templatePath) || !File.Exists(extraPassesTemplatePath))
                 return string.Empty;
+
 
             if (sourceAssetDependencyPaths != null)
             {
                 sourceAssetDependencyPaths.Add(templatePath);
                 sourceAssetDependencyPaths.Add(extraPassesTemplatePath);
+                sourceAssetDependencyPaths.Add(lightweight2DPath);
+
+                var relativePath = "Packages/com.unity.render-pipelines.lightweight/";
+                var fullPath = Path.GetFullPath(relativePath);
+                var shaderFiles = Directory.GetFiles(Path.Combine(fullPath, "ShaderLibrary")).Select(x => Path.Combine(relativePath, x.Substring(fullPath.Length)));
+                sourceAssetDependencyPaths.AddRange(shaderFiles);
             }
 
             string forwardTemplate = File.ReadAllText(templatePath);
             string extraTemplate = File.ReadAllText(extraPassesTemplatePath);
+            string lightweight2DTemplate = File.ReadAllText(lightweight2DPath);
 
             var pbrMasterNode = masterNode as PBRMasterNode;
             var pass = pbrMasterNode.model == PBRMasterNode.Model.Metallic ? m_ForwardPassMetallic : m_ForwardPassSpecular;
@@ -107,11 +118,9 @@ namespace UnityEditor.Experimental.Rendering.LightweightPipeline
             subShader.AppendLine("SubShader");
             using (subShader.BlockScope())
             {
-                subShader.AppendLine("Tags{ \"RenderPipeline\" = \"LightweightPipeline\"}");
-
                 var materialTags = ShaderGenerator.BuildMaterialTags(pbrMasterNode.surfaceType);
                 var tagsBuilder = new ShaderStringBuilder(0);
-                materialTags.GetTags(tagsBuilder);
+                materialTags.GetTags(tagsBuilder, LightweightRenderPipeline.k_ShaderTagName);
                 subShader.AppendLines(tagsBuilder.ToString());
 
                 var materialOptions = ShaderGenerator.GetMaterialOptions(pbrMasterNode.surfaceType, pbrMasterNode.alphaMode, pbrMasterNode.twoSided.isOn);
@@ -128,6 +137,15 @@ namespace UnityEditor.Experimental.Rendering.LightweightPipeline
                         m_DepthShadowPass,
                         mode,
                         materialOptions));
+
+                string txt = GetShaderPassFromTemplate(
+                        lightweight2DTemplate,
+                        pbrMasterNode,
+                        pass,
+                        mode,
+                        materialOptions);
+                subShader.AppendLines(txt);
+
             }
             subShader.Append("CustomEditor \"UnityEditor.ShaderGraph.PBRMasterGUI\"");
 
@@ -141,9 +159,9 @@ namespace UnityEditor.Experimental.Rendering.LightweightPipeline
 
         static string GetTemplatePath(string templateName)
         {
-            var basePath = Path.GetFullPath("Packages/com.unity.render-pipelines.lightweight/Editor/ShaderGraph");
+            var basePath = "Packages/com.unity.render-pipelines.lightweight/Editor/ShaderGraph/";
             string templatePath = Path.Combine(basePath, templateName);
-            
+
             if (File.Exists(templatePath))
                 return templatePath;
 
@@ -160,6 +178,7 @@ namespace UnityEditor.Experimental.Rendering.LightweightPipeline
             // String builders
 
             var shaderProperties = new PropertyCollector();
+            var shaderPropertyUniforms = new ShaderStringBuilder(1);
             var functionBuilder = new ShaderStringBuilder(1);
             var functionRegistry = new FunctionRegistry(functionBuilder);
 
@@ -189,11 +208,11 @@ namespace UnityEditor.Experimental.Rendering.LightweightPipeline
             // Get Slot and Node lists per stage
 
             var vertexSlots = pass.VertexShaderSlots.Select(masterNode.FindSlot<MaterialSlot>).ToList();
-            var vertexNodes = ListPool<INode>.Get();
+            var vertexNodes = ListPool<AbstractMaterialNode>.Get();
             NodeUtils.DepthFirstCollectNodesFromNode(vertexNodes, masterNode, NodeUtils.IncludeSelf.Include, pass.VertexShaderSlots);
 
             var pixelSlots = pass.PixelShaderSlots.Select(masterNode.FindSlot<MaterialSlot>).ToList();
-            var pixelNodes = ListPool<INode>.Get();
+            var pixelNodes = ListPool<AbstractMaterialNode>.Get();
             NodeUtils.DepthFirstCollectNodesFromNode(pixelNodes, masterNode, NodeUtils.IncludeSelf.Include, pass.PixelShaderSlots);
 
             // -------------------------------------
@@ -275,6 +294,11 @@ namespace UnityEditor.Experimental.Rendering.LightweightPipeline
 
                 foreach (var channel in vertexRequirements.requiresMeshUVs.Distinct())
                     vertexDescriptionInputStruct.AppendLine("half4 {0};", channel.GetUVName());
+
+                if (vertexRequirements.requiresTime)
+                {
+                    vertexDescriptionInputStruct.AppendLine("float3 {0};", ShaderGeneratorNames.TimeParameters);
+                }
             }
 
             // -------------------------------------
@@ -286,7 +310,7 @@ namespace UnityEditor.Experimental.Rendering.LightweightPipeline
             // Generate Vertex Description function
 
             GraphUtil.GenerateVertexDescriptionFunction(
-                masterNode.owner as AbstractMaterialGraph,
+                masterNode.owner as GraphData,
                 vertexDescriptionFunction,
                 functionRegistry,
                 shaderProperties,
@@ -322,12 +346,17 @@ namespace UnityEditor.Experimental.Rendering.LightweightPipeline
 
                 foreach (var channel in surfaceRequirements.requiresMeshUVs.Distinct())
                     surfaceDescriptionInputStruct.AppendLine("half4 {0};", channel.GetUVName());
+
+                if (surfaceRequirements.requiresTime)
+                {
+                    surfaceDescriptionInputStruct.AppendLine("float3 {0};", ShaderGeneratorNames.TimeParameters);
+                }
             }
 
             // -------------------------------------
             // Generate Output structure for Surface Description function
 
-            GraphUtil.GenerateSurfaceDescriptionStruct(surfaceDescriptionStruct, pixelSlots, true);
+            GraphUtil.GenerateSurfaceDescriptionStruct(surfaceDescriptionStruct, pixelSlots);
 
             // -------------------------------------
             // Generate Surface Description function
@@ -335,7 +364,7 @@ namespace UnityEditor.Experimental.Rendering.LightweightPipeline
             GraphUtil.GenerateSurfaceDescriptionFunction(
                 pixelNodes,
                 masterNode,
-                masterNode.owner as AbstractMaterialGraph,
+                masterNode.owner as GraphData,
                 surfaceDescriptionFunction,
                 functionRegistry,
                 shaderProperties,
@@ -349,6 +378,11 @@ namespace UnityEditor.Experimental.Rendering.LightweightPipeline
             // ----------------------------------------------------- //
             //           GENERATE VERTEX > PIXEL PIPELINE            //
             // ----------------------------------------------------- //
+
+            // -------------------------------------
+            // Property uniforms
+
+            shaderProperties.GetPropertiesDeclaration(shaderPropertyUniforms, mode, masterNode.owner.concretePrecision);
 
             // -------------------------------------
             // Generate Input structure for Vertex shader
@@ -397,7 +431,7 @@ namespace UnityEditor.Experimental.Rendering.LightweightPipeline
             // -------------------------------------
             // Combine Graph sections
 
-            graph.AppendLine(shaderProperties.GetPropertiesDeclaration(1));
+            graph.AppendLines(shaderPropertyUniforms.ToString());
 
             graph.AppendLine(vertexDescriptionInputStruct.ToString());
             graph.AppendLine(surfaceDescriptionInputStruct.ToString());

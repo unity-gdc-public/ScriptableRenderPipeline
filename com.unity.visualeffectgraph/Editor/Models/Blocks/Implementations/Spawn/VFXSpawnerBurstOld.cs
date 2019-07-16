@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using UnityEngine.Experimental.VFX;
+using UnityEngine.VFX;
 
 namespace UnityEditor.VFX
 {
@@ -50,7 +50,7 @@ namespace UnityEditor.VFX
             }
         }
 
-        public override void Sanitize()
+        public override void Sanitize(int version)
         {
             var newBlock = ScriptableObject.CreateInstance<VFXSpawnerBurst>();
             newBlock.SetSettingValue("repeat", VFXSpawnerBurst.RepeatMode.Single);
@@ -77,7 +77,7 @@ namespace UnityEditor.VFX
                 newBlock.GetInputSlot(1).value = 0.0f;
 
             ReplaceModel(newBlock, this);
-            base.Sanitize();
+            base.Sanitize(version);
         }
     }
 }

@@ -5,7 +5,7 @@ using UnityEngine;
 namespace UnityEditor.ShaderGraph
 {
     [Serializable]
-    public class Vector2ShaderProperty : VectorShaderProperty
+    class Vector2ShaderProperty : VectorShaderProperty
     {
         public Vector2ShaderProperty()
         {
@@ -27,9 +27,19 @@ namespace UnityEditor.ShaderGraph
             get { return true; }
         }
 
+        public override bool isExposable
+        {
+            get { return true; }
+        }
+
+        public override bool isRenamable
+        {
+            get { return true; }
+        }
+
         public override string GetPropertyDeclarationString(string delimiter = ";")
         {
-            return string.Format("float2 {0}{1}", referenceName, delimiter);
+            return string.Format("{0}2 {1}{2}", concretePrecision.ToShaderString(), referenceName, delimiter);
         }
 
         public override PreviewProperty GetPreviewMaterialProperty()
@@ -41,7 +51,7 @@ namespace UnityEditor.ShaderGraph
             };
         }
 
-        public override INode ToConcreteNode()
+        public override AbstractMaterialNode ToConcreteNode()
         {
             var node = new Vector2Node();
             node.FindInputSlot<Vector1MaterialSlot>(Vector2Node.InputSlotXId).value = value.x;
@@ -49,7 +59,7 @@ namespace UnityEditor.ShaderGraph
             return node;
         }
 
-        public override IShaderProperty Copy()
+        public override AbstractShaderProperty Copy()
         {
             var copied = new Vector2ShaderProperty();
             copied.displayName = displayName;

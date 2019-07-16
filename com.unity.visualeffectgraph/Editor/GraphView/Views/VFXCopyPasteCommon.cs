@@ -2,8 +2,8 @@ using System;
 using System.Linq;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEditor.Experimental.VFX;
-using UnityEngine.Experimental.UIElements;
+using UnityEditor.VFX;
+using UnityEngine.UIElements;
 using System.Reflection;
 using UnityObject = UnityEngine.Object;
 using NodeID = System.UInt32;
@@ -66,6 +66,7 @@ namespace UnityEditor.VFX.UI
         protected struct Property
         {
             public string name;
+            public VFXCoordinateSpace space;
             public VFXSerializableObject value;
         }
 
@@ -88,6 +89,7 @@ namespace UnityEditor.VFX.UI
             public Property[] inputSlots;
             public string[] expandedInputs;
             public string[] expandedOutputs;
+            public int indexInClipboard;
         }
 
 
@@ -96,7 +98,16 @@ namespace UnityEditor.VFX.UI
         {
             public Node node;
             public int dataIndex;
+            public string label;
             public Node[] blocks;
+            public SubOutput[] subOutputs;
+        }
+
+        [Serializable]
+        protected struct SubOutput
+        {
+            public SerializableType type;
+            public Property[] settings;
         }
 
         [Serializable]
@@ -111,6 +122,7 @@ namespace UnityEditor.VFX.UI
             public Vector2 position;
             public bool collapsed;
             public string[] expandedOutput;
+            public int indexInClipboard;
         }
 
         [Serializable]
@@ -124,6 +136,7 @@ namespace UnityEditor.VFX.UI
             public VFXSerializableObject min;
             public VFXSerializableObject max;
             public string tooltip;
+            public bool isOutput;
             public ParameterNode[] nodes;
         }
 
@@ -143,7 +156,7 @@ namespace UnityEditor.VFX.UI
             public bool blocksOnly;
 
             public Context[] contexts;
-            public Node[] operatorsOrBlocks; // this contains blocks if blocksOnly else it contains operators and blocks are included in their respective contexts
+            public Node[] operators; // this contains blocks if blocksOnly else it contains operators and blocks are included in their respective contexts
             public Data[] datas;
 
             public Parameter[] parameters;
@@ -153,6 +166,8 @@ namespace UnityEditor.VFX.UI
 
             public VFXUI.StickyNoteInfo[] stickyNotes;
             public GroupNode[] groupNodes;
+
+            public int controllerCount;
         }
 
         static Dictionary<Type, List<FieldInfo>> s_SerializableFieldByType = new Dictionary<Type, List<FieldInfo>>();
@@ -162,7 +177,7 @@ namespace UnityEditor.VFX.UI
             if (!s_SerializableFieldByType.TryGetValue(type, out fields))
             {
                 fields = new List<FieldInfo>();
-                while (type != typeof(VFXContext) && type != typeof(VFXOperator) && type != typeof(VFXBlock) && type != typeof(VFXData))
+                while (type != typeof(VFXContext) && type != typeof(VFXOperator) && type != typeof(VFXBlock) && type != typeof(VFXData) && type != typeof(VFXSRPSubOutput))
                 {
                     var typeFields = type.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly);
 

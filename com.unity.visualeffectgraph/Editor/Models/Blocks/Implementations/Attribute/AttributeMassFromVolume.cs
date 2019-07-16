@@ -9,15 +9,17 @@ namespace UnityEditor.VFX.Block
     class AttributeMassFromVolume : VFXBlock
     {
         public override string name { get { return "Calculate Mass from Volume"; } }
-        public override VFXContextType compatibleContexts { get { return VFXContextType.kInitAndUpdate; } }
-        public override VFXDataType compatibleData { get { return VFXDataType.kParticle; } }
+        public override VFXContextType compatibleContexts { get { return VFXContextType.InitAndUpdate; } }
+        public override VFXDataType compatibleData { get { return VFXDataType.Particle; } }
         public override IEnumerable<VFXAttributeInfo> attributes
         {
             get
             {
                 yield return new VFXAttributeInfo(VFXAttribute.Mass, VFXAttributeMode.Write);
-                foreach (var size in VFXBlockUtility.GetReadableSizeAttributes(GetData()))
-                    yield return size;
+                yield return new VFXAttributeInfo(VFXAttribute.Size, VFXAttributeMode.Read);
+                yield return new VFXAttributeInfo(VFXAttribute.ScaleX, VFXAttributeMode.Read);
+                yield return new VFXAttributeInfo(VFXAttribute.ScaleY, VFXAttributeMode.Read);
+                yield return new VFXAttributeInfo(VFXAttribute.ScaleZ, VFXAttributeMode.Read);
             }
         }
 
@@ -39,11 +41,11 @@ namespace UnityEditor.VFX.Block
         {
             get
             {
-                return string.Format(@"
-float3 size = {0};
-float radiusCubed = size.x * size.y * size.z * 0.125f;
+                return @"
+float3 radius = size * float3(scaleX, scaleY, scaleZ);
+float radiusCubed = radius.x * radius.y * radius.z * 0.125f;
 mass = (4.0f / 3.0f) * UNITY_PI * radiusCubed * Density;
-", VFXBlockUtility.GetSizeVector(GetParent()));
+";
             }
         }
     }

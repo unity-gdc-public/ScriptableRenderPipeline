@@ -5,7 +5,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 
-namespace UnityEngine.Experimental.Rendering
+namespace UnityEngine.Rendering
 {
     // We need this base class to be able to store a list of VolumeParameter in collections as we
     // can't store VolumeParameter<T> with variable T types in the same collection. As a result some
@@ -19,8 +19,8 @@ namespace UnityEngine.Experimental.Rendering
 
         public virtual bool overrideState
         {
-            get { return m_OverrideState; }
-            set { m_OverrideState = value; }
+            get => m_OverrideState;
+            set => m_OverrideState = value;
         }
 
         internal abstract void Interp(VolumeParameter from, VolumeParameter to, float t);
@@ -64,8 +64,8 @@ namespace UnityEngine.Experimental.Rendering
 
         public virtual T value
         {
-            get { return m_Value; }
-            set { m_Value = value; }
+            get => m_Value;
+            set => m_Value = value;
         }
 
         protected const float k_DefaultInterpSwap = 0f;
@@ -110,25 +110,19 @@ namespace UnityEngine.Experimental.Rendering
             {
                 int hash = 17;
                 hash = hash * 23 + overrideState.GetHashCode();
-                hash = hash * 23 + value.GetHashCode();
+
+                if (value != null)
+                    hash = hash * 23 + value.GetHashCode();
+
                 return hash;
             }
         }
 
-        public override string ToString()
-        {
-            return string.Format("{0} ({1})", value, overrideState);
-        }
+        public override string ToString() => $"{value} ({overrideState})";
 
-        public static bool operator==(VolumeParameter<T> lhs, T rhs)
-        {
-            return lhs != null && lhs.value != null && lhs.value.Equals(rhs);
-        }
+        public static bool operator==(VolumeParameter<T> lhs, T rhs) => lhs != null && lhs.value != null && lhs.value.Equals(rhs);
 
-        public static bool operator!=(VolumeParameter<T> lhs, T rhs)
-        {
-            return !(lhs == rhs);
-        }
+        public static bool operator!=(VolumeParameter<T> lhs, T rhs) => !(lhs == rhs);
 
         public bool Equals(VolumeParameter<T> other)
         {
@@ -155,22 +149,7 @@ namespace UnityEngine.Experimental.Rendering
             return Equals((VolumeParameter<T>)obj);
         }
 
-        //
-        // Implicit conversion; assuming the following:
-        //
-        //   var myFloatProperty = new ParameterOverride<float> { value = 42f; };
-        //
-        // It allows for implicit casts:
-        //
-        //   float myFloat = myFloatProperty.value; // No implicit cast
-        //   float myFloat = myFloatProperty;       // Implicit cast
-        //
-        // For safety reason this is one-way only.
-        //
-        public static implicit operator T(VolumeParameter<T> prop)
-        {
-            return prop.m_Value;
-        }
+        public static explicit operator T(VolumeParameter<T> prop) => prop.m_Value;
     }
 
     //
@@ -184,9 +163,16 @@ namespace UnityEngine.Experimental.Rendering
     //
 
     [Serializable, DebuggerDisplay(k_DebuggerDisplay)]
-    public sealed class BoolParameter : VolumeParameter<bool>
+    public class BoolParameter : VolumeParameter<bool>
     {
         public BoolParameter(bool value, bool overrideState = false)
+            : base(value, overrideState) {}
+    }
+
+    [Serializable, DebuggerDisplay(k_DebuggerDisplay)]
+    public class LayerMaskParameter : VolumeParameter<LayerMask>
+    {
+        public LayerMaskParameter(LayerMask value, bool overrideState = false)
             : base(value, overrideState) {}
     }
 
@@ -205,21 +191,21 @@ namespace UnityEngine.Experimental.Rendering
     }
 
     [Serializable, DebuggerDisplay(k_DebuggerDisplay)]
-    public sealed class NoInterpIntParameter : VolumeParameter<int>
+    public class NoInterpIntParameter : VolumeParameter<int>
     {
         public NoInterpIntParameter(int value, bool overrideState = false)
             : base(value, overrideState) {}
     }
 
     [Serializable, DebuggerDisplay(k_DebuggerDisplay)]
-    public sealed class MinIntParameter : IntParameter
+    public class MinIntParameter : IntParameter
     {
         public int min;
 
         public override int value
         {
-            get { return m_Value; }
-            set { m_Value = Mathf.Max(value, min); }
+            get => m_Value;
+            set => m_Value = Mathf.Max(value, min);
         }
 
         public MinIntParameter(int value, int min, bool overrideState = false)
@@ -230,14 +216,14 @@ namespace UnityEngine.Experimental.Rendering
     }
 
     [Serializable, DebuggerDisplay(k_DebuggerDisplay)]
-    public sealed class NoInterpMinIntParameter : VolumeParameter<int>
+    public class NoInterpMinIntParameter : VolumeParameter<int>
     {
         public int min;
 
         public override int value
         {
-            get { return m_Value; }
-            set { m_Value = Mathf.Max(value, min); }
+            get => m_Value;
+            set => m_Value = Mathf.Max(value, min);
         }
 
         public NoInterpMinIntParameter(int value, int min, bool overrideState = false)
@@ -248,14 +234,14 @@ namespace UnityEngine.Experimental.Rendering
     }
 
     [Serializable, DebuggerDisplay(k_DebuggerDisplay)]
-    public sealed class MaxIntParameter : IntParameter
+    public class MaxIntParameter : IntParameter
     {
         public int max;
 
         public override int value
         {
-            get { return m_Value; }
-            set { m_Value = Mathf.Min(value, max); }
+            get => m_Value;
+            set => m_Value = Mathf.Min(value, max);
         }
 
         public MaxIntParameter(int value, int max, bool overrideState = false)
@@ -266,14 +252,14 @@ namespace UnityEngine.Experimental.Rendering
     }
 
     [Serializable, DebuggerDisplay(k_DebuggerDisplay)]
-    public sealed class NoInterpMaxIntParameter : VolumeParameter<int>
+    public class NoInterpMaxIntParameter : VolumeParameter<int>
     {
         public int max;
 
         public override int value
         {
-            get { return m_Value; }
-            set { m_Value = Mathf.Min(value, max); }
+            get => m_Value;
+            set => m_Value = Mathf.Min(value, max);
         }
 
         public NoInterpMaxIntParameter(int value, int max, bool overrideState = false)
@@ -284,15 +270,15 @@ namespace UnityEngine.Experimental.Rendering
     }
 
     [Serializable, DebuggerDisplay(k_DebuggerDisplay)]
-    public sealed class ClampedIntParameter : IntParameter
+    public class ClampedIntParameter : IntParameter
     {
         public int min;
         public int max;
 
         public override int value
         {
-            get { return m_Value; }
-            set { m_Value = Mathf.Clamp(value, min, max); }
+            get => m_Value;
+            set => m_Value = Mathf.Clamp(value, min, max);
         }
 
         public ClampedIntParameter(int value, int min, int max, bool overrideState = false)
@@ -304,15 +290,15 @@ namespace UnityEngine.Experimental.Rendering
     }
 
     [Serializable, DebuggerDisplay(k_DebuggerDisplay)]
-    public sealed class NoInterpClampedIntParameter : VolumeParameter<int>
+    public class NoInterpClampedIntParameter : VolumeParameter<int>
     {
         public int min;
         public int max;
 
         public override int value
         {
-            get { return m_Value; }
-            set { m_Value = Mathf.Clamp(value, min, max); }
+            get => m_Value;
+            set => m_Value = Mathf.Clamp(value, min, max);
         }
 
         public NoInterpClampedIntParameter(int value, int min, int max, bool overrideState = false)
@@ -336,21 +322,21 @@ namespace UnityEngine.Experimental.Rendering
     }
 
     [Serializable, DebuggerDisplay(k_DebuggerDisplay)]
-    public sealed class NoInterpFloatParameter : VolumeParameter<float>
+    public class NoInterpFloatParameter : VolumeParameter<float>
     {
         public NoInterpFloatParameter(float value, bool overrideState = false)
             : base(value, overrideState) {}
     }
 
     [Serializable, DebuggerDisplay(k_DebuggerDisplay)]
-    public sealed class MinFloatParameter : FloatParameter
+    public class MinFloatParameter : FloatParameter
     {
         public float min;
 
         public override float value
         {
-            get { return m_Value; }
-            set { m_Value = Mathf.Max(value, min); }
+            get => m_Value;
+            set => m_Value = Mathf.Max(value, min);
         }
 
         public MinFloatParameter(float value, float min, bool overrideState = false)
@@ -361,14 +347,14 @@ namespace UnityEngine.Experimental.Rendering
     }
 
     [Serializable, DebuggerDisplay(k_DebuggerDisplay)]
-    public sealed class NoInterpMinFloatParameter : VolumeParameter<float>
+    public class NoInterpMinFloatParameter : VolumeParameter<float>
     {
         public float min;
 
         public override float value
         {
-            get { return m_Value; }
-            set { m_Value = Mathf.Max(value, min); }
+            get => m_Value;
+            set => m_Value = Mathf.Max(value, min);
         }
 
         public NoInterpMinFloatParameter(float value, float min, bool overrideState = false)
@@ -379,14 +365,14 @@ namespace UnityEngine.Experimental.Rendering
     }
 
     [Serializable, DebuggerDisplay(k_DebuggerDisplay)]
-    public sealed class MaxFloatParameter : FloatParameter
+    public class MaxFloatParameter : FloatParameter
     {
         public float max;
 
         public override float value
         {
-            get { return m_Value; }
-            set { m_Value = Mathf.Min(value, max); }
+            get => m_Value;
+            set => m_Value = Mathf.Min(value, max);
         }
 
         public MaxFloatParameter(float value, float max, bool overrideState = false)
@@ -397,14 +383,14 @@ namespace UnityEngine.Experimental.Rendering
     }
 
     [Serializable, DebuggerDisplay(k_DebuggerDisplay)]
-    public sealed class NoInterpMaxFloatParameter : VolumeParameter<float>
+    public class NoInterpMaxFloatParameter : VolumeParameter<float>
     {
         public float max;
 
         public override float value
         {
-            get { return m_Value; }
-            set { m_Value = Mathf.Min(value, max); }
+            get => m_Value;
+            set => m_Value = Mathf.Min(value, max);
         }
 
         public NoInterpMaxFloatParameter(float value, float max, bool overrideState = false)
@@ -415,15 +401,15 @@ namespace UnityEngine.Experimental.Rendering
     }
 
     [Serializable, DebuggerDisplay(k_DebuggerDisplay)]
-    public sealed class ClampedFloatParameter : FloatParameter
+    public class ClampedFloatParameter : FloatParameter
     {
         public float min;
         public float max;
 
         public override float value
         {
-            get { return m_Value; }
-            set { m_Value = Mathf.Clamp(value, min, max); }
+            get => m_Value;
+            set => m_Value = Mathf.Clamp(value, min, max);
         }
 
         public ClampedFloatParameter(float value, float min, float max, bool overrideState = false)
@@ -435,15 +421,15 @@ namespace UnityEngine.Experimental.Rendering
     }
 
     [Serializable, DebuggerDisplay(k_DebuggerDisplay)]
-    public sealed class NoInterpClampedFloatParameter : VolumeParameter<float>
+    public class NoInterpClampedFloatParameter : VolumeParameter<float>
     {
         public float min;
         public float max;
 
         public override float value
         {
-            get { return m_Value; }
-            set { m_Value = Mathf.Clamp(value, min, max); }
+            get => m_Value;
+            set => m_Value = Mathf.Clamp(value, min, max);
         }
 
         public NoInterpClampedFloatParameter(float value, float min, float max, bool overrideState = false)
@@ -456,14 +442,14 @@ namespace UnityEngine.Experimental.Rendering
 
     // Holds a min & a max values clamped in a range (MinMaxSlider in the editor)
     [Serializable, DebuggerDisplay(k_DebuggerDisplay)]
-    public sealed class FloatRangeParameter : VolumeParameter<Vector2>
+    public class FloatRangeParameter : VolumeParameter<Vector2>
     {
         public float min;
         public float max;
 
         public override Vector2 value
         {
-            get { return m_Value; }
+            get => m_Value;
             set
             {
                 m_Value.x = Mathf.Max(value.x, min);
@@ -486,14 +472,14 @@ namespace UnityEngine.Experimental.Rendering
     }
 
     [Serializable, DebuggerDisplay(k_DebuggerDisplay)]
-    public sealed class NoInterpFloatRangeParameter : VolumeParameter<Vector2>
+    public class NoInterpFloatRangeParameter : VolumeParameter<Vector2>
     {
         public float min;
         public float max;
 
         public override Vector2 value
         {
-            get { return m_Value; }
+            get => m_Value;
             set
             {
                 m_Value.x = Mathf.Max(value.x, min);
@@ -511,7 +497,7 @@ namespace UnityEngine.Experimental.Rendering
 
     // 32-bit RGBA
     [Serializable, DebuggerDisplay(k_DebuggerDisplay)]
-    public sealed class ColorParameter : VolumeParameter<Color>
+    public class ColorParameter : VolumeParameter<Color>
     {
         public bool hdr = false;
         public bool showAlpha = true;
@@ -543,7 +529,7 @@ namespace UnityEngine.Experimental.Rendering
     }
 
     [Serializable, DebuggerDisplay(k_DebuggerDisplay)]
-    public sealed class NoInterpColorParameter : VolumeParameter<Color>
+    public class NoInterpColorParameter : VolumeParameter<Color>
     {
         public bool hdr = false;
         public bool showAlpha = true;
@@ -563,7 +549,7 @@ namespace UnityEngine.Experimental.Rendering
     }
 
     [Serializable, DebuggerDisplay(k_DebuggerDisplay)]
-    public sealed class Vector2Parameter : VolumeParameter<Vector2>
+    public class Vector2Parameter : VolumeParameter<Vector2>
     {
         public Vector2Parameter(Vector2 value, bool overrideState = false)
             : base(value, overrideState) {}
@@ -576,14 +562,14 @@ namespace UnityEngine.Experimental.Rendering
     }
 
     [Serializable, DebuggerDisplay(k_DebuggerDisplay)]
-    public sealed class NoInterpVector2Parameter : VolumeParameter<Vector2>
+    public class NoInterpVector2Parameter : VolumeParameter<Vector2>
     {
         public NoInterpVector2Parameter(Vector2 value, bool overrideState = false)
             : base(value, overrideState) {}
     }
 
     [Serializable, DebuggerDisplay(k_DebuggerDisplay)]
-    public sealed class Vector3Parameter : VolumeParameter<Vector3>
+    public class Vector3Parameter : VolumeParameter<Vector3>
     {
         public Vector3Parameter(Vector3 value, bool overrideState = false)
             : base(value, overrideState) {}
@@ -597,14 +583,14 @@ namespace UnityEngine.Experimental.Rendering
     }
 
     [Serializable, DebuggerDisplay(k_DebuggerDisplay)]
-    public sealed class NoInterpVector3Parameter : VolumeParameter<Vector3>
+    public class NoInterpVector3Parameter : VolumeParameter<Vector3>
     {
         public NoInterpVector3Parameter(Vector3 value, bool overrideState = false)
             : base(value, overrideState) {}
     }
 
     [Serializable, DebuggerDisplay(k_DebuggerDisplay)]
-    public sealed class Vector4Parameter : VolumeParameter<Vector4>
+    public class Vector4Parameter : VolumeParameter<Vector4>
     {
         public Vector4Parameter(Vector4 value, bool overrideState = false)
             : base(value, overrideState) {}
@@ -619,14 +605,14 @@ namespace UnityEngine.Experimental.Rendering
     }
 
     [Serializable, DebuggerDisplay(k_DebuggerDisplay)]
-    public sealed class NoInterpVector4Parameter : VolumeParameter<Vector4>
+    public class NoInterpVector4Parameter : VolumeParameter<Vector4>
     {
         public NoInterpVector4Parameter(Vector4 value, bool overrideState = false)
             : base(value, overrideState) {}
     }
 
     [Serializable, DebuggerDisplay(k_DebuggerDisplay)]
-    public sealed class TextureParameter : VolumeParameter<Texture>
+    public class TextureParameter : VolumeParameter<Texture>
     {
         public TextureParameter(Texture value, bool overrideState = false)
             : base(value, overrideState) {}
@@ -635,14 +621,14 @@ namespace UnityEngine.Experimental.Rendering
     }
 
     [Serializable, DebuggerDisplay(k_DebuggerDisplay)]
-    public sealed class NoInterpTextureParameter : VolumeParameter<Texture>
+    public class NoInterpTextureParameter : VolumeParameter<Texture>
     {
         public NoInterpTextureParameter(Texture value, bool overrideState = false)
             : base(value, overrideState) {}
     }
 
     [Serializable, DebuggerDisplay(k_DebuggerDisplay)]
-    public sealed class RenderTextureParameter : VolumeParameter<RenderTexture>
+    public class RenderTextureParameter : VolumeParameter<RenderTexture>
     {
         public RenderTextureParameter(RenderTexture value, bool overrideState = false)
             : base(value, overrideState) {}
@@ -651,14 +637,14 @@ namespace UnityEngine.Experimental.Rendering
     }
 
     [Serializable, DebuggerDisplay(k_DebuggerDisplay)]
-    public sealed class NoInterpRenderTextureParameter : VolumeParameter<RenderTexture>
+    public class NoInterpRenderTextureParameter : VolumeParameter<RenderTexture>
     {
         public NoInterpRenderTextureParameter(RenderTexture value, bool overrideState = false)
             : base(value, overrideState) {}
     }
 
     [Serializable, DebuggerDisplay(k_DebuggerDisplay)]
-    public sealed class CubemapParameter : VolumeParameter<Cubemap>
+    public class CubemapParameter : VolumeParameter<Cubemap>
     {
         public CubemapParameter(Cubemap value, bool overrideState = false)
             : base(value, overrideState) {}
@@ -667,13 +653,14 @@ namespace UnityEngine.Experimental.Rendering
     }
 
     [Serializable, DebuggerDisplay(k_DebuggerDisplay)]
-    public sealed class NoInterpCubemapParameter : VolumeParameter<Cubemap>
+    public class NoInterpCubemapParameter : VolumeParameter<Cubemap>
     {
         public NoInterpCubemapParameter(Cubemap value, bool overrideState = false)
             : base(value, overrideState) {}
     }
 
     // Used as a container to store custom serialized classes/structs inside volume components
+    // TODO: ObjectParameter<T> doesn't seem to be working as expect, debug me
     [Serializable, DebuggerDisplay(k_DebuggerDisplay)]
     public class ObjectParameter<T> : VolumeParameter<T>
     {
@@ -682,13 +669,13 @@ namespace UnityEngine.Experimental.Rendering
         // Force override state to true for container objects
         public override bool overrideState
         {
-            get { return true; }
-            set { m_OverrideState = true; }
+            get => true;
+            set => m_OverrideState = true;
         }
 
         public override T value
         {
-            get { return m_Value; }
+            get => m_Value;
             set
             {
                 m_Value = value;
@@ -727,9 +714,21 @@ namespace UnityEngine.Experimental.Rendering
 
             for (int i = 0; i < paramFrom.Count; i++)
             {
-                if (paramOrigin[i].overrideState)
+                // Keep track of the override state for debugging purpose
+                paramOrigin[i].overrideState = paramTo[i].overrideState;
+
+                if (paramTo[i].overrideState)
                     paramOrigin[i].Interp(paramFrom[i], paramTo[i], t);
             }
         }
+    }
+
+    [Serializable]
+    public class AnimationCurveParameter : VolumeParameter<AnimationCurve>
+    {
+        public AnimationCurveParameter(AnimationCurve value, bool overrideState = false)
+            : base(value, overrideState) {}
+
+        // TODO: Curve interpolation
     }
 }

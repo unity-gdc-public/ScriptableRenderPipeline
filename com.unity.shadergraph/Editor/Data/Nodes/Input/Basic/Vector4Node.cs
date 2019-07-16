@@ -6,7 +6,7 @@ using UnityEditor.Graphing;
 namespace UnityEditor.ShaderGraph
 {
     [Title("Input", "Basic", "Vector 4")]
-    public class Vector4Node : AbstractMaterialNode, IGeneratesBodyCode, IPropertyFromNode
+    class Vector4Node : AbstractMaterialNode, IGeneratesBodyCode, IPropertyFromNode
     {
         [SerializeField]
         private Vector4 m_Value = Vector4.zero;
@@ -30,10 +30,6 @@ namespace UnityEditor.ShaderGraph
             UpdateNodeAfterDeserialization();
         }
 
-        public override string documentationURL
-        {
-            get { return "https://github.com/Unity-Technologies/ShaderGraph/wiki/Vector-4-Node"; }
-        }
 
         public sealed override void UpdateNodeAfterDeserialization()
         {
@@ -45,7 +41,7 @@ namespace UnityEditor.ShaderGraph
             RemoveSlotsNameNotMatching(new[] { OutputSlotId, InputSlotXId, InputSlotYId, InputSlotZId, InputSlotWId });
         }
 
-        public void GenerateNodeCode(ShaderGenerator visitor, GraphContext graphContext, GenerationMode generationMode)
+        public void GenerateNodeCode(ShaderStringBuilder sb, GraphContext graphContext, GenerationMode generationMode)
         {
             var inputXValue = GetSlotValue(InputSlotXId, generationMode);
             var inputYValue = GetSlotValue(InputSlotYId, generationMode);
@@ -53,17 +49,16 @@ namespace UnityEditor.ShaderGraph
             var inputWValue = GetSlotValue(InputSlotWId, generationMode);
             var outputName = GetVariableNameForSlot(outputSlotId);
 
-            var s = string.Format("{0}4 {1} = {0}4({2},{3},{4},{5});",
-                    precision,
+            var s = string.Format("$precision4 {0} = $precision4({1}, {2}, {3}, {4});",
                     outputName,
                     inputXValue,
                     inputYValue,
                     inputZValue,
                     inputWValue);
-            visitor.AddShaderChunk(s, true);
+            sb.AppendLine(s);
         }
 
-        public IShaderProperty AsShaderProperty()
+        public AbstractShaderProperty AsShaderProperty()
         {
             var slotX = FindInputSlot<Vector1MaterialSlot>(InputSlotXId);
             var slotY = FindInputSlot<Vector1MaterialSlot>(InputSlotYId);

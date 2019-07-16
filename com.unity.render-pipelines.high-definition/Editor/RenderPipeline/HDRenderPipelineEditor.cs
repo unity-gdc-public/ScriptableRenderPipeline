@@ -1,32 +1,35 @@
-using UnityEngine.Experimental.Rendering;
 using UnityEngine.Experimental.Rendering.HDPipeline;
 
 namespace UnityEditor.Experimental.Rendering.HDPipeline
 {
     [CustomEditor(typeof(HDRenderPipelineAsset))]
+    [CanEditMultipleObjects]
     public sealed class HDRenderPipelineEditor : Editor
     {
         SerializedHDRenderPipelineAsset m_SerializedHDRenderPipeline;
-        HDRenderPipelineUI m_HDRenderPipelineUI = new HDRenderPipelineUI();
+
+        internal bool showInspector = true;
 
         void OnEnable()
         {
+#if QUALITY_SETTINGS_GET_RENDER_PIPELINE_AT_AVAILABLE
+            showInspector = false;
+#endif
             m_SerializedHDRenderPipeline = new SerializedHDRenderPipelineAsset(serializedObject);
-            m_HDRenderPipelineUI.Reset(m_SerializedHDRenderPipeline, Repaint);
         }
 
         public override void OnInspectorGUI()
         {
-            var s = m_HDRenderPipelineUI;
-            var d = m_SerializedHDRenderPipeline;
-            var o = this;
+            if (!showInspector)
+                return;
 
-            s.Update();
-            d.Update();
+            var serialized = m_SerializedHDRenderPipeline;
 
-            HDRenderPipelineUI.Inspector.Draw(s, d, o);
+            serialized.Update();
 
-            d.Apply();
+            HDRenderPipelineUI.Inspector.Draw(serialized, this);
+
+            serialized.Apply();
         }
     }
 }

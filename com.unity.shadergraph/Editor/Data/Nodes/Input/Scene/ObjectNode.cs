@@ -4,7 +4,7 @@ using UnityEngine;
 namespace UnityEditor.ShaderGraph
 {
     [Title("Input", "Scene", "Object")]
-    public sealed class ObjectNode : AbstractMaterialNode
+    sealed class ObjectNode : AbstractMaterialNode
     {
         const string kOutputSlotName = "Position";
         const string kOutputSlot1Name = "Scale";
@@ -18,10 +18,6 @@ namespace UnityEditor.ShaderGraph
             UpdateNodeAfterDeserialization();
         }
 
-        public override string documentationURL
-        {
-            get { return "https://github.com/Unity-Technologies/ShaderGraph/wiki/Object-Node"; }
-        }
 
         public override void UpdateNodeAfterDeserialization()
         {
@@ -35,11 +31,11 @@ namespace UnityEditor.ShaderGraph
             switch (slotId)
             {
                 case OutputSlot1Id:
-                    return @"float3(length(float3(UNITY_MATRIX_M[0].x, UNITY_MATRIX_M[1].x, UNITY_MATRIX_M[2].x)),
-                             length(float3(UNITY_MATRIX_M[0].y, UNITY_MATRIX_M[1].y, UNITY_MATRIX_M[2].y)),
-                             length(float3(UNITY_MATRIX_M[0].z, UNITY_MATRIX_M[1].z, UNITY_MATRIX_M[2].z)))";
+                    return @"$precision3(length($precision3(UNITY_MATRIX_M[0].x, UNITY_MATRIX_M[1].x, UNITY_MATRIX_M[2].x)),
+                             length($precision3(UNITY_MATRIX_M[0].y, UNITY_MATRIX_M[1].y, UNITY_MATRIX_M[2].y)),
+                             length($precision3(UNITY_MATRIX_M[0].z, UNITY_MATRIX_M[1].z, UNITY_MATRIX_M[2].z)))";
                 default:
-                    return "UNITY_MATRIX_M._m03_m13_m23";
+                    return "SHADERGRAPH_OBJECT_POSITION";
             }
         }
     }

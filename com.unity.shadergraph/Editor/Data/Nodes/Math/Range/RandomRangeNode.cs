@@ -4,17 +4,13 @@ using System.Reflection;
 namespace UnityEditor.ShaderGraph
 {
     [Title("Math", "Range", "Random Range")]
-    public class RandomRangeNode : CodeFunctionNode
+    class RandomRangeNode : CodeFunctionNode
     {
         public RandomRangeNode()
         {
             name = "Random Range";
         }
 
-        public override string documentationURL
-        {
-            get { return "https://github.com/Unity-Technologies/ShaderGraph/wiki/Random-Range-Node"; }
-        }
 
         protected override MethodInfo GetFunctionToConvert()
         {
@@ -30,7 +26,7 @@ namespace UnityEditor.ShaderGraph
             return
                 @"
 {
-     {precision} randomno =  frac(sin(dot(Seed, float2(12.9898, 78.233)))*43758.5453);
+     $precision randomno =  frac(sin(dot(Seed, $precision2(12.9898, 78.233)))*43758.5453);
      Out = lerp(Min, Max, randomno);
 }";
         }

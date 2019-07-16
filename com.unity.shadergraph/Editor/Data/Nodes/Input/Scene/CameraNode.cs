@@ -4,7 +4,7 @@ using UnityEngine;
 namespace UnityEditor.ShaderGraph
 {
     [Title("Input", "Scene", "Camera")]
-    public class CameraNode : AbstractMaterialNode
+    class CameraNode : AbstractMaterialNode
     {
         const string kOutputSlotName = "Position";
         const string kOutputSlot1Name = "Direction";
@@ -30,10 +30,6 @@ namespace UnityEditor.ShaderGraph
             UpdateNodeAfterDeserialization();
         }
 
-        public override string documentationURL
-        {
-            get { return "https://github.com/Unity-Technologies/ShaderGraph/wiki/Camera-Node"; }
-        }
 
         public sealed override void UpdateNodeAfterDeserialization()
         {

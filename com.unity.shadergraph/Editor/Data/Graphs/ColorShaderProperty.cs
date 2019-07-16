@@ -6,7 +6,7 @@ using UnityEngine;
 namespace UnityEditor.ShaderGraph
 {
     [Serializable]
-    public class ColorShaderProperty : AbstractShaderProperty<Color>
+    class ColorShaderProperty : AbstractShaderProperty<Color>
     {
         [SerializeField]
         private ColorMode m_ColorMode;
@@ -52,6 +52,16 @@ namespace UnityEditor.ShaderGraph
             get { return true; }
         }
 
+        public override bool isExposable
+        {
+            get { return true; }
+        }
+
+        public override bool isRenamable
+        {
+            get { return true; }
+        }
+
         public override string GetPropertyBlockString()
         {
             if (!generatePropertyBlock)
@@ -81,7 +91,7 @@ namespace UnityEditor.ShaderGraph
 
         public override string GetPropertyDeclarationString(string delimiter = ";")
         {
-            return string.Format("float4 {0}{1}", referenceName, delimiter);
+            return string.Format("{0}4 {1}{2}", concretePrecision.ToShaderString(), referenceName, delimiter);
         }
 
         public override PreviewProperty GetPreviewMaterialProperty()
@@ -93,12 +103,12 @@ namespace UnityEditor.ShaderGraph
             };
         }
 
-        public override INode ToConcreteNode()
+        public override AbstractMaterialNode ToConcreteNode()
         {
             return new ColorNode { color = new ColorNode.Color(value, colorMode) };
         }
 
-        public override IShaderProperty Copy()
+        public override AbstractShaderProperty Copy()
         {
             var copied = new ColorShaderProperty();
             copied.displayName = displayName;

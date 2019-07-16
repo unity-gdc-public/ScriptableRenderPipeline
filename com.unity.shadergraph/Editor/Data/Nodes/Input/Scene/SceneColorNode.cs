@@ -1,10 +1,10 @@
-﻿using System.Reflection;
+using System.Reflection;
 using UnityEngine;
 
 namespace UnityEditor.ShaderGraph
 {
     [Title("Input", "Scene", "Scene Color")]
-    public sealed class SceneColorNode : CodeFunctionNode, IMayRequireCameraOpaqueTexture
+    sealed class SceneColorNode : CodeFunctionNode, IMayRequireCameraOpaqueTexture
     {
         const string kScreenPositionSlotName = "UV";
         const string kOutputSlotName = "Out";
@@ -20,10 +20,6 @@ namespace UnityEditor.ShaderGraph
 
         public override bool hasPreview { get { return false; } }
 
-        public override string documentationURL
-        {
-            get { return "https://github.com/Unity-Technologies/ShaderGraph/wiki/Scene-Color-Node"; }
-        }
 
         protected override MethodInfo GetFunctionToConvert()
         {
@@ -38,7 +34,7 @@ namespace UnityEditor.ShaderGraph
             return
                 @"
 {
-    Out = SHADERGRAPH_SAMPLE_SCENE_COLOR(UV);
+    Out = SHADERGRAPH_SAMPLE_SCENE_COLOR(UV.xy);
 }
 ";
         }

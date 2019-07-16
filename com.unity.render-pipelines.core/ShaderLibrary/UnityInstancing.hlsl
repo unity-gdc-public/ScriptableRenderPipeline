@@ -9,7 +9,7 @@
     #define UNITY_SUPPORT_INSTANCING
 #endif
 
-#if defined(SHADER_API_D3D11) || defined(SHADER_API_GLCORE) || defined(SHADER_API_GLES3)
+#if defined(SHADER_API_D3D11) || defined(SHADER_API_GLCORE) || defined(SHADER_API_GLES3) || defined(SHADER_API_VULKAN)
     #define UNITY_SUPPORT_STEREO_INSTANCING
 #endif
 
@@ -27,6 +27,7 @@
 // - UNITY_INSTANCING_ENABLED               Defined if instancing path is taken.
 // - UNITY_PROCEDURAL_INSTANCING_ENABLED    Defined if procedural instancing path is taken.
 // - UNITY_STEREO_INSTANCING_ENABLED        Defined if stereo instancing path is taken.
+// - UNITY_ANY_INSTANCING_ENABLED           Defined if any instancing path is taken
 #if defined(UNITY_SUPPORT_INSTANCING) && defined(INSTANCING_ON)
     #define UNITY_INSTANCING_ENABLED
 #endif
@@ -35,6 +36,12 @@
 #endif
 #if defined(UNITY_SUPPORT_STEREO_INSTANCING) && defined(STEREO_INSTANCING_ON)
     #define UNITY_STEREO_INSTANCING_ENABLED
+#endif
+
+#if defined(UNITY_INSTANCING_ENABLED) || defined(UNITY_PROCEDURAL_INSTANCING_ENABLED) || defined(UNITY_STEREO_INSTANCING_ENABLED)
+    #define UNITY_ANY_INSTANCING_ENABLED 1
+#else
+    #define UNITY_ANY_INSTANCING_ENABLED 0
 #endif
 
 #if defined(SHADER_API_GLES3) || defined(SHADER_API_GLCORE) || defined(SHADER_API_METAL) || defined(SHADER_API_VULKAN)
@@ -189,7 +196,7 @@
     #elif defined(UNITY_MAX_INSTANCE_COUNT)
         #define UNITY_INSTANCED_ARRAY_SIZE  UNITY_MAX_INSTANCE_COUNT
     #else
-        #if defined(SHADER_API_VULKAN) && defined(SHADER_API_MOBILE)
+        #if (defined(SHADER_API_VULKAN) && defined(SHADER_API_MOBILE)) || defined(SHADER_API_SWITCH)
             #define UNITY_INSTANCED_ARRAY_SIZE  250
         #else
             #define UNITY_INSTANCED_ARRAY_SIZE  500

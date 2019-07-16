@@ -9,8 +9,10 @@ namespace UnityEditor.ShaderGraph
 {
 
     [CustomEditor(typeof(ShaderGraphImporter))]
-    public class ShaderGraphImporterEditor : ScriptedImporterEditor
+    class ShaderGraphImporterEditor : ScriptedImporterEditor
     {
+        protected override bool needsApplyRevert => false;
+
         public override void OnInspectorGUI()
         {
             if (GUILayout.Button("Open Shader Editor"))
@@ -19,13 +21,15 @@ namespace UnityEditor.ShaderGraph
                 Debug.Assert(importer != null, "importer != null");
                 ShowGraphEditWindow(importer.assetPath);
             }
+
+            ApplyRevertGUI();
         }
 
         internal static bool ShowGraphEditWindow(string path)
         {
             var guid = AssetDatabase.AssetPathToGUID(path);
             var extension = Path.GetExtension(path);
-            if (extension == null)
+            if (string.IsNullOrEmpty(extension))
                 return false;
             // Path.GetExtension returns the extension prefixed with ".", so we remove it. We force lower case such that
             // the comparison will be case-insensitive.
@@ -46,8 +50,8 @@ namespace UnityEditor.ShaderGraph
             if (!foundWindow)
             {
                 var window = CreateInstance<MaterialGraphEditWindow>();
-                window.Show();
                 window.Initialize(guid);
+                window.Show();
             }
 
             return true;

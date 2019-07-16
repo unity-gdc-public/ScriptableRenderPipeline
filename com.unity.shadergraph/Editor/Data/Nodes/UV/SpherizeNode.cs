@@ -4,17 +4,13 @@ using UnityEngine;
 namespace UnityEditor.ShaderGraph
 {
     [Title("UV", "Spherize")]
-    public class SpherizeNode : CodeFunctionNode
+    class SpherizeNode : CodeFunctionNode
     {
         public SpherizeNode()
         {
             name = "Spherize";
         }
 
-        public override string documentationURL
-        {
-            get { return "https://github.com/Unity-Technologies/ShaderGraph/wiki/Spherize-Node"; }
-        }
 
         protected override MethodInfo GetFunctionToConvert()
         {
@@ -32,10 +28,10 @@ namespace UnityEditor.ShaderGraph
             return
                 @"
 {
-    float2 delta = UV - Center;
-    float delta2 = dot(delta.xy, delta.xy);
-    float delta4 = delta2 * delta2;
-    float2 delta_offset = delta4 * Strength;
+    $precision2 delta = UV - Center;
+    $precision delta2 = dot(delta.xy, delta.xy);
+    $precision delta4 = delta2 * delta2;
+    $precision2 delta_offset = delta4 * Strength;
     Out = UV + delta * delta_offset + Offset;
 }";
         }

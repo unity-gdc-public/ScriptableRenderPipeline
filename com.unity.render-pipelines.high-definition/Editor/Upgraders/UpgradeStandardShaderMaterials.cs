@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Experimental.Rendering;
+using UnityEngine.Rendering;
+using UnityEditor.Rendering;
 
 namespace UnityEditor.Experimental.Rendering.HDPipeline
 {
@@ -9,14 +10,14 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         static List<MaterialUpgrader> GetHDUpgraders()
         {
             var upgraders = new List<MaterialUpgrader>();
-            upgraders.Add(new StandardsToHDLitMaterialUpgrader("Standard", "HDRenderPipeline/Lit"));
-            upgraders.Add(new StandardsToHDLitMaterialUpgrader("Standard (Specular setup)", "HDRenderPipeline/Lit"));
-            upgraders.Add(new StandardsToHDLitMaterialUpgrader("Standard (Roughness setup)", "HDRenderPipeline/Lit"));
+            upgraders.Add(new StandardsToHDLitMaterialUpgrader("Standard", "HDRP/Lit"));
+            upgraders.Add(new StandardsToHDLitMaterialUpgrader("Standard (Specular setup)", "HDRP/Lit"));
+            upgraders.Add(new StandardsToHDLitMaterialUpgrader("Standard (Roughness setup)", "HDRP/Lit"));
 
-            upgraders.Add(new UnlitsToHDUnlitUpgrader("Unlit/Color", "HDRenderPipeline/Unlit"));
-            upgraders.Add(new UnlitsToHDUnlitUpgrader("Unlit/Texture", "HDRenderPipeline/Unlit"));
-            upgraders.Add(new UnlitsToHDUnlitUpgrader("Unlit/Transparent", "HDRenderPipeline/Unlit"));
-            upgraders.Add(new UnlitsToHDUnlitUpgrader("Unlit/Transparent Cutout", "HDRenderPipeline/Unlit"));
+            upgraders.Add(new UnlitsToHDUnlitUpgrader("Unlit/Color", "HDRP/Unlit"));
+            upgraders.Add(new UnlitsToHDUnlitUpgrader("Unlit/Texture", "HDRP/Unlit"));
+            upgraders.Add(new UnlitsToHDUnlitUpgrader("Unlit/Transparent", "HDRP/Unlit"));
+            upgraders.Add(new UnlitsToHDUnlitUpgrader("Unlit/Transparent Cutout", "HDRP/Unlit"));
             return upgraders;
         }
 
@@ -32,7 +33,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             MaterialUpgrader.UpgradeSelection(GetHDUpgraders(), "Upgrade to HD Material");
         }
 
-        [MenuItem("Edit/Render Pipeline/Upgrade Scene Light Intensity for High Definition", priority = CoreUtils.editMenuPriority2)]
+        [MenuItem("Edit/Render Pipeline/Upgrade Unity Builtin Scene Light Intensity for High Definition", priority = CoreUtils.editMenuPriority2)]
         static void UpgradeLights()
         {
             Light[] lights = Light.GetLights(LightType.Directional, 0);

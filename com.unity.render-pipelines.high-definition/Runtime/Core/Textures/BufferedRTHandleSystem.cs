@@ -52,6 +52,10 @@ namespace UnityEngine.Experimental.Rendering
         RTHandleSystem m_RTHandleSystem = new RTHandleSystem();
         bool m_DisposedValue = false;
 
+        public int maxWidth { get { return m_RTHandleSystem.GetMaxWidth(); } }
+        public int maxHeight { get { return m_RTHandleSystem.GetMaxHeight(); } }
+        public RTHandleProperties rtHandleProperties { get { return m_RTHandleSystem.rtHandleProperties; } }
+
         /// <summary>
         /// Return the frame RT or null.
         /// </summary>
@@ -94,23 +98,30 @@ namespace UnityEngine.Experimental.Rendering
             }
         }
 
+        public void ReleaseBuffer(int bufferId)
+        {
+            if (m_RTHandles.TryGetValue(bufferId, out var buffers))
+            {
+                foreach (var rt in buffers)
+                    m_RTHandleSystem.Release(rt);
+            }
+
+            m_RTHandles.Remove(bufferId);
+        }
+
         /// <summary>
-        /// Set the reference size for this RT Handle System (<see cref="RTHandleSystem.SetReferenceSize(int, int, bool, MSAASamples)"/>)
+        /// Swap buffers Set the reference size for this RT Handle System (<see cref="RTHandleSystem.SetReferenceSize(int, int, bool, MSAASamples)"/>)
         /// </summary>
         /// <param name="width">The width of the RTs of this buffer.</param>
         /// <param name="height">The height of the RTs of this buffer.</param>
         /// <param name="msaaSamples">Number of MSAA samples for this buffer.</param>
-        public void SetReferenceSize(int width, int height, MSAASamples msaaSamples)
+        public void SwapAndSetReferenceSize(int width, int height, MSAASamples msaaSamples)
         {
+            Swap();
             m_RTHandleSystem.SetReferenceSize(width, height, msaaSamples);
         }
 
-        /// <summary>
-        /// Swap the buffers.
-        ///
-        /// Take care that if the new current frame needs resizing, it will occurs during the this call.
-        /// </summary>
-        public void Swap()
+        void Swap()
         {
             foreach (var item in m_RTHandles)
             {
@@ -139,6 +150,7 @@ namespace UnityEngine.Experimental.Rendering
             {
                 if (disposing)
                 {
+                    ReleaseAll();
                     m_RTHandleSystem.Dispose();
                     m_RTHandleSystem = null;
                 }

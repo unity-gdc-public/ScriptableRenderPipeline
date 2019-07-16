@@ -1,4 +1,4 @@
-Shader "Hidden/TerrainEngine/Details/Vertexlit" 
+Shader "Hidden/TerrainEngine/Details/LightweightPipeline/Vertexlit" 
 {
     Properties 
     {
@@ -41,6 +41,7 @@ Shader "Hidden/TerrainEngine/Details/Vertexlit"
             #include "Packages/com.unity.render-pipelines.lightweight/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.lightweight/ShaderLibrary/Lighting.hlsl"
     
+            TEXTURE2D(_MainTex);       SAMPLER(sampler_MainTex);
             float4 _MainTex_ST;
     
             struct Attributes
@@ -67,7 +68,9 @@ Shader "Hidden/TerrainEngine/Details/Vertexlit"
             Varyings Vert(Attributes input)
             {
                 Varyings output = (Varyings)0;
+                
                 UNITY_SETUP_INSTANCE_ID(input);
+                UNITY_TRANSFER_INSTANCE_ID(input, output);
                 UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
                 
                 // Vertex attributes
@@ -102,10 +105,11 @@ Shader "Hidden/TerrainEngine/Details/Vertexlit"
                 return output;
             }
     
-            TEXTURE2D(_MainTex);       SAMPLER(sampler_MainTex);
-    
             half4 Frag(Varyings input) : SV_Target
             {
+                UNITY_SETUP_INSTANCE_ID(input);
+                UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
+    
                 half3 bakedGI = SampleLightmap(input.LightmapUV, half3(0.0, 1.0, 0.0));
                 
                 half3 lighting = input.LightingFog.rgb * MainLightRealtimeShadow(input.ShadowCoords) + bakedGI;

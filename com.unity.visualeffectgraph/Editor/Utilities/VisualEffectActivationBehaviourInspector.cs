@@ -1,15 +1,16 @@
+#if VFX_HAS_TIMELINE
 using System;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.Playables;
 using UnityEngine.Timeline;
-using UnityEngine.Experimental.VFX;
+using UnityEngine.VFX;
 using UnityEditor;
 using UnityEditorInternal;
 using UnityEditor.VFX;
 using System.Collections.Generic;
 
-namespace UnityEditor.VFX.Utils
+namespace UnityEditor.Experimental.VFX.Utility
 {
     [CustomEditor(typeof(VisualEffectActivationClip))]
     public class VisualEffectActivationClipEditor : Editor
@@ -184,6 +185,9 @@ namespace UnityEditor.VFX.Utils
         {
             serializedObject.Update();
 
+            if (serializedObject.isEditingMultipleObjects)
+                return; //TODO
+
             EditorGUILayout.PropertyField(onClipEnterProperty);
             clipEnterAttributesPropertyList.DoLayoutList();
 
@@ -194,3 +198,4 @@ namespace UnityEditor.VFX.Utils
         }
     }
 }
+#endif

@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 namespace UnityEditor.ShaderGraph.Drawing
 {
-    public sealed class IndexSet : ICollection<int>
+    sealed class IndexSet : ICollection<int>
     {
         List<uint> m_Masks = new List<uint>();
 
@@ -304,8 +304,7 @@ namespace UnityEditor.ShaderGraph.Drawing
 
         public void Clear()
         {
-            for (var i = 0; i < m_Masks.Count; i++)
-                m_Masks[i] = 0;
+            m_Masks.Clear();
         }
 
         public bool Contains(int index)

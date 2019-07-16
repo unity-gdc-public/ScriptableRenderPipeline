@@ -7,7 +7,7 @@ using UnityEngine;
 namespace UnityEditor.ShaderGraph
 {
     [Serializable]
-    public class BooleanShaderProperty : AbstractShaderProperty<bool>
+    class BooleanShaderProperty : AbstractShaderProperty<bool>
     {
         public BooleanShaderProperty()
         {
@@ -29,10 +29,33 @@ namespace UnityEditor.ShaderGraph
             get { return true; }
         }
 
+        public override bool isExposable
+        {
+            get { return true; }
+        }
+
+        [SerializeField]
+        bool m_Hidden = false;
+
+        public bool hidden
+        {
+            get { return m_Hidden; }
+            set { m_Hidden = value; }
+        }
+
+        public override bool isRenamable
+        {
+            get { return true; }
+        }
+
         public override string GetPropertyBlockString()
         {
             var result = new StringBuilder();
-            result.Append("[Toggle] ");
+            if (hidden)
+            {
+                result.Append("[HideInInspector] ");
+            }
+            result.Append("[ToggleUI] ");
             result.Append(referenceName);
             result.Append("(\"");
             result.Append(displayName);
@@ -43,7 +66,7 @@ namespace UnityEditor.ShaderGraph
 
         public override string GetPropertyDeclarationString(string delimiter = ";")
         {
-            return string.Format("float {0}{1}", referenceName, delimiter);
+            return string.Format("{0} {1}{2}", concretePrecision.ToShaderString(), referenceName, delimiter);
         }
 
         public override PreviewProperty GetPreviewMaterialProperty()
@@ -55,12 +78,12 @@ namespace UnityEditor.ShaderGraph
             };
         }
 
-        public override INode ToConcreteNode()
+        public override AbstractMaterialNode ToConcreteNode()
         {
             return new BooleanNode { value = new ToggleData(value) };
         }
 
-        public override IShaderProperty Copy()
+        public override AbstractShaderProperty Copy()
         {
             var copied = new BooleanShaderProperty();
             copied.displayName = displayName;

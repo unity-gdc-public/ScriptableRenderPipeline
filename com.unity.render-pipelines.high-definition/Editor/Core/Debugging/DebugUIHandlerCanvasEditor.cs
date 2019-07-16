@@ -1,8 +1,9 @@
 using System;
 using System.Linq;
 using UnityEditor;
-using UnityEditor.Experimental.Rendering;
+using UnityEditor.Rendering;
 using UnityEditorInternal;
+using UnityEngine.Rendering;
 
 namespace UnityEngine.Experimental.Rendering.UI
 {
@@ -18,8 +19,8 @@ namespace UnityEngine.Experimental.Rendering.UI
 
         static DebugUIHandlerCanvasEditor()
         {
-            s_Types = CoreUtils.GetAllAssemblyTypes()
-                .Where(t => t.IsSubclassOf(typeof(DebugUI.Widget)) && !t.IsAbstract)
+            s_Types = CoreUtils.GetAllTypesDerivedFrom<DebugUI.Widget>()
+                .Where(t => !t.IsAbstract)
                 .Select(t => t.AssemblyQualifiedName)
                 .ToArray();
 

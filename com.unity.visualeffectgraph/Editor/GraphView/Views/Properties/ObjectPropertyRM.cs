@@ -2,20 +2,19 @@ using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
 using UnityEngine.Rendering;
-using UnityEngine.Experimental.UIElements;
-using UnityEngine.Experimental.UIElements.StyleEnums;
-using UnityEditor.Experimental.UIElements;
+using UnityEngine.UIElements;
+using UnityEditor.UIElements;
 using UnityEditor.VFX;
 using UnityEditor.VFX.UIElements;
-using Object = UnityEngine.Object;
+using UnityObject = UnityEngine.Object;
 using Type = System.Type;
 
 #if true
-using ObjectField = UnityEditor.VFX.UIElements.VFXLabeledField<UnityEditor.Experimental.UIElements.ObjectField, UnityEngine.Object>;
+using ObjectField = UnityEditor.VFX.UIElements.VFXLabeledField<UnityEditor.UIElements.ObjectField, UnityEngine.Object>;
 
 namespace UnityEditor.VFX.UI
 {
-    class ObjectPropertyRM : PropertyRM<Object>
+    class ObjectPropertyRM : PropertyRM<UnityObject>
     {
         public ObjectPropertyRM(IPropertyRMProvider controller, float labelWidth) : base(controller, labelWidth)
         {
@@ -25,9 +24,10 @@ namespace UnityEditor.VFX.UI
             else
                 m_ObjectField.control.objectType = controller.portType;
 
-            m_ObjectField.RegisterCallback<ChangeEvent<Object>>(OnValueChanged);
+            m_ObjectField.RegisterCallback<ChangeEvent<UnityObject>>(OnValueChanged);
             m_ObjectField.control.allowSceneObjects = false;
-            m_ObjectField.style.flex = new Flex(1, 0);
+            m_ObjectField.style.flexGrow = 1f;
+            m_ObjectField.style.flexShrink = 0f;
 
             Add(m_ObjectField);
         }
@@ -37,9 +37,9 @@ namespace UnityEditor.VFX.UI
             return 120;
         }
 
-        public void OnValueChanged(ChangeEvent<Object> onObjectChanged)
+        public void OnValueChanged(ChangeEvent<UnityObject> onObjectChanged)
         {
-            Object newValue = m_ObjectField.value;
+            UnityObject newValue = m_ObjectField.value;
             if (typeof(Texture).IsAssignableFrom(m_Provider.portType))
             {
                 Texture tex = newValue as Texture;
@@ -93,7 +93,23 @@ namespace UnityEditor.VFX.UI
 
         public override void UpdateGUI(bool force)
         {
+            if( force )
+                m_ObjectField.SetValueWithoutNotify(null);
             m_ObjectField.SetValueWithoutNotify(m_Value);
+        }
+
+        public override void SetValue(object obj) // object setvalue should accept null
+        {
+            try
+            {
+                m_Value = (UnityObject)obj;
+            }
+            catch (System.Exception)
+            {
+                Debug.Log("Error Trying to convert" + (obj != null ? obj.GetType().Name : "null") + " to " + typeof(UnityObject).Name);
+            }
+
+            UpdateGUI(false);
         }
 
         public override bool showsEverything { get { return true; } }

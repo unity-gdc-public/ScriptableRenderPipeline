@@ -4,29 +4,21 @@ Shader "Lightweight Render Pipeline/Simple Lit"
     // Keep properties of StandardSpecular shader for upgrade reasons.
     Properties
     {
-        _Color("Color", Color) = (0.5, 0.5, 0.5, 1)
-        _MainTex("Base (RGB) Glossiness / Alpha (A)", 2D) = "white" {}
+        _BaseColor("Base Color", Color) = (0.5, 0.5, 0.5, 1)
+        _BaseMap("Base Map (RGB) Smoothness / Alpha (A)", 2D) = "white" {}
 
-        _Cutoff("Alpha Cutoff", Range(0.0, 1.0)) = 0.5
+        _Cutoff("Alpha Clipping", Range(0.0, 1.0)) = 0.5
 
-        _Shininess("Shininess", Range(0.01, 1.0)) = 0.5
-        _GlossMapScale("Smoothness Factor", Range(0.0, 1.0)) = 1.0
-
-        _Glossiness("Glossiness", Range(0.0, 1.0)) = 0.5
-        [Enum(Specular Alpha,0,Albedo Alpha,1)] _SmoothnessTextureChannel("Smoothness texture channel", Float) = 0
-
-        [HideInInspector] _SpecSource("Specular Color Source", Float) = 0.0
-        _SpecColor("Specular", Color) = (0.5, 0.5, 0.5)
-        _SpecGlossMap("Specular", 2D) = "white" {}
-        [HideInInspector] _GlossinessSource("Glossiness Source", Float) = 0.0
+        _SpecColor("Specular Color", Color) = (0.5, 0.5, 0.5, 0.5)
+        _SpecGlossMap("Specular Map", 2D) = "white" {}
+        [Enum(Specular Alpha,0,Albedo Alpha,1)] _SmoothnessSource("Smoothness Source", Float) = 0.0
         [ToggleOff] _SpecularHighlights("Specular Highlights", Float) = 1.0
-        [ToggleOff] _GlossyReflections("Glossy Reflections", Float) = 1.0
 
         [HideInInspector] _BumpScale("Scale", Float) = 1.0
         [NoScaleOffset] _BumpMap("Normal Map", 2D) = "bump" {}
 
         _EmissionColor("Emission Color", Color) = (0,0,0)
-        _EmissionMap("Emission", 2D) = "white" {}
+        [NoScaleOffset]_EmissionMap("Emission Map", 2D) = "white" {}
 
         // Blending state
         [HideInInspector] _Surface("__surface", Float) = 0.0
@@ -38,6 +30,17 @@ Shader "Lightweight Render Pipeline/Simple Lit"
         [HideInInspector] _Cull("__cull", Float) = 2.0
 
         [ToogleOff] _ReceiveShadows("Receive Shadows", Float) = 1.0
+        
+        // Editmode props
+        [HideInInspector] _QueueOffset("Queue offset", Float) = 0.0
+        [HideInInspector] _Smoothness("SMoothness", Float) = 0.5
+        
+        // ObsoleteProperties
+        [HideInInspector] _MainTex("BaseMap", 2D) = "white" {}
+        [HideInInspector] _Color("Base Color", Color) = (0.5, 0.5, 0.5, 1)
+        [HideInInspector] _Shininess("Smoothness", Float) = 0.0
+        [HideInInspector] _GlossinessSource("GlossinessSource", Float) = 0.0
+        [HideInInspector] _SpecSource("SpecularHighlights", Float) = 0.0
     }
 
     SubShader
@@ -94,8 +97,8 @@ Shader "Lightweight Render Pipeline/Simple Lit"
             #pragma fragment LitPassFragmentSimple
             #define BUMP_SCALE_NOT_SUPPORTED 1
 
-            #include "SimpleLitInput.hlsl"
-            #include "SimpleLitForwardPass.hlsl"
+            #include "Packages/com.unity.render-pipelines.lightweight/Shaders/SimpleLitInput.hlsl"
+            #include "Packages/com.unity.render-pipelines.lightweight/Shaders/SimpleLitForwardPass.hlsl"
             ENDHLSL
         }
 
@@ -126,8 +129,8 @@ Shader "Lightweight Render Pipeline/Simple Lit"
             #pragma vertex ShadowPassVertex
             #pragma fragment ShadowPassFragment
 
-            #include "SimpleLitInput.hlsl"
-            #include "ShadowCasterPass.hlsl"
+            #include "Packages/com.unity.render-pipelines.lightweight/Shaders/SimpleLitInput.hlsl"
+            #include "Packages/com.unity.render-pipelines.lightweight/Shaders/ShadowCasterPass.hlsl"
             ENDHLSL
         }
 
@@ -158,8 +161,8 @@ Shader "Lightweight Render Pipeline/Simple Lit"
             // GPU Instancing
             #pragma multi_compile_instancing
 
-            #include "SimpleLitInput.hlsl"
-            #include "DepthOnlyPass.hlsl"
+            #include "Packages/com.unity.render-pipelines.lightweight/Shaders/SimpleLitInput.hlsl"
+            #include "Packages/com.unity.render-pipelines.lightweight/Shaders/DepthOnlyPass.hlsl"
             ENDHLSL
         }
 
@@ -175,18 +178,39 @@ Shader "Lightweight Render Pipeline/Simple Lit"
             // Required to compile gles 2.0 with standard srp library
             #pragma prefer_hlslcc gles
             #pragma exclude_renderers d3d11_9x
+            
             #pragma vertex LightweightVertexMeta
             #pragma fragment LightweightFragmentMetaSimple
 
             #pragma shader_feature _EMISSION
             #pragma shader_feature _SPECGLOSSMAP
 
-            #include "SimpleLitInput.hlsl"
-            #include "SimpleLitMetaPass.hlsl"
+            #include "Packages/com.unity.render-pipelines.lightweight/Shaders/SimpleLitInput.hlsl"
+            #include "Packages/com.unity.render-pipelines.lightweight/Shaders/SimpleLitMetaPass.hlsl"
 
+            ENDHLSL
+        }
+        Pass
+        {
+            Name "Lightweight2D"
+            Tags{ "LightMode" = "Lightweight2D" }
+            Tags{ "RenderType" = "Transparent" "Queue" = "Transparent" }
+
+            HLSLPROGRAM
+            // Required to compile gles 2.0 with standard srp library
+            #pragma prefer_hlslcc gles
+            #pragma exclude_renderers d3d11_9x
+
+            #pragma vertex vert
+            #pragma fragment frag
+            #pragma shader_feature _ALPHATEST_ON
+            #pragma shader_feature _ALPHAPREMULTIPLY_ON
+
+            #include "Packages/com.unity.render-pipelines.lightweight/Shaders/SimpleLitInput.hlsl"
+            #include "Packages/com.unity.render-pipelines.lightweight/Shaders/Utils/Lightweight2D.hlsl"
             ENDHLSL
         }
     }
     Fallback "Hidden/InternalErrorShader"
-    CustomEditor "UnityEditor.Experimental.Rendering.LightweightPipeline.SimpleLitShaderGUI"
+    CustomEditor "UnityEditor.Rendering.LWRP.ShaderGUI.SimpleLitShader"
 }

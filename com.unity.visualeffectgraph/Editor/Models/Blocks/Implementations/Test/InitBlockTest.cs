@@ -3,11 +3,10 @@ using UnityEngine;
 
 namespace UnityEditor.VFX.Block.Test
 {
-    [VFXInfo(category = "Tests")]
     class InitBlockTest : VFXBlock
     {
         public override string name                         { get { return "Init Block"; }}
-        public override VFXContextType compatibleContexts   { get { return VFXContextType.kInit; } }
-        public override VFXDataType compatibleData          { get { return VFXDataType.kParticle; } }
+        public override VFXContextType compatibleContexts   { get { return VFXContextType.Init; } }
+        public override VFXDataType compatibleData          { get { return VFXDataType.Particle; } }
     }
 }

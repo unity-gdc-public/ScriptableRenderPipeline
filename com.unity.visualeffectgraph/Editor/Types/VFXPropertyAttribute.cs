@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace UnityEditor.VFX
 {
-    // Attribute used to normalize a FloatN
+    // Attribute used to normalize a Vector or float
     [System.AttributeUsage(AttributeTargets.Field, Inherited = true, AllowMultiple = false)]
     public sealed class NormalizeAttribute : PropertyAttribute
     {
@@ -41,6 +41,7 @@ namespace UnityEditor.VFX
             { typeof(ShowAsColorAttribute), o => new VFXPropertyAttribute(Type.kColor) },
             { typeof(RegexAttribute), o => new VFXPropertyAttribute(Type.kRegex, (o as RegexAttribute).pattern, (o as RegexAttribute).maxLength) },
             { typeof(DelayedAttribute), o => new VFXPropertyAttribute(Type.kDelayed) },
+            { typeof(BitFieldAttribute), o => new VFXPropertyAttribute(Type.kBitField) },
         };
 
         public static VFXPropertyAttribute[] Create(params object[] attributes)
@@ -58,7 +59,7 @@ namespace UnityEditor.VFX
                     switch (attribute.m_Type)
                     {
                         case Type.kRange:
-                            exp = VFXOperatorUtility.UnifyOp(VFXOperatorUtility.Clamp, exp, VFXValue.Constant(attribute.m_Min), VFXValue.Constant(attribute.m_Max));
+                            exp = VFXOperatorUtility.Clamp(exp, VFXValue.Constant(attribute.m_Min), VFXValue.Constant(attribute.m_Max));
                             break;
                         case Type.kMin:
                             exp = new VFXExpressionMax(exp, VFXOperatorUtility.CastFloat(VFXValue.Constant(attribute.m_Min), exp.valueType));
@@ -71,6 +72,7 @@ namespace UnityEditor.VFX
                         case Type.kColor:
                         case Type.kRegex:
                         case Type.kDelayed:
+                        case Type.kBitField:
                             break;
                         default:
                             throw new NotImplementedException();
@@ -106,6 +108,7 @@ namespace UnityEditor.VFX
                         case Type.kColor:
                         case Type.kRegex:
                         case Type.kDelayed:
+                        case Type.kBitField:
                             break;
                         default:
                             throw new NotImplementedException();
@@ -151,6 +154,13 @@ namespace UnityEditor.VFX
             return false;
         }
 
+        public static bool IsBitField(VFXPropertyAttribute[] attributes)
+        {
+            if (attributes != null)
+                return attributes.Any(o => o.m_Type == Type.kBitField);
+            return false;
+        }
+
         public static string ApplyRegex(VFXPropertyAttribute[] attributes, object obj)
         {
             if (attributes != null)
@@ -176,7 +186,8 @@ namespace UnityEditor.VFX
             kAngle,
             kColor,
             kRegex,
-            kDelayed
+            kDelayed,
+            kBitField
         }
 
         public VFXPropertyAttribute(Type type, float min = -Mathf.Infinity, float max = Mathf.Infinity)

@@ -9,7 +9,7 @@ using UnityEditor.Graphing;
 
 namespace UnityEditor.ShaderGraph
 {
-    public class ShaderGenerator
+    class ShaderGenerator
     {
         private struct ShaderChunk
         {
@@ -161,7 +161,7 @@ namespace UnityEditor.ShaderGraph
                         case ConcreteSlotValueType.Vector1:
                             return string.Format("({0}.xxx)", rawOutput);
                         case ConcreteSlotValueType.Vector2:
-                            return string.Format("({0}3({1}, 0.0))", node.precision, rawOutput);
+                            return string.Format("($precision3({0}, 0.0))", rawOutput);
                         case ConcreteSlotValueType.Vector4:
                             return string.Format("({0}.xyz)", rawOutput);
                         default:
@@ -173,9 +173,9 @@ namespace UnityEditor.ShaderGraph
                         case ConcreteSlotValueType.Vector1:
                             return string.Format("({0}.xxxx)", rawOutput);
                         case ConcreteSlotValueType.Vector2:
-                            return string.Format("({0}4({1}, 0.0, 1.0))", node.precision, rawOutput);
+                            return string.Format("($precision4({0}, 0.0, 1.0))", rawOutput);
                         case ConcreteSlotValueType.Vector3:
-                            return string.Format("({0}4({1}, 1.0))", node.precision, rawOutput);
+                            return string.Format("($precision4({0}, 1.0))", rawOutput);
                         default:
                             return kErrorString;
                     }
@@ -214,8 +214,10 @@ namespace UnityEditor.ShaderGraph
                     return string.Format("half4({0}.x, {0}.y, {0}.z, 1.0)", variableName);
                 case ConcreteSlotValueType.Vector4:
                     return string.Format("half4({0}.x, {0}.y, {0}.z, 1.0)", variableName);
+                case ConcreteSlotValueType.Boolean:
+                    return string.Format("half4({0}, {0}, {0}, 1.0)", variableName);
                 default:
-                    return kErrorString;
+                    return "half4(0, 0, 0, 0)";
             }
         }
 
@@ -257,8 +259,8 @@ namespace UnityEditor.ShaderGraph
             {
                 return m_transforms[(int)from, (int)to];
             }
-            var distance = new int[4];
-            var prev = new CoordinateSpace ? [4];
+            var distance = new int[5];
+            var prev = new CoordinateSpace ? [5];
             var queue = new List<CoordinateSpace>();
             foreach (var space in Enum.GetValues(typeof(CoordinateSpace)))
             {
@@ -316,11 +318,12 @@ namespace UnityEditor.ShaderGraph
         {
             if (m_transforms == null)
             {
-                m_transforms = new TransformDesc[4, 4][];
+                m_transforms = new TransformDesc[5, 5][];
                 m_transforms[(int)CoordinateSpace.Object, (int)CoordinateSpace.Object] = new TransformDesc[] {};
                 m_transforms[(int)CoordinateSpace.View, (int)CoordinateSpace.View] = new TransformDesc[] {};
                 m_transforms[(int)CoordinateSpace.World, (int)CoordinateSpace.World] = new TransformDesc[] {};
                 m_transforms[(int)CoordinateSpace.Tangent, (int)CoordinateSpace.Tangent] = new TransformDesc[] {};
+                m_transforms[(int)CoordinateSpace.AbsoluteWorld, (int)CoordinateSpace.AbsoluteWorld] = new TransformDesc[] {};
                 m_transforms[(int)CoordinateSpace.Object, (int)CoordinateSpace.World]
                     = new TransformDesc[] {new TransformDesc(MatrixNames.Model)};
                 m_transforms[(int)CoordinateSpace.View, (int)CoordinateSpace.World]
@@ -433,6 +436,9 @@ namespace UnityEditor.ShaderGraph
 
             if ((neededSpaces & NeededCoordinateSpace.Tangent) > 0)
                 builder.AppendLine(format, CoordinateSpace.Tangent.ToVariableName(interpolatorType));
+            
+            if ((neededSpaces & NeededCoordinateSpace.AbsoluteWorld) > 0)
+                builder.AppendLine(format, CoordinateSpace.AbsoluteWorld.ToVariableName(interpolatorType));
         }
 
         public static void GenerateStandardTransforms(
@@ -686,6 +692,11 @@ namespace UnityEditor.ShaderGraph
             foreach (var channel in pixelRequirements.requiresMeshUVs.Distinct())
                 pixelShaderSurfaceInputs.AppendLine("surfaceInput.{0} = {0};", ShaderGeneratorNames.GetUVName(channel));
 
+            if (pixelRequirements.requiresTime)
+            {
+                pixelShaderSurfaceInputs.AppendLine("surfaceInput.{0} = _TimeParameters.xyz;", ShaderGeneratorNames.TimeParameters);
+            }
+
             // ----------------------------------------------------- //
             //                START VERTEX DESCRIPTION               //
             // ----------------------------------------------------- //
@@ -713,6 +724,11 @@ namespace UnityEditor.ShaderGraph
 
             foreach (var channel in vertexRequirements.requiresMeshUVs.Distinct())
                 vertexShaderDescriptionInputs.AppendLine("vdi.{0} = {0};", channel.GetUVName(), (int)channel);
+
+            if (vertexRequirements.requiresTime)
+            {
+                vertexShaderDescriptionInputs.AppendLine("vdi.{0} = _TimeParameters.xyz;", ShaderGeneratorNames.TimeParameters);
+            }
         }
 
         public enum Dimension
@@ -738,7 +754,7 @@ namespace UnityEditor.ShaderGraph
             }
             return "error";
         }
-        
+
         private static string DimensionToSwizzle(Dimension d)
         {
             switch (d)
@@ -784,10 +800,19 @@ namespace UnityEditor.ShaderGraph
                     CoordinateSpace.Tangent.ToVariableName(type),
                     ConvertBetweenSpace(from.ToVariableName(type), from, CoordinateSpace.Tangent, inputType, from),
                     DimensionToSwizzle(dimension));
+
+            if ((neededSpaces & NeededCoordinateSpace.AbsoluteWorld) > 0 && from != CoordinateSpace.AbsoluteWorld)
+               pixelShader.AppendLine("float{0} {1} = GetAbsolutePositionWS({2}).{3};", DimensionToString(dimension),
+                   CoordinateSpace.AbsoluteWorld.ToVariableName(type),
+                   CoordinateSpace.World.ToVariableName(type),
+                   DimensionToSwizzle(dimension));
         }
 
         public static string GetPreviewSubShader(AbstractMaterialNode node, ShaderGraphRequirements shaderGraphRequirements)
         {
+            // Should never be called without a node
+            Debug.Assert(node != null);
+
             var vertexOutputStruct = new ShaderStringBuilder(2);
 
             var vertexShader = new ShaderStringBuilder(2);
@@ -816,20 +841,24 @@ namespace UnityEditor.ShaderGraph
             vertexShader.AppendLines(vertexShaderDescriptionInputs.ToString());
             vertexShader.AppendLines(vertexShaderOutputs.ToString());
 
-            if (node != null)
+            var outputSlot = node.GetOutputSlots<MaterialSlot>().FirstOrDefault();
+            // Sub Graph Output uses first input slot
+            if (node is SubGraphOutputNode)
             {
-                var outputSlot = node.GetOutputSlots<MaterialSlot>().FirstOrDefault();
-                if (outputSlot != null)
-                {
-                    var result = string.Format("surf.{0}", node.GetVariableNameForSlot(outputSlot.id));
-                    pixelShaderSurfaceRemap.AppendLine("return {0};", AdaptNodeOutputForPreview(node, outputSlot.id, result));
-                }
-                else
-                    pixelShaderSurfaceRemap.AppendLine("return 0;");
+                outputSlot = node.GetInputSlots<MaterialSlot>().FirstOrDefault();
+            }
+
+            if (outputSlot != null)
+            {
+                var result = $"surf.{NodeUtils.GetHLSLSafeName(outputSlot.shaderOutputName)}_{outputSlot.id}";
+                pixelShaderSurfaceRemap.AppendLine("return all(isfinite({0})) ? {1} : {2};",
+                    result, AdaptNodeOutputForPreview(node, outputSlot.id, result), nanOutput);
             }
             else
             {
-                pixelShaderSurfaceRemap.AppendLine("return all(isfinite(surf.PreviewOutput)) ? surf.PreviewOutput : float4(1.0f, 0.0f, 1.0f, 1.0f);");
+                // No valid slots to display, so just show black.
+                // It's up to each node to error or warn as appropriate.
+                pixelShaderSurfaceRemap.AppendLine("return 0;");
             }
 
             // -------------------------------------
@@ -867,7 +896,7 @@ namespace UnityEditor.ShaderGraph
             return materialTags;
         }
 
-        public static SurfaceMaterialOptions GetMaterialOptions(SurfaceType surfaceType, AlphaMode alphaMode, bool twoSided)
+        public static SurfaceMaterialOptions GetMaterialOptions(SurfaceType surfaceType, AlphaMode alphaMode, bool twoSided, bool offscreenTransparent = false)
         {
             var materialOptions = new SurfaceMaterialOptions();
             switch (surfaceType)
@@ -885,6 +914,16 @@ namespace UnityEditor.ShaderGraph
                         case AlphaMode.Alpha:
                             materialOptions.srcBlend = SurfaceMaterialOptions.BlendMode.SrcAlpha;
                             materialOptions.dstBlend = SurfaceMaterialOptions.BlendMode.OneMinusSrcAlpha;
+                            if(offscreenTransparent)
+                            {
+                                materialOptions.alphaSrcBlend = SurfaceMaterialOptions.BlendMode.Zero;
+
+                            }
+                            else
+                            {
+                                materialOptions.alphaSrcBlend = SurfaceMaterialOptions.BlendMode.One;
+                            }
+                            materialOptions.alphaDstBlend = SurfaceMaterialOptions.BlendMode.OneMinusSrcAlpha;
                             materialOptions.cullMode = twoSided ? SurfaceMaterialOptions.CullMode.Off : SurfaceMaterialOptions.CullMode.Back;
                             materialOptions.zTest = SurfaceMaterialOptions.ZTest.LEqual;
                             materialOptions.zWrite = SurfaceMaterialOptions.ZWrite.Off;
@@ -892,6 +931,16 @@ namespace UnityEditor.ShaderGraph
                         case AlphaMode.Premultiply:
                             materialOptions.srcBlend = SurfaceMaterialOptions.BlendMode.One;
                             materialOptions.dstBlend = SurfaceMaterialOptions.BlendMode.OneMinusSrcAlpha;
+                            if (offscreenTransparent)
+                            {
+                                materialOptions.alphaSrcBlend = SurfaceMaterialOptions.BlendMode.Zero;
+
+                            }
+                            else
+                            {
+                                materialOptions.alphaSrcBlend = SurfaceMaterialOptions.BlendMode.One;
+                            }
+                            materialOptions.alphaDstBlend = SurfaceMaterialOptions.BlendMode.OneMinusSrcAlpha;
                             materialOptions.cullMode = twoSided ? SurfaceMaterialOptions.CullMode.Off : SurfaceMaterialOptions.CullMode.Back;
                             materialOptions.zTest = SurfaceMaterialOptions.ZTest.LEqual;
                             materialOptions.zWrite = SurfaceMaterialOptions.ZWrite.Off;
@@ -899,6 +948,16 @@ namespace UnityEditor.ShaderGraph
                         case AlphaMode.Additive:
                             materialOptions.srcBlend = SurfaceMaterialOptions.BlendMode.One;
                             materialOptions.dstBlend = SurfaceMaterialOptions.BlendMode.One;
+                            if (offscreenTransparent)
+                            {
+                                materialOptions.alphaSrcBlend = SurfaceMaterialOptions.BlendMode.Zero;
+
+                            }
+                            else
+                            {
+                                materialOptions.alphaSrcBlend = SurfaceMaterialOptions.BlendMode.One;
+                            }
+                            materialOptions.alphaDstBlend = SurfaceMaterialOptions.BlendMode.One;
                             materialOptions.cullMode = twoSided ? SurfaceMaterialOptions.CullMode.Off : SurfaceMaterialOptions.CullMode.Back;
                             materialOptions.zTest = SurfaceMaterialOptions.ZTest.LEqual;
                             materialOptions.zWrite = SurfaceMaterialOptions.ZWrite.Off;
@@ -917,7 +976,8 @@ namespace UnityEditor.ShaderGraph
             return materialOptions;
         }
 
-        private const string subShaderTemplate = @"
+        const string nanOutput = "float4(1.0f, 0.0f, 1.0f, 1.0f)";
+        const string subShaderTemplate = @"
 SubShader
 {
     Tags { ""RenderType""=""Opaque"" }
@@ -949,7 +1009,7 @@ SubShader
         float4 frag (GraphVertexOutput IN ${FaceSign}) : SV_Target
         {
     ${LocalPixelShader}
-            SurfaceDescriptionInputs surfaceInput = (SurfaceDescriptionInputs)0;;
+            SurfaceDescriptionInputs surfaceInput = (SurfaceDescriptionInputs)0;
     ${SurfaceInputs}
             SurfaceDescription surf = PopulateSurfaceData(surfaceInput);
     ${SurfaceOutputRemap}

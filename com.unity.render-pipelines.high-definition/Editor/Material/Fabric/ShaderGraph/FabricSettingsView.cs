@@ -1,16 +1,17 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
-using UnityEditor.Experimental.UIElements;
+using UnityEditor.UIElements;
 using UnityEngine;
-using UnityEngine.Experimental.UIElements;
+using UnityEngine.UIElements;
 using UnityEditor.Graphing.Util;
+using UnityEditor.ShaderGraph;
+using UnityEditor.ShaderGraph.Drawing;
 using UnityEditor.ShaderGraph.Drawing.Controls;
 using UnityEngine.Experimental.Rendering.HDPipeline;
+using UnityEngine.Rendering;
 
-namespace UnityEditor.ShaderGraph.Drawing
+namespace UnityEditor.Experimental.Rendering.HDPipeline.Drawing
 {
-    public class FabricSettingsView : VisualElement
+    class FabricSettingsView : VisualElement
     {
         FabricMasterNode m_Node;
 
@@ -37,7 +38,7 @@ namespace UnityEditor.ShaderGraph.Drawing
                 row.Add(new EnumField(SurfaceType.Opaque), (field) =>
                 {
                     field.value = m_Node.surfaceType;
-                    field.OnValueChanged(ChangeSurfaceType);
+                    field.RegisterValueChangedCallback(ChangeSurfaceType);
                 });
             });
 
@@ -63,28 +64,50 @@ namespace UnityEditor.ShaderGraph.Drawing
                     });
                 });
 
-                ps.Add(new PropertyRow(CreateLabel("Back Then Front Rendering", indentLevel)), (row) =>
-                {
-                    row.Add(new Toggle(), (toggle) =>
-                    {
-                        toggle.value = m_Node.backThenFrontRendering.isOn;
-                        toggle.OnToggleChanged(ChangeBackThenFrontRendering);
-                    });
-                });
-
                 m_SortPiorityField = new IntegerField();
                 ps.Add(new PropertyRow(CreateLabel("Sort Priority", indentLevel)), (row) =>
                 {
                     row.Add(m_SortPiorityField, (field) =>
                     {
                         field.value = m_Node.sortPriority;
-                        field.OnValueChanged(ChangeSortPriority);
+                        field.RegisterValueChangedCallback(ChangeSortPriority);
                     });
                 });
+
+                ps.Add(new PropertyRow(CreateLabel("ZWrite", indentLevel)), (row) =>
+                {
+                    row.Add(new Toggle(), (toggle) =>
+                    {
+                        toggle.value = m_Node.zWrite.isOn;
+                        toggle.OnToggleChanged(ChangeZWrite);
+                    });
+                });
+
+                if (m_Node.doubleSidedMode == DoubleSidedMode.Disabled)
+                {
+                    ps.Add(new PropertyRow(CreateLabel("Cull Mode", indentLevel)), (row) =>
+                    {
+                        row.Add(new EnumField(m_Node.transparentCullMode), (e) =>
+                        {
+                            e.value = m_Node.transparentCullMode;
+                            e.RegisterValueChangedCallback(ChangeTransparentCullMode);
+                        });
+                    });
+                }
+
+                ps.Add(new PropertyRow(CreateLabel("Z Test", indentLevel)), (row) =>
+                {
+                    row.Add(new EnumField(m_Node.zTest), (e) =>
+                    {
+                        e.value = m_Node.zTest;
+                        e.RegisterValueChangedCallback(ChangeZTest);
+                    });
+                });
+
                 --indentLevel;
             }
 
-            ps.Add(new PropertyRow(CreateLabel("Alpha Cutoff", indentLevel)), (row) =>
+            ps.Add(new PropertyRow(CreateLabel("Alpha Clipping", indentLevel)), (row) =>
             {
                 row.Add(new Toggle(), (toggle) =>
                 {
@@ -116,12 +139,12 @@ namespace UnityEditor.ShaderGraph.Drawing
                 --indentLevel;
             }
 
-            ps.Add(new PropertyRow(CreateLabel("Double Sided", indentLevel)), (row) =>
+            ps.Add(new PropertyRow(CreateLabel("Double-Sided", indentLevel)), (row) =>
             {
                 row.Add(new EnumField(DoubleSidedMode.Disabled), (field) =>
                 {
                     field.value = m_Node.doubleSidedMode;
-                    field.OnValueChanged(ChangeDoubleSidedMode);
+                    field.RegisterValueChangedCallback(ChangeDoubleSidedMode);
                 });
             });
 
@@ -139,9 +162,21 @@ namespace UnityEditor.ShaderGraph.Drawing
                 row.Add(new EnumField(FabricMasterNode.MaterialType.CottonWool), (field) =>
                 {
                     field.value = m_Node.materialType;
-                    field.OnValueChanged(ChangeMaterialType);
+                    field.RegisterValueChangedCallback(ChangeMaterialType);
                 });
             });
+
+            if (m_Node.surfaceType != SurfaceType.Transparent)
+            {
+                ps.Add(new PropertyRow(CreateLabel("Subsurface Scattering", indentLevel)), (row) =>
+                {
+                    row.Add(new Toggle(), (toggle) =>
+                    {
+                        toggle.value = m_Node.subsurfaceScattering.isOn;
+                        toggle.OnToggleChanged(ChangeSubsurfaceScattering);
+                    });
+                });
+            }
 
             ps.Add(new PropertyRow(CreateLabel("Transmission", indentLevel)), (row) =>
             {
@@ -152,18 +187,6 @@ namespace UnityEditor.ShaderGraph.Drawing
                 });
             });
 
-
-            ps.Add(new PropertyRow(CreateLabel("Subsurface Scattering", indentLevel)), (row) =>
-            {
-                row.Add(new Toggle(), (toggle) =>
-                {
-                    toggle.value = m_Node.subsurfaceScattering.isOn;
-                    toggle.OnToggleChanged(ChangeSubsurfaceScattering);
-                });
-            });
-
-                
-
             ps.Add(new PropertyRow(CreateLabel("Receive Decals", indentLevel)), (row) =>
             {
                 row.Add(new Toggle(), (toggle) =>
@@ -173,7 +196,7 @@ namespace UnityEditor.ShaderGraph.Drawing
                 });
             });
 
-            ps.Add(new PropertyRow(CreateLabel("Receives SSR", indentLevel)), (row) =>
+            ps.Add(new PropertyRow(CreateLabel("Receive SSR", indentLevel)), (row) =>
             {
                 row.Add(new Toggle(), (toggle) =>
                 {
@@ -187,7 +210,25 @@ namespace UnityEditor.ShaderGraph.Drawing
                 row.Add(new EnumField(SpecularOcclusionMode.Off), (field) =>
                 {
                     field.value = m_Node.specularOcclusionMode;
-                    field.OnValueChanged(ChangeSpecularOcclusionMode);
+                    field.RegisterValueChangedCallback(ChangeSpecularOcclusionMode);
+                });
+            });
+
+            ps.Add(new PropertyRow(CreateLabel("Override Baked GI", indentLevel)), (row) =>
+            {
+                row.Add(new Toggle(), (toggle) =>
+                {
+                    toggle.value = m_Node.overrideBakedGI.isOn;
+                    toggle.OnToggleChanged(ChangeoverrideBakedGI);
+                });
+            });
+
+            ps.Add(new PropertyRow(CreateLabel("Depth Offset", indentLevel)), (row) =>
+            {
+                row.Add(new Toggle(), (toggle) =>
+                {
+                    toggle.value = m_Node.depthOffset.isOn;
+                    toggle.OnToggleChanged(ChangeDepthOffset);
                 });
             });
 
@@ -208,7 +249,7 @@ namespace UnityEditor.ShaderGraph.Drawing
             if (Equals(m_Node.doubleSidedMode, evt.newValue))
                 return;
 
-            m_Node.owner.owner.RegisterCompleteObjectUndo("Double Sided Mode Change");
+            m_Node.owner.owner.RegisterCompleteObjectUndo("Double-Sided Mode Change");
             m_Node.doubleSidedMode = (DoubleSidedMode)evt.newValue;
         }
 
@@ -265,23 +306,23 @@ namespace UnityEditor.ShaderGraph.Drawing
             m_Node.transparencyFog = td;
         }
 
-        void ChangeBackThenFrontRendering(ChangeEvent<bool> evt)
-        {
-            m_Node.owner.owner.RegisterCompleteObjectUndo("Back Then Front Rendering Change");
-            ToggleData td = m_Node.backThenFrontRendering;
-            td.isOn = evt.newValue;
-            m_Node.backThenFrontRendering = td;
-        }
-
         void ChangeSortPriority(ChangeEvent<int> evt)
         {
-            m_Node.sortPriority = Math.Max(-HDRenderQueue.k_TransparentPriorityQueueRange, Math.Min(evt.newValue, HDRenderQueue.k_TransparentPriorityQueueRange));
+            m_Node.sortPriority = HDRenderQueue.ClampsTransparentRangePriority(evt.newValue);
             // Force the text to match.
             m_SortPiorityField.value = m_Node.sortPriority;
             if (Equals(m_Node.sortPriority, evt.newValue))
                 return;
 
             m_Node.owner.owner.RegisterCompleteObjectUndo("Sort Priority Change");
+        }
+
+        void ChangeZWrite(ChangeEvent<bool> evt)
+        {
+            m_Node.owner.owner.RegisterCompleteObjectUndo("ZWrite Change");
+            ToggleData td = m_Node.zWrite;
+            td.isOn = evt.newValue;
+            m_Node.zWrite = td;
         }
 
         void ChangeAlphaTest(ChangeEvent<bool> evt)
@@ -341,13 +382,47 @@ namespace UnityEditor.ShaderGraph.Drawing
             m_Node.specularOcclusionMode = (SpecularOcclusionMode)evt.newValue;
         }
 
+        void ChangeoverrideBakedGI(ChangeEvent<bool> evt)
+        {
+            m_Node.owner.owner.RegisterCompleteObjectUndo("overrideBakedGI Change");
+            ToggleData td = m_Node.overrideBakedGI;
+            td.isOn = evt.newValue;
+            m_Node.overrideBakedGI = td;
+        }
+
+        void ChangeDepthOffset(ChangeEvent<bool> evt)
+        {
+            m_Node.owner.owner.RegisterCompleteObjectUndo("DepthOffset Change");
+            ToggleData td = m_Node.depthOffset;
+            td.isOn = evt.newValue;
+            m_Node.depthOffset = td;
+        }
+
+        void ChangeTransparentCullMode(ChangeEvent<Enum> evt)
+        {
+            if (Equals(m_Node.transparentCullMode, evt.newValue))
+                return;
+
+            m_Node.owner.owner.RegisterCompleteObjectUndo("Transparent Cull Mode Change");
+            m_Node.transparentCullMode = (TransparentCullMode)evt.newValue;
+        }
+
+        void ChangeZTest(ChangeEvent<Enum> evt)
+        {
+            if (Equals(m_Node.zTest, evt.newValue))
+                return;
+
+            m_Node.owner.owner.RegisterCompleteObjectUndo("ZTest Change");
+            m_Node.zTest = (CompareFunction)evt.newValue;
+        }
+
         public AlphaMode GetAlphaMode(FabricMasterNode.AlphaModeFabric alphaModeLit)
         {
             switch (alphaModeLit)
             {
                 case FabricMasterNode.AlphaModeFabric.Alpha:
                     return AlphaMode.Alpha;
-                case FabricMasterNode.AlphaModeFabric.PremultipliedAlpha:
+                case FabricMasterNode.AlphaModeFabric.Premultiply:
                     return AlphaMode.Premultiply;
                 case FabricMasterNode.AlphaModeFabric.Additive:
                     return AlphaMode.Additive;
@@ -356,7 +431,7 @@ namespace UnityEditor.ShaderGraph.Drawing
                         Debug.LogWarning("Not supported: " + alphaModeLit);
                         return AlphaMode.Alpha;
                     }
-                    
+
             }
         }
 
@@ -367,14 +442,14 @@ namespace UnityEditor.ShaderGraph.Drawing
                 case AlphaMode.Alpha:
                     return FabricMasterNode.AlphaModeFabric.Alpha;
                 case AlphaMode.Premultiply:
-                    return FabricMasterNode.AlphaModeFabric.PremultipliedAlpha;
+                    return FabricMasterNode.AlphaModeFabric.Premultiply;
                 case AlphaMode.Additive:
                     return FabricMasterNode.AlphaModeFabric.Additive;
                 default:
                     {
                         Debug.LogWarning("Not supported: " + alphaMode);
                         return FabricMasterNode.AlphaModeFabric.Alpha;
-                    }                    
+                    }
             }
         }
     }

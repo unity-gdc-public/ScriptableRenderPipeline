@@ -5,7 +5,7 @@ namespace UnityEditor.VFX.Block
     [VFXInfo(category = "Collision")]
     class CollisionAABox : CollisionBase
     {
-        public override string name { get { return "Collider (AABox)"; } }
+        public override string name { get { return "Collide with AABox"; } }
 
         public class InputProperties
         {
@@ -21,18 +21,18 @@ namespace UnityEditor.VFX.Block
 float3 nextPos = position + velocity * deltaTime;
 float3 dir = nextPos - box_center;
 float3 absDir = abs(dir);
-float3 size = box_size * 0.5f + radius * colliderSign;
+float3 halfBoxSize = box_size * 0.5f + radius * colliderSign;
 ";
 
                 if (mode == Mode.Solid)
-                    Source += @"bool collision = all(absDir < size);";
+                    Source += @"bool collision = all(absDir < halfBoxSize);";
                 else
-                    Source += @"bool collision = any(absDir > size);";
+                    Source += @"bool collision = any(absDir > halfBoxSize);";
 
                 Source += @"
 if (collision)
 {
-    float3 distanceToEdge = (absDir - size);
+    float3 distanceToEdge = (absDir - halfBoxSize);
     float3 absDistanceToEdge = abs(distanceToEdge);
 
     float3 n;

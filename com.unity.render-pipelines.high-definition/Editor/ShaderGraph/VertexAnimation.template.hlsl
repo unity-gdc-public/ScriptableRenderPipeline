@@ -17,28 +17,31 @@ VertexDescriptionInputs AttributesMeshToVertexDescriptionInputs(AttributesMesh i
     $VertexDescriptionInputs.ViewSpaceBiTangent:        output.ViewSpaceBiTangent =          TransformWorldToViewDir(output.WorldSpaceBiTangent);
     $VertexDescriptionInputs.TangentSpaceBiTangent:     output.TangentSpaceBiTangent =       float3(0.0f, 1.0f, 0.0f);
     $VertexDescriptionInputs.ObjectSpacePosition:       output.ObjectSpacePosition =         input.positionOS;
-    $VertexDescriptionInputs.WorldSpacePosition:        output.WorldSpacePosition =          GetAbsolutePositionWS(TransformObjectToWorld(input.positionOS));
+    $VertexDescriptionInputs.WorldSpacePosition:        output.WorldSpacePosition =          TransformObjectToWorld(input.positionOS);
     $VertexDescriptionInputs.ViewSpacePosition:         output.ViewSpacePosition =           TransformWorldToView(output.WorldSpacePosition);
     $VertexDescriptionInputs.TangentSpacePosition:      output.TangentSpacePosition =        float3(0.0f, 0.0f, 0.0f);
+    $VertexDescriptionInputs.AbsoluteWorldSpacePosition:output.AbsoluteWorldSpacePosition =  GetAbsolutePositionWS(TransformObjectToWorld(input.positionOS));
     $VertexDescriptionInputs.WorldSpaceViewDirection:   output.WorldSpaceViewDirection =     GetWorldSpaceNormalizeViewDir(output.WorldSpacePosition);
     $VertexDescriptionInputs.ObjectSpaceViewDirection:  output.ObjectSpaceViewDirection =    TransformWorldToObjectDir(output.WorldSpaceViewDirection);
     $VertexDescriptionInputs.ViewSpaceViewDirection:    output.ViewSpaceViewDirection =      TransformWorldToViewDir(output.WorldSpaceViewDirection);
     $VertexDescriptionInputs.TangentSpaceViewDirection: float3x3 tangentSpaceTransform =     float3x3(output.WorldSpaceTangent,output.WorldSpaceBiTangent,output.WorldSpaceNormal);
     $VertexDescriptionInputs.TangentSpaceViewDirection: output.TangentSpaceViewDirection =   mul(tangentSpaceTransform, output.WorldSpaceViewDirection);
     $VertexDescriptionInputs.ScreenPosition:            output.ScreenPosition =              ComputeScreenPos(TransformWorldToHClip(output.WorldSpacePosition), _ProjectionParams.x);
-    $VertexDescriptionInputs.uv0:                       output.uv0 =                         float4(input.uv0, 0.0f, 0.0f);
-    $VertexDescriptionInputs.uv1:                       output.uv1 =                         float4(input.uv1, 0.0f, 0.0f);
-    $VertexDescriptionInputs.uv2:                       output.uv2 =                         float4(input.uv2, 0.0f, 0.0f);
-    $VertexDescriptionInputs.uv3:                       output.uv3 =                         float4(input.uv3, 0.0f, 0.0f);
+    $VertexDescriptionInputs.uv0:                       output.uv0 =                         input.uv0;
+    $VertexDescriptionInputs.uv1:                       output.uv1 =                         input.uv1;
+    $VertexDescriptionInputs.uv2:                       output.uv2 =                         input.uv2;
+    $VertexDescriptionInputs.uv3:                       output.uv3 =                         input.uv3;
     $VertexDescriptionInputs.VertexColor:               output.VertexColor =                 input.color;
 
     return output;
 }
 
-AttributesMesh ApplyMeshModification(AttributesMesh input)
+AttributesMesh ApplyMeshModification(AttributesMesh input, float3 timeParameters)
 {
     // build graph inputs
     VertexDescriptionInputs vertexDescriptionInputs = AttributesMeshToVertexDescriptionInputs(input);
+    // Override time paramters with used one (This is required to correctly handle motion vector for vertex animation based on time)
+    $VertexDescriptionInputs.TimeParameters: vertexDescriptionInputs.TimeParameters = timeParameters;
 
     // evaluate vertex graph
     VertexDescription vertexDescription = VertexDescriptionFunction(vertexDescriptionInputs);

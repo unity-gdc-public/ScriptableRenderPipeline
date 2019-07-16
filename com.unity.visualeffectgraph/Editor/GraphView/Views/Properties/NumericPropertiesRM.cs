@@ -1,7 +1,11 @@
+using System.Linq;
+
 using UnityEngine;
-using UnityEngine.Experimental.UIElements;
-using UnityEditor.Experimental.UIElements;
+using UnityEngine.UIElements;
+using UnityEditor.UIElements;
 using UnityEditor.VFX.UIElements;
+
+
 
 namespace UnityEditor.VFX.UI
 {
@@ -13,6 +17,11 @@ namespace UnityEditor.VFX.UI
 
         public override float GetPreferredControlWidth()
         {
+            Vector2 range = VFXPropertyAttribute.FindRange(m_Provider.attributes);
+            if (RangeShouldCreateSlider(range))
+            {
+                return 120;
+            }
             return 60;
         }
 
@@ -34,8 +43,11 @@ namespace UnityEditor.VFX.UI
             if (!RangeShouldCreateSlider(range))
             {
                 result = CreateSimpleField(out m_TextField);
-                m_TextField.RegisterCallback<KeyDownEvent>(OnKeyDown);
-                m_TextField.RegisterCallback<BlurEvent>(OnFocusLost);
+                if(m_TextField != null)
+                {
+                    m_TextField.Q("unity-text-input").RegisterCallback<KeyDownEvent>(OnKeyDown);
+                    m_TextField.Q("unity-text-input").RegisterCallback<BlurEvent>(OnFocusLost);
+                }
             }
             else
             {
@@ -74,7 +86,9 @@ namespace UnityEditor.VFX.UI
         {
             if (m_Slider != null)
                 return m_Slider.HasFocus();
-            return m_TextField.HasFocus();
+            if( m_TextField != null)
+                return m_TextField.HasFocus();
+            return false;
         }
 
         public override bool IsCompatible(IPropertyRMProvider provider)
@@ -147,6 +161,8 @@ namespace UnityEditor.VFX.UI
 
     class UintPropertyRM : IntegerPropertyRM<uint, long>
     {
+        VFX32BitField m_BitField;
+
         public UintPropertyRM(IPropertyRMProvider controller, float labelWidth) : base(controller, labelWidth)
         {
         }
@@ -158,6 +174,12 @@ namespace UnityEditor.VFX.UI
 
         protected override INotifyValueChanged<long> CreateSimpleField(out TextValueField<long> textField)
         {
+            if(VFXPropertyAttribute.IsBitField(m_Provider.attributes))
+            {
+                var bitfield = new VFXLabeledField<VFX32BitField, long>(m_Label);
+                textField = null;
+                return bitfield;
+            }
             var field =  new VFXLabeledField<LongField, long>(m_Label);
 
             field.onValueDragFinished = t => DelayedNotifyValueChange();

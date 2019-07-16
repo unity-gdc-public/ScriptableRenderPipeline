@@ -3,11 +3,12 @@ using System.Collections.Generic;
 using UnityEditor.Graphing;
 using UnityEditor.ShaderGraph.Drawing.Slots;
 using UnityEngine;
-using UnityEngine.Experimental.UIElements;
+
+using UnityEngine.UIElements;
 
 namespace UnityEditor.ShaderGraph
 {
-    public class ColorRGBMaterialSlot : Vector3MaterialSlot
+    class ColorRGBMaterialSlot : Vector3MaterialSlot
     {
         [SerializeField]
         ColorMode m_ColorMode = ColorMode.Default;
@@ -39,10 +40,9 @@ namespace UnityEditor.ShaderGraph
             return new ColorRGBSlotControlView(this);
         }
 
-        protected override string ConcreteSlotValueAsVariable(AbstractMaterialNode.OutputPrecision precision)
+        protected override string ConcreteSlotValueAsVariable()
         {
-            return string.Format(m_ColorMode == ColorMode.Default ? "IsGammaSpace() ? {0}3({1}, {2}, {3}) : SRGBToLinear({0}3({1}, {2}, {3}))" : "{0}3({1}, {2}, {3})"
-                , precision
+            return string.Format(m_ColorMode == ColorMode.Default ? "IsGammaSpace() ? $precision3({0}, {1}, {2}) : SRGBToLinear($precision3({0}, {1}, {2}))" : "$precision3({0}, {1}, {2})"
                 , NodeUtils.FloatToShaderValue(value.x)
                 , NodeUtils.FloatToShaderValue(value.y)
                 , NodeUtils.FloatToShaderValue(value.z));

@@ -1,66 +1,70 @@
 using System;
-using UnityEngine.Rendering;
 
-namespace UnityEngine.Experimental.Rendering.LightweightPipeline
+namespace UnityEngine.Rendering.LWRP
 {
-    public class ScreenSpaceShadowResolvePass : ScriptableRenderPass
+    internal class ScreenSpaceShadowResolvePass : ScriptableRenderPass
     {
-        const string k_CollectShadowsTag = "Collect Shadows";
-        RenderTextureFormat m_ColorFormat;
+        Material m_ScreenSpaceShadowsMaterial;
+        RenderTargetHandle m_ScreenSpaceShadowmap;
+        RenderTextureDescriptor m_RenderTextureDescriptor;
+        const string m_ProfilerTag = "Resolve Shadows";
 
-        public ScreenSpaceShadowResolvePass()
+        public ScreenSpaceShadowResolvePass(RenderPassEvent evt, Material screenspaceShadowsMaterial)
         {
-            m_ColorFormat = SystemInfo.SupportsRenderTextureFormat(RenderTextureFormat.R8)
+            m_ScreenSpaceShadowsMaterial = screenspaceShadowsMaterial;
+            m_ScreenSpaceShadowmap.Init("_ScreenSpaceShadowmapTexture");
+            renderPassEvent = evt;
+        }
+
+        public void Setup(RenderTextureDescriptor baseDescriptor)
+        {
+            m_RenderTextureDescriptor = baseDescriptor;
+            m_RenderTextureDescriptor.depthBufferBits = 0;
+            m_RenderTextureDescriptor.msaaSamples = 1;
+            m_RenderTextureDescriptor.colorFormat = RenderingUtils.SupportsRenderTextureFormat(RenderTextureFormat.R8)
                 ? RenderTextureFormat.R8
                 : RenderTextureFormat.ARGB32;
         }
 
-        private RenderTargetHandle colorAttachmentHandle { get; set; }
-        private RenderTextureDescriptor descriptor { get; set; }
-
-        public void Setup(
-            RenderTextureDescriptor baseDescriptor,
-            RenderTargetHandle colorAttachmentHandle)
+        public override void Configure(CommandBuffer cmd, RenderTextureDescriptor cameraTextureDescriptor)
         {
-            this.colorAttachmentHandle = colorAttachmentHandle;
+            cmd.GetTemporaryRT(m_ScreenSpaceShadowmap.id, m_RenderTextureDescriptor, FilterMode.Bilinear);
 
-            baseDescriptor.depthBufferBits = 0;
-            baseDescriptor.colorFormat = m_ColorFormat;
-            descriptor = baseDescriptor;
+            RenderTargetIdentifier screenSpaceOcclusionTexture = m_ScreenSpaceShadowmap.Identifier();
+            ConfigureTarget(screenSpaceOcclusionTexture);
+            ConfigureClear(ClearFlag.All, Color.white);
         }
-        
+
         /// <inheritdoc/>
-        public override void Execute(ScriptableRenderer renderer, ScriptableRenderContext context, ref RenderingData renderingData)
+        public override void Execute(ScriptableRenderContext context, ref RenderingData renderingData)
         {
-            if (renderer == null)
-                throw new ArgumentNullException("renderer");
-            
+            if (m_ScreenSpaceShadowsMaterial == null)
+            {
+                Debug.LogErrorFormat("Missing {0}. {1} render pass will not execute. Check for missing reference in the renderer resources.", m_ScreenSpaceShadowsMaterial, GetType().Name);
+                return;
+            }
+
             if (renderingData.lightData.mainLightIndex == -1)
                 return;
 
-            CommandBuffer cmd = CommandBufferPool.Get(k_CollectShadowsTag);
+            Camera camera = renderingData.cameraData.camera;
+            bool stereo = renderingData.cameraData.isStereoEnabled;
 
-            cmd.GetTemporaryRT(colorAttachmentHandle.id, descriptor, FilterMode.Bilinear);
-
-            // Note: The source isn't actually 'used', but there's an engine peculiarity (bug) that
-            // doesn't like null sources when trying to determine a stereo-ized blit.  So for proper
-            // stereo functionality, we use the screen-space shadow map as the source (until we have
-            // a better solution).
-            // An alternative would be DrawProcedural, but that would require further changes in the shader.
-            RenderTargetIdentifier screenSpaceOcclusionTexture = colorAttachmentHandle.Identifier();
-            SetRenderTarget(cmd, screenSpaceOcclusionTexture, RenderBufferLoadAction.DontCare, RenderBufferStoreAction.Store,
-                ClearFlag.Color | ClearFlag.Depth, Color.white, descriptor.dimension);
-            cmd.Blit(screenSpaceOcclusionTexture, screenSpaceOcclusionTexture, renderer.GetMaterial(MaterialHandle.ScreenSpaceShadow));
-
-            if (renderingData.cameraData.isStereoEnabled)
+            CommandBuffer cmd = CommandBufferPool.Get(m_ProfilerTag);
+            if (!stereo)
             {
-                Camera camera = renderingData.cameraData.camera;
-                context.StartMultiEye(camera);
-                context.ExecuteCommandBuffer(cmd);
-                context.StopMultiEye(camera);
+                cmd.SetViewProjectionMatrices(Matrix4x4.identity, Matrix4x4.identity);
+                cmd.DrawMesh(RenderingUtils.fullscreenMesh, Matrix4x4.identity, m_ScreenSpaceShadowsMaterial);
+                cmd.SetViewProjectionMatrices(camera.worldToCameraMatrix, camera.projectionMatrix);
             }
             else
-                context.ExecuteCommandBuffer(cmd);
+            {
+                // Avoid setting and restoring camera view and projection matrices when in stereo.
+                RenderTargetIdentifier screenSpaceOcclusionTexture = m_ScreenSpaceShadowmap.Identifier();
+                Blit(cmd, screenSpaceOcclusionTexture, screenSpaceOcclusionTexture, m_ScreenSpaceShadowsMaterial);
+            }
+
+            context.ExecuteCommandBuffer(cmd);
             CommandBufferPool.Release(cmd);
         }
 
@@ -69,12 +73,8 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
         {
             if (cmd == null)
                 throw new ArgumentNullException("cmd");
-            
-            if (colorAttachmentHandle != RenderTargetHandle.CameraTarget)
-            {
-                cmd.ReleaseTemporaryRT(colorAttachmentHandle.id);
-                colorAttachmentHandle = RenderTargetHandle.CameraTarget;
-            }
+
+            cmd.ReleaseTemporaryRT(m_ScreenSpaceShadowmap.id);
         }
     }
 }

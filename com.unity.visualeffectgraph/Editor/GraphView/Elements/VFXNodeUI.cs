@@ -2,12 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using UnityEditor.Experimental.UIElements.GraphView;
+using UnityEditor.Experimental.GraphView;
 using UnityEngine;
-using UnityEngine.Experimental.UIElements;
-using UnityEngine.Experimental.UIElements.StyleEnums;
-using UnityEngine.Experimental.UIElements.StyleSheets;
+using UnityEngine.UIElements;
 using UnityEngine.Profiling;
+
+using PositionType = UnityEngine.UIElements.Position;
 
 namespace UnityEditor.VFX.UI
 {
@@ -45,7 +45,7 @@ namespace UnityEditor.VFX.UI
         protected virtual void OnNewController()
         {
             if (controller != null)
-                persistenceKey = string.Format("NodeID-{0}", controller.model.GetInstanceID());
+                viewDataKey = string.Format("NodeID-{0}", controller.model.GetInstanceID());
         }
 
         public void OnSelectionMouseDown(MouseDownEvent e)
@@ -90,7 +90,7 @@ namespace UnityEditor.VFX.UI
 
         public VFXNodeUI() : base(UXMLResourceToPackage("uxml/VFXNode"))
         {
-            AddStyleSheetPath("StyleSheets/GraphView/Node.uss");
+            styleSheets.Add(EditorGUIUtility.Load("StyleSheets/GraphView/Node.uss") as StyleSheet);
             Initialize();
         }
 
@@ -116,6 +116,7 @@ namespace UnityEditor.VFX.UI
 
         public override void OnSelected()
         {
+            base.OnSelected();
             m_Selected = true;
             UpdateBorder();
         }
@@ -124,6 +125,7 @@ namespace UnityEditor.VFX.UI
         {
             m_Selected = false;
             UpdateBorder();
+            base.OnUnselected();
         }
 
         void UpdateBorder()
@@ -140,14 +142,16 @@ namespace UnityEditor.VFX.UI
                         m_SelectionBorder.style.borderRight = (m_Selected ? 1 : (m_Hovered ? 1 : 0));*/
 
 
-            m_SelectionBorder.style.borderColor = m_Selected ? new Color(68.0f / 255.0f, 192.0f / 255.0f, 255.0f / 255.0f, 1.0f) : (m_Hovered ? new Color(68.0f / 255.0f, 192.0f / 255.0f, 255.0f / 255.0f, 0.5f) : Color.clear);
+            m_SelectionBorder.style.borderBottomColor =
+                m_SelectionBorder.style.borderTopColor =
+                    m_SelectionBorder.style.borderLeftColor =
+                        m_SelectionBorder.style.borderRightColor = m_Selected ? new Color(68.0f / 255.0f, 192.0f / 255.0f, 255.0f / 255.0f, 1.0f) : (m_Hovered ? new Color(68.0f / 255.0f, 192.0f / 255.0f, 255.0f / 255.0f, 0.5f) : Color.clear);
         }
 
         void Initialize()
         {
-            AddStyleSheetPath("VFXNode");
+            this.AddStyleSheetPath("VFXNode");
             AddToClassList("VFXNodeUI");
-            clippingOptions = ClippingOptions.ClipContents;
 
             RegisterCallback<MouseEnterEvent>(OnMouseEnter);
             RegisterCallback<MouseLeaveEvent>(OnMouseLeave);
@@ -209,7 +213,7 @@ namespace UnityEditor.VFX.UI
                 for (int i = 0; i < m_Settings.Count; ++i)
                 {
                     PropertyRM prop = m_Settings[i];
-                    if (prop != null && activeSettings.Any(s => s.Name == controller.settings[i].name))
+                    if (prop != null && activeSettings.Any(s => s.field.Name == controller.settings[i].name))
                     {
                         hasSettings = true;
                         settingsContainer.Add(prop);
@@ -226,6 +230,9 @@ namespace UnityEditor.VFX.UI
                     settingsContainer.AddToClassList("nosettings");
                 }
             }
+
+            if(m_SettingsDivider != null)
+                m_SettingsDivider.visible = hasSettingDivider && hasSettings;
             Profiler.EndSample();
         }
 
@@ -235,16 +242,11 @@ namespace UnityEditor.VFX.UI
             private set;
         }
 
-        protected virtual bool syncInput
-        {
-            get { return true; }
-        }
-
         void SyncAnchors()
         {
             Profiler.BeginSample("VFXNodeUI.SyncAnchors");
-            if (syncInput)
-                SyncAnchors(controller.inputPorts, inputContainer);
+
+            SyncAnchors(controller.inputPorts, inputContainer);
             SyncAnchors(controller.outputPorts, outputContainer);
             Profiler.EndSample();
         }
@@ -259,6 +261,8 @@ namespace UnityEditor.VFX.UI
 
             foreach (var deletedController in deletedControllers)
             {
+                //Explicitely remove edges before removing anchor.
+                GetFirstAncestorOfType<VFXView>().RemoveAnchorEdges(existingAnchors[deletedController]);
                 container.Remove(existingAnchors[deletedController]);
                 existingAnchors.Remove(deletedController);
             }
@@ -321,6 +325,20 @@ namespace UnityEditor.VFX.UI
             }
         }
 
+        public void AssetMoved()
+        {
+            title = controller.title;
+
+            foreach( var setting in m_Settings)
+            {
+                setting.UpdateGUI(true);
+            }
+            foreach( VFXEditableDataAnchor input in GetPorts(true,false).OfType<VFXEditableDataAnchor>())
+            {
+                input.AssetMoved();
+            }
+        }
+
         protected virtual void SelfChange()
         {
             Profiler.BeginSample("VFXNodeUI.SelfChange");
@@ -331,9 +349,9 @@ namespace UnityEditor.VFX.UI
 
             if (HasPosition())
             {
-                style.positionType = PositionType.Absolute;
-                style.positionLeft = controller.position.x;
-                style.positionTop = controller.position.y;
+                style.position = PositionType.Absolute;
+                style.left = controller.position.x;
+                style.top = controller.position.y;
             }
 
             base.expanded = controller.expanded;
@@ -388,7 +406,7 @@ namespace UnityEditor.VFX.UI
         {
             if (input)
             {
-                foreach (var child in inputContainer)
+                foreach (var child in inputContainer.Children())
                 {
                     if (child is VFXDataAnchor)
                         yield return child as VFXDataAnchor;
@@ -396,7 +414,7 @@ namespace UnityEditor.VFX.UI
             }
             if (output)
             {
-                foreach (var child in outputContainer)
+                foreach (var child in outputContainer.Children())
                 {
                     if (child is VFXDataAnchor)
                         yield return child as VFXDataAnchor;

@@ -2,26 +2,29 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using UnityEditor.Experimental.UIElements.GraphView;
 using UnityEngine;
-using UnityEngine.Experimental.UIElements;
 using UnityEditor.Graphing;
+using UnityEditor.Graphing.Util;
 using UnityEditor.ShaderGraph.Drawing.Controls;
-using UnityEngine.Experimental.Rendering;
-using UnityEngine.Experimental.UIElements.StyleEnums;
-using UnityEngine.Experimental.UIElements.StyleSheets;
 using UnityEngine.Rendering;
-using Node = UnityEditor.Experimental.UIElements.GraphView.Node;
-#if UNITY_2018_3_OR_NEWER
-using ContextualMenu = UnityEngine.Experimental.UIElements.DropdownMenu;
-#endif
+
+using UnityEditor.Experimental.GraphView;
+using UnityEditor.Rendering;
+using UnityEditor.ShaderGraph.Drawing.Colors;
+using UnityEngine.UIElements;
+using UnityEditor.UIElements;
+using Node = UnityEditor.Experimental.GraphView.Node;
 
 namespace UnityEditor.ShaderGraph.Drawing
 {
-    public sealed class MaterialNodeView : Node
+    sealed class MaterialNodeView : Node, IShaderNodeView
     {
         PreviewRenderData m_PreviewRenderData;
         Image m_PreviewImage;
+        // Remove this after updated to the correct API call has landed in trunk. ------------
+        VisualElement m_TitleContainer;
+        new VisualElement m_ButtonContainer;
+
         VisualElement m_PreviewContainer;
         VisualElement m_ControlItems;
         VisualElement m_PreviewFiller;
@@ -34,10 +37,12 @@ namespace UnityEditor.ShaderGraph.Drawing
         VisualElement m_Settings;
         VisualElement m_NodeSettingsView;
 
+        GraphView m_GraphView;
 
-        public void Initialize(AbstractMaterialNode inNode, PreviewManager previewManager, IEdgeConnectorListener connectorListener)
+        public void Initialize(AbstractMaterialNode inNode, PreviewManager previewManager, IEdgeConnectorListener connectorListener, GraphView graphView)
         {
-            AddStyleSheetPath("Styles/MaterialNodeView");
+            styleSheets.Add(Resources.Load<StyleSheet>("Styles/MaterialNodeView"));
+            styleSheets.Add(Resources.Load<StyleSheet>($"Styles/ColorMode"));
             AddToClassList("MaterialNode");
 
             if (inNode == null)
@@ -45,9 +50,11 @@ namespace UnityEditor.ShaderGraph.Drawing
 
             var contents = this.Q("contents");
 
+            m_GraphView = graphView;
+
             m_ConnectorListener = connectorListener;
             node = inNode;
-            persistenceKey = node.guid.ToString();
+            viewDataKey = node.guid.ToString();
             UpdateTitle();
 
             // Add controls container
@@ -73,7 +80,7 @@ namespace UnityEditor.ShaderGraph.Drawing
                 m_PreviewContainer = new VisualElement
                 {
                     name = "previewContainer",
-                    clippingOptions = ClippingOptions.ClipAndCacheContents,
+                    style = { overflow = Overflow.Hidden },
                     pickingMode = PickingMode.Ignore
                 };
                 m_PreviewImage = new Image
@@ -126,7 +133,7 @@ namespace UnityEditor.ShaderGraph.Drawing
             m_PortInputContainer = new VisualElement
             {
                 name = "portInputContainer",
-                clippingOptions = ClippingOptions.ClipAndCacheContents,
+                style = { overflow = Overflow.Hidden },
                 pickingMode = PickingMode.Ignore
             };
             Add(m_PortInputContainer);
@@ -144,56 +151,99 @@ namespace UnityEditor.ShaderGraph.Drawing
                 RegisterCallback<MouseDownEvent>(OnSubGraphDoubleClick);
             }
 
+            m_PortInputContainer.SendToBack();
+
+            m_TitleContainer = this.Q("title");
+
             var masterNode = node as IMasterNode;
             if (masterNode != null)
             {
+                AddToClassList("master");
+
                 if (!masterNode.IsPipelineCompatible(GraphicsSettings.renderPipelineAsset))
                 {
-                    IconBadge wrongPipeline = IconBadge.CreateError("The current render pipeline is not compatible with this master node.");
-                    Add(wrongPipeline);
-                    VisualElement title = this.Q("title");
-                    wrongPipeline.AttachTo(title, SpriteAlignment.LeftCenter);
+                    AttachMessage("The current render pipeline is not compatible with this master node.", ShaderCompilerMessageSeverity.Error);
                 }
             }
 
-            m_PortInputContainer.SendToBack();
+            m_NodeSettingsView = new NodeSettingsView();
+            m_NodeSettingsView.visible = false;
+            Add(m_NodeSettingsView);
 
-            // Remove this after updated to the correct API call has landed in trunk. ------------
-            VisualElement m_TitleContainer;
-            VisualElement m_ButtonContainer;
-            m_TitleContainer = this.Q("title");
-            // -----------------------------------------------------------------------------------
+            m_SettingsButton = new VisualElement {name = "settings-button"};
+            m_SettingsButton.Add(new VisualElement { name = "icon" });
 
-            var settings = node as IHasSettings;
-            if (settings != null)
+            m_Settings = new VisualElement();
+            AddDefaultSettings();
+
+            // Add Node type specific settings
+            var nodeTypeSettings = node as IHasSettings;
+            if (nodeTypeSettings != null)
+                m_Settings.Add(nodeTypeSettings.CreateSettingsElement());
+            
+            // Add manipulators
+            m_SettingsButton.AddManipulator(new Clickable(() =>
+                {
+                    UpdateSettingsExpandedState();
+                }));
+
+            if(m_Settings.childCount > 0)
             {
-                m_NodeSettingsView = new NodeSettingsView();
-                m_NodeSettingsView.visible = false;
-
-                Add(m_NodeSettingsView);
-
-                m_SettingsButton = new VisualElement {name = "settings-button"};
-                m_SettingsButton.Add(new VisualElement { name = "icon" });
-
-                m_Settings = settings.CreateSettingsElement();
-
-                m_SettingsButton.AddManipulator(new Clickable(() =>
-                    {
-                        UpdateSettingsExpandedState();
-                    }));
-
-                // Remove this after updated to the correct API call has landed in trunk. ------------
                 m_ButtonContainer = new VisualElement { name = "button-container" };
-                m_ButtonContainer.style.flexDirection = StyleValue<FlexDirection>.Create(FlexDirection.Row);
+                m_ButtonContainer.style.flexDirection = FlexDirection.Row;
                 m_ButtonContainer.Add(m_SettingsButton);
                 m_ButtonContainer.Add(m_CollapseButton);
                 m_TitleContainer.Add(m_ButtonContainer);
-                // -----------------------------------------------------------------------------------
-                //titleButtonContainer.Add(m_SettingsButton);
-                //titleButtonContainer.Add(m_CollapseButton);
-
-                RegisterCallback<GeometryChangedEvent>(OnGeometryChanged);
             }
+        }
+
+        public void AttachMessage(string errString, ShaderCompilerMessageSeverity severity)
+        {
+            ClearMessage();
+            IconBadge badge;
+            if (severity == ShaderCompilerMessageSeverity.Error)
+            {
+                badge = IconBadge.CreateError(errString);
+            }
+            else
+            {
+                badge = IconBadge.CreateComment(errString);
+            }
+
+            Add(badge);
+            badge.AttachTo(m_TitleContainer, SpriteAlignment.RightCenter);
+        }
+
+        public void ClearMessage()
+        {
+            var badge = this.Q<IconBadge>();
+            if(badge != null)
+            {
+                badge.Detach();
+                badge.RemoveFromHierarchy();
+            }
+        }
+
+        public VisualElement colorElement
+        {
+            get { return this; }
+        }
+
+        static readonly StyleColor noColor = new StyleColor(StyleKeyword.Null);
+        public void SetColor(Color color)
+        {
+            m_TitleContainer.style.borderBottomColor = color;
+        }
+        
+        public void ResetColor()
+        {
+            m_TitleContainer.style.borderBottomColor = noColor;
+        }
+
+
+        public Color GetColor()
+        {
+            return m_TitleContainer.resolvedStyle.borderBottomColor;
         }
 
         void OnGeometryChanged(GeometryChangedEvent evt)
@@ -203,8 +253,8 @@ namespace UnityEditor.ShaderGraph.Drawing
             // space of the settings view's parent.
 
             var settingsButtonLayout = m_SettingsButton.ChangeCoordinatesTo(m_NodeSettingsView.parent, m_SettingsButton.layout);
-            m_NodeSettingsView.style.positionTop = settingsButtonLayout.yMax - 18f;
-            m_NodeSettingsView.style.positionLeft = settingsButtonLayout.xMin - 16f;
+            m_NodeSettingsView.style.top = settingsButtonLayout.yMax - 18f;
+            m_NodeSettingsView.style.left = settingsButtonLayout.xMin - 16f;
         }
 
         void OnSubGraphDoubleClick(MouseDownEvent evt)
@@ -213,11 +263,12 @@ namespace UnityEditor.ShaderGraph.Drawing
             {
                 SubGraphNode subgraphNode = node as SubGraphNode;
 
-                var path = AssetDatabase.GetAssetPath(subgraphNode.subGraphAsset);
+                var path = AssetDatabase.GUIDToAssetPath(subgraphNode.subGraphGuid);
                 ShaderGraphImporterEditor.ShowGraphEditWindow(path);
             }
         }
 
+        public Node gvNode => this;
         public AbstractMaterialNode node { get; private set; }
 
         public override bool expanded
@@ -244,16 +295,41 @@ namespace UnityEditor.ShaderGraph.Drawing
         {
             if (evt.target is Node)
             {
-                evt.menu.AppendAction("Copy Shader", CopyToClipboard, node.hasPreview ? ContextualMenu.MenuAction.StatusFlags.Normal : ContextualMenu.MenuAction.StatusFlags.Hidden);
-                evt.menu.AppendAction("Show Generated Code", ShowGeneratedCode, node.hasPreview ? ContextualMenu.MenuAction.StatusFlags.Normal : ContextualMenu.MenuAction.StatusFlags.Hidden);
+                var isMaster = node is IMasterNode;
+                var isActive = node.guid == node.owner.activeOutputNodeGuid;
+                if (isMaster)
+                {
+                    evt.menu.AppendAction("Set Active", SetMasterAsActive,
+                        _ => isActive ? DropdownMenuAction.Status.Checked : DropdownMenuAction.Status.Normal);
+                }
+
+                var canViewShader = node.hasPreview || node is IMasterNode || node is SubGraphOutputNode;
+                evt.menu.AppendAction("Copy Shader", CopyToClipboard,
+                    _ => canViewShader ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Hidden,
+                    GenerationMode.ForReals);
+                evt.menu.AppendAction("Show Generated Code", ShowGeneratedCode,
+                    _ => canViewShader ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Hidden,
+                    GenerationMode.ForReals);
+
+                if (Unsupported.IsDeveloperMode())
+                {
+                    evt.menu.AppendAction("Show Preview Code", ShowGeneratedCode,
+                        _ => canViewShader ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Hidden,
+                        GenerationMode.Preview);
+                }
             }
 
             base.BuildContextualMenu(evt);
         }
 
-        void CopyToClipboard()
+        void SetMasterAsActive(DropdownMenuAction action)
         {
-            GUIUtility.systemCopyBuffer = ConvertToShader();
+            node.owner.activeOutputNodeGuid = node.guid;
+        }
+
+        void CopyToClipboard(DropdownMenuAction action)
+        {
+            GUIUtility.systemCopyBuffer = ConvertToShader((GenerationMode) action.userData);
         }
 
         public string SanitizeName(string name)
@@ -261,37 +337,77 @@ namespace UnityEditor.ShaderGraph.Drawing
             return new string(name.Where(c => !Char.IsWhiteSpace(c)).ToArray());
         }
 
-        public void ShowGeneratedCode()
+        public void ShowGeneratedCode(DropdownMenuAction action)
         {
             string name = GetFirstAncestorOfType<GraphEditorView>().assetName;
+            var mode = (GenerationMode)action.userData;
 
-            string path = String.Format("Temp/GeneratedFromGraph-{0}-{1}-{2}.shader", SanitizeName(name), SanitizeName(node.name), node.guid);
-            if (GraphUtil.WriteToFile(path, ConvertToShader()))
+            string path = String.Format("Temp/GeneratedFromGraph-{0}-{1}-{2}{3}.shader", SanitizeName(name),
+                SanitizeName(node.name), node.guid, mode == GenerationMode.Preview ? "-Preview" : "");
+            if (GraphUtil.WriteToFile(path, ConvertToShader(mode)))
                 GraphUtil.OpenFile(path);
         }
 
-        string ConvertToShader()
+        string ConvertToShader(GenerationMode mode)
         {
             List<PropertyCollector.TextureInfo> textureInfo;
-            var masterNode = node as IMasterNode;
-            if (masterNode != null)
-                return masterNode.GetShader(GenerationMode.ForReals, node.name, out textureInfo);
+            if (node is IMasterNode masterNode)
+                return masterNode.GetShader(mode, node.name, out textureInfo);
 
-            var graph = (AbstractMaterialGraph)node.owner;
-            return graph.GetShader(node, GenerationMode.ForReals, node.name).shader;
+            return node.owner.GetShader(node, mode, node.name).shader;
+        }
+
+        void AddDefaultSettings()
+        {
+            PropertySheet ps = new PropertySheet();
+            bool hasDefaultSettings = false;
+
+            if(node.canSetPrecision)
+            {
+                hasDefaultSettings = true;
+                ps.Add(new PropertyRow(new Label("Precision")), (row) =>
+                {
+                    row.Add(new EnumField(node.precision), (field) =>
+                    {
+                        field.RegisterValueChangedCallback(evt =>
+                        {
+                            if (evt.newValue.Equals(node.precision))
+                                return;
+                            
+                            var editorView = GetFirstAncestorOfType<GraphEditorView>();
+                            var nodeList = m_GraphView.Query<MaterialNodeView>().ToList();
+
+                            editorView.colorManager.SetNodesDirty(nodeList);
+                            node.owner.owner.RegisterCompleteObjectUndo("Change precision");
+                            node.precision = (Precision)evt.newValue;
+                            node.owner.ValidateGraph();
+                            editorView.colorManager.UpdateNodeViews(nodeList);
+                            node.Dirty(ModificationScope.Graph);
+                        });
+                    });
+                });
+            }
+
+            if(hasDefaultSettings)
+                m_Settings.Add(ps);
         }
 
         void RecreateSettings()
         {
-            var settings = node as IHasSettings;
-            if (settings != null)
-            {
-                m_Settings.RemoveFromHierarchy();
+            m_Settings.RemoveFromHierarchy();
+            m_Settings = new PropertySheet();
 
-                m_Settings = settings.CreateSettingsElement();
-                m_NodeSettingsView.Add(m_Settings);
-            }
+            // Add default settings
+            AddDefaultSettings();
+
+            // Add Node type specific settings
+            var nodeTypeSettings = node as IHasSettings;
+            if (nodeTypeSettings != null)
+                m_Settings.Add(nodeTypeSettings.CreateSettingsElement());
+
+            m_NodeSettingsView.Add(m_Settings);
         }
+
 
         void UpdateSettingsExpandedState()
         {
@@ -300,8 +416,12 @@ namespace UnityEditor.ShaderGraph.Drawing
             {
                 m_NodeSettingsView.Add(m_Settings);
                 m_NodeSettingsView.visible = true;
+                m_GraphView.ClearSelection();
+                m_GraphView.AddToSelection(this);
 
                 m_SettingsButton.AddToClassList("clicked");
+                RegisterCallback<GeometryChangedEvent>(OnGeometryChanged);
+                OnGeometryChanged(null);
             }
             else
             {
@@ -309,6 +429,7 @@ namespace UnityEditor.ShaderGraph.Drawing
 
                 m_NodeSettingsView.visible = false;
                 m_SettingsButton.RemoveFromClassList("clicked");
+                UnregisterCallback<GeometryChangedEvent>(OnGeometryChanged);
             }
         }
 
@@ -336,13 +457,13 @@ namespace UnityEditor.ShaderGraph.Drawing
                 m_PreviewFiller.RemoveFromClassList("expanded");
                 m_PreviewFiller.AddToClassList("collapsed");
             }
+            UpdatePreviewTexture();
         }
 
         void UpdateTitle()
         {
-            var subGraphNode = node as SubGraphNode;
-            if (subGraphNode != null && subGraphNode.subGraphAsset != null)
-                title = subGraphNode.subGraphAsset.name + " (sub)";
+            if (node is SubGraphNode subGraphNode && subGraphNode.asset != null)
+                title = subGraphNode.asset.name;
             else
                 title = node.name;
         }
@@ -373,15 +494,22 @@ namespace UnityEditor.ShaderGraph.Drawing
                         inputContainer.Remove(port);
 
                         // We also need to remove the inline input
-                        var portInputView = m_PortInputContainer.OfType<PortInputView>().FirstOrDefault(v => Equals(v.slot, port.slot));
+                        var portInputView = m_PortInputContainer.Children().OfType<PortInputView>().FirstOrDefault(v => Equals(v.slot, port.slot));
                         if (portInputView != null)
                             portInputView.RemoveFromHierarchy();
                     }
                     else
                     {
                         port.slot = newSlot;
-                        var portInputView = m_PortInputContainer.OfType<PortInputView>().FirstOrDefault(x => x.slot.id == currentSlot.id);
-                        portInputView.UpdateSlot(newSlot);
+                        var portInputView = m_PortInputContainer.Children().OfType<PortInputView>().FirstOrDefault(x => x.slot.id == currentSlot.id);
+                        if (newSlot.isConnected)
+                        {
+                            portInputView?.RemoveFromHierarchy();
+                        }
+                        else
+                        {
+                            portInputView?.UpdateSlot(newSlot);
+                        }
 
                         slots.Remove(newSlot);
                     }
@@ -412,15 +540,15 @@ namespace UnityEditor.ShaderGraph.Drawing
                     inputContainer.Sort((x, y) => slots.IndexOf(((ShaderPort)x).slot) - slots.IndexOf(((ShaderPort)y).slot));
                 if (outputContainer.childCount > 0)
                     outputContainer.Sort((x, y) => slots.IndexOf(((ShaderPort)x).slot) - slots.IndexOf(((ShaderPort)y).slot));
+
+                UpdatePortInputs();
+                UpdatePortInputVisibilities();
             }
 
             RefreshExpandedState(); //This should not be needed. GraphView needs to improve the extension api here
-            UpdatePortInputs();
-            UpdatePortInputVisibilities();
 
-            foreach (var control in m_ControlItems)
+            foreach (var listener in m_ControlItems.Children().OfType<AbstractMaterialNodeModificationListener>())
             {
-                var listener = control as INodeModificationListener;
                 if (listener != null)
                     listener.OnNodeModified(scope);
             }
@@ -443,63 +571,66 @@ namespace UnityEditor.ShaderGraph.Drawing
 
         void UpdatePortInputs()
         {
-            foreach (var port in inputContainer.OfType<ShaderPort>())
+            foreach (var port in inputContainer.Children().OfType<ShaderPort>())
             {
-                if (!m_PortInputContainer.OfType<PortInputView>().Any(a => Equals(a.slot, port.slot)))
+                if (port.slot.isConnected)
                 {
-                    var portInputView = new PortInputView(port.slot) { style = { positionType = PositionType.Absolute } };
-                    m_PortInputContainer.Add(portInputView);
-                    port.RegisterCallback<GeometryChangedEvent>(evt => UpdatePortInput((ShaderPort)evt.target));
+                    continue;
                 }
+
+                var portInputView = m_PortInputContainer.Children().OfType<PortInputView>().FirstOrDefault(a => Equals(a.slot, port.slot));
+                if (portInputView == null)
+                {
+                    portInputView = new PortInputView(port.slot) { style = { position = Position.Absolute } };
+                    m_PortInputContainer.Add(portInputView);
+                    SetPortInputPosition(port, portInputView);
+                }
+                
+                port.RegisterCallback<GeometryChangedEvent>(UpdatePortInput);
             }
         }
 
-        void UpdatePortInput(ShaderPort port)
+        void UpdatePortInput(GeometryChangedEvent evt)
         {
-            var inputView = m_PortInputContainer.OfType<PortInputView>().First(x => Equals(x.slot, port.slot));
-
-            var currentRect = new Rect(inputView.style.positionLeft, inputView.style.positionTop, inputView.style.width, inputView.style.height);
-            var targetRect = new Rect(0.0f, 0.0f, port.layout.width, port.layout.height);
-            targetRect = port.ChangeCoordinatesTo(inputView.shadow.parent, targetRect);
-            var centerY = targetRect.center.y;
-            var centerX = targetRect.xMax - currentRect.width;
-            currentRect.center = new Vector2(centerX, centerY);
-
-            inputView.style.positionTop = currentRect.yMin;
-            var newHeight = inputView.parent.layout.height;
-            foreach (var element in inputView.parent.Children())
-                newHeight = Mathf.Max(newHeight, element.style.positionTop + element.layout.height);
-            if (Math.Abs(inputView.parent.style.height - newHeight) > 1e-3)
-                inputView.parent.style.height = newHeight;
+            var port = (ShaderPort)evt.target;
+            var inputView = m_PortInputContainer.Children().OfType<PortInputView>().First(x => Equals(x.slot, port.slot));
+            SetPortInputPosition(port, inputView);
+            port.UnregisterCallback<GeometryChangedEvent>(UpdatePortInput);
         }
 
-        public void UpdatePortInputVisibilities()
+        void SetPortInputPosition(ShaderPort port, PortInputView inputView)
         {
-            foreach (var portInputView in m_PortInputContainer.OfType<PortInputView>())
+            inputView.style.top = port.layout.y;
+            inputView.parent.style.height = inputContainer.layout.height;
+        }
+
+        void UpdatePortInputVisibilities()
+        {
+            if (expanded)
             {
-                var slot = portInputView.slot;
-                var oldVisibility = portInputView.visible;
-                portInputView.visible = expanded && !node.owner.GetEdges(node.GetSlotReference(slot.id)).Any();
-                if (portInputView.visible != oldVisibility)
-                    m_PortInputContainer.MarkDirtyRepaint();
+                m_PortInputContainer.style.display = StyleKeyword.Null;
+            }
+            else
+            {
+                m_PortInputContainer.style.display = DisplayStyle.None;
             }
         }
 
         public void UpdatePortInputTypes()
         {
-            foreach (var anchor in inputContainer.Concat(outputContainer).OfType<ShaderPort>())
+            foreach (var anchor in inputContainer.Children().Concat(outputContainer.Children()).OfType<ShaderPort>())
             {
                 var slot = anchor.slot;
                 anchor.portName = slot.displayName;
                 anchor.visualClass = slot.concreteValueType.ToClassName();
             }
 
-            foreach (var portInputView in m_PortInputContainer.OfType<PortInputView>())
+            foreach (var portInputView in m_PortInputContainer.Children().OfType<PortInputView>())
                 portInputView.UpdateSlotType();
 
-            foreach (var control in m_ControlItems)
+            foreach (var control in m_ControlItems.Children())
             {
-                var listener = control as INodeModificationListener;
+                var listener = control as AbstractMaterialNodeModificationListener;
                 if (listener != null)
                     listener.OnNodeModified(ModificationScope.Graph);
             }
@@ -534,6 +665,11 @@ namespace UnityEditor.ShaderGraph.Drawing
                     m_PreviewImage.image = m_PreviewRenderData.texture;
                 else
                     m_PreviewImage.MarkDirtyRepaint();
+
+                if (m_PreviewRenderData.shaderData.isCompiling)
+                    m_PreviewImage.tintColor = new Color(1.0f, 1.0f, 1.0f, 0.3f);
+                else
+                    m_PreviewImage.tintColor = Color.white;
             }
         }
 
@@ -553,10 +689,11 @@ namespace UnityEditor.ShaderGraph.Drawing
 
         public void Dispose()
         {
-            foreach (var portInputView in m_PortInputContainer.OfType<PortInputView>())
+            foreach (var portInputView in m_PortInputContainer.Children().OfType<PortInputView>())
                 portInputView.Dispose();
 
             node = null;
+            ((VisualElement)this).userData = null;
             if (m_PreviewRenderData != null)
             {
                 m_PreviewRenderData.onPreviewChanged -= UpdatePreviewTexture;

@@ -2,27 +2,28 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using UnityEditor.Experimental.UIElements;
-using UnityEditor.Experimental.UIElements.GraphView;
 using UnityEditor.Graphing;
 using UnityEditor.Graphing.Util;
 using UnityEngine;
-using UnityEngine.Experimental.UIElements;
+using UnityEditor.UIElements;
+using UnityEditor.Experimental.GraphView;
+using UnityEngine.UIElements;
 
 namespace UnityEditor.ShaderGraph.Drawing
 {
     class SearchWindowProvider : ScriptableObject, ISearchWindowProvider
     {
         EditorWindow m_EditorWindow;
-        AbstractMaterialGraph m_Graph;
+        GraphData m_Graph;
         GraphView m_GraphView;
         Texture2D m_Icon;
         public ShaderPort connectedPort { get; set; }
         public bool nodeNeedsRepositioning { get; set; }
         public SlotReference targetSlotReference { get; private set; }
         public Vector2 targetPosition { get; private set; }
+        private const string k_HiddenFolderName = "Hidden";
 
-        public void Initialize(EditorWindow editorWindow, AbstractMaterialGraph graph, GraphView graphView)
+        public void Initialize(EditorWindow editorWindow, GraphData graph, GraphView graphView)
         {
             m_EditorWindow = editorWindow;
             m_Graph = graph;
@@ -75,23 +76,26 @@ namespace UnityEditor.ShaderGraph.Drawing
                 }
             }
 
-            if (!(m_Graph is SubGraph))
+            foreach (var guid in AssetDatabase.FindAssets(string.Format("t:{0}", typeof(SubGraphAsset))))
             {
-                foreach (var guid in AssetDatabase.FindAssets(string.Format("t:{0}", typeof(MaterialSubGraphAsset))))
+                var asset = AssetDatabase.LoadAssetAtPath<SubGraphAsset>(AssetDatabase.GUIDToAssetPath(guid));
+                var node = new SubGraphNode { asset = asset };
+                var title = asset.path.Split('/').ToList();
+                
+                if (asset.descendents.Contains(m_Graph.assetGuid) || asset.assetGuid == m_Graph.assetGuid)
                 {
-                    var asset = AssetDatabase.LoadAssetAtPath<MaterialSubGraphAsset>(AssetDatabase.GUIDToAssetPath(guid));
-                    var node = new SubGraphNode { subGraphAsset = asset };
+                    continue;
+                }
 
-                    if (string.IsNullOrEmpty(asset.subGraph.path))
-                    {
-                        AddEntries(node, new string[1] { asset.name }, nodeEntries);
-                    }
-                    else
-                    {
-                        var title = asset.subGraph.path.Split('/').ToList();
-                        title.Add(asset.name);
-                        AddEntries(node, title.ToArray(), nodeEntries);
-                    }
+                if (string.IsNullOrEmpty(asset.path))
+                {
+                    AddEntries(node, new string[1] { asset.name }, nodeEntries);
+                }
+
+                else if (title[0] != k_HiddenFolderName)
+                {
+                    title.Add(asset.name);
+                    AddEntries(node, title.ToArray(), nodeEntries);
                 }
             }
 
@@ -184,9 +188,9 @@ namespace UnityEditor.ShaderGraph.Drawing
 
         void AddEntries(AbstractMaterialNode node, string[] title, List<NodeEntry> nodeEntries)
         {
-            if (m_Graph is SubGraph && !node.allowedInSubGraph)
+            if (m_Graph.isSubGraph && !node.allowedInSubGraph)
                 return;
-            if (m_Graph is MaterialGraph && !node.allowedInMainGraph)
+            if (!m_Graph.isSubGraph && !node.allowedInMainGraph)
                 return;
             if (connectedPort == null)
             {
@@ -246,7 +250,10 @@ namespace UnityEditor.ShaderGraph.Drawing
             var node = nodeEntry.node;
 
             var drawState = node.drawState;
-            var windowMousePosition = m_EditorWindow.GetRootVisualContainer().ChangeCoordinatesTo(m_EditorWindow.GetRootVisualContainer().parent, context.screenMousePosition - m_EditorWindow.position.position);
+
+
+            var windowRoot = m_EditorWindow.rootVisualElement;
+            var windowMousePosition = windowRoot.ChangeCoordinatesTo(windowRoot.parent, context.screenMousePosition - m_EditorWindow.position.position);
             var graphMousePosition = m_GraphView.contentViewContainer.WorldToLocal(windowMousePosition);
             drawState.position = new Rect(graphMousePosition, Vector2.zero);
             node.drawState = drawState;

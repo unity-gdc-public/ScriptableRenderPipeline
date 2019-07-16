@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using UnityEngine.Experimental.VFX;
+using UnityEngine.VFX;
 using UnityEditor.VFX.Block;
 
 namespace UnityEditor.VFX
@@ -20,13 +20,16 @@ namespace UnityEditor.VFX
         [VFXSetting(VFXSettingAttribute.VisibleFlags.InInspector)]
         public VFXIntegrationMode integration = VFXIntegrationMode.Euler;
 
+        [VFXSetting(VFXSettingAttribute.VisibleFlags.InInspector)]
+        public VFXIntegrationMode angularIntegration = VFXIntegrationMode.Euler;
+
         [VFXSetting(VFXSettingAttribute.VisibleFlags.InInspector), Tooltip("Automatically increase particle age every frame, based on deltaTime")]
         public bool ageParticles = true;
 
         [VFXSetting(VFXSettingAttribute.VisibleFlags.InInspector), Tooltip("Destroy particles if age > lifetime")]
         public bool reapParticles = true;
 
-        public VFXBasicUpdate() : base(VFXContextType.kUpdate, VFXDataType.kParticle, VFXDataType.kParticle) {}
+        public VFXBasicUpdate() : base(VFXContextType.Update, VFXDataType.Particle, VFXDataType.Particle) {}
         public override string name { get { return "Update"; } }
         public override string codeGeneratorTemplate { get { return VisualEffectGraphPackageInfo.assetPackagePath + "/Shaders/VFXUpdate"; } }
         public override bool codeGeneratorCompute { get { return true; } }
@@ -69,7 +72,15 @@ namespace UnityEditor.VFX
                 var data = GetData();
 
                 if (integration != VFXIntegrationMode.None && data.IsCurrentAttributeWritten(VFXAttribute.Velocity))
-                    yield return CreateInstance<EulerIntegration>();
+                    yield return VFXBlock.CreateImplicitBlock<EulerIntegration>(data);
+
+                if (angularIntegration != VFXIntegrationMode.None &&
+                    (
+                        data.IsCurrentAttributeWritten(VFXAttribute.AngularVelocityX) ||
+                        data.IsCurrentAttributeWritten(VFXAttribute.AngularVelocityY) ||
+                        data.IsCurrentAttributeWritten(VFXAttribute.AngularVelocityZ))
+                    )
+                    yield return VFXBlock.CreateImplicitBlock<AngularEulerIntegration>(data);
 
                 var lifeTime = GetData().IsCurrentAttributeWritten(VFXAttribute.Lifetime);
                 var age = GetData().IsCurrentAttributeRead(VFXAttribute.Age);
@@ -77,10 +88,10 @@ namespace UnityEditor.VFX
                 if (age || lifeTime)
                 {
                     if (ageParticles)
-                        yield return CreateInstance<Age>();
+                        yield return VFXBlock.CreateImplicitBlock<Age>(data);
 
                     if (lifeTime && reapParticles)
-                        yield return CreateInstance<Reap>();
+                        yield return VFXBlock.CreateImplicitBlock<Reap>(data);
                 }
             }
         }

@@ -131,11 +131,7 @@ namespace UnityEditor.VFX
 
                 if (!type.IsAssignableFrom(obj.GetType()))
                 {
-                    if (type == typeof(FloatN))
-                    {
-                        obj = System.Activator.CreateInstance(typeof(FloatN), obj);
-                    }
-                    else if (obj is UnityEngine.Object && (obj as UnityEngine.Object == null))
+                    if (obj is UnityEngine.Object && (obj as UnityEngine.Object == null))
                     {
                         // Some object couldn't be loaded. just ignore it.
                     }
@@ -371,11 +367,11 @@ namespace UnityEditor.VFX
                     {
                         return Activator.CreateInstance(type);
                     }
-                    catch (MissingMethodException e)
+                    catch (MissingMethodException)
                     {
                         Debug.LogError(type.Name + " Doesn't seem to have a default constructor");
 
-                        throw e;
+                        throw;
                     }
 
                 return Convert.ChangeType(text, type, CultureInfo.InvariantCulture);
@@ -494,7 +490,7 @@ namespace UnityEditor.VFX
                 else //List
                 {
                     int listCount = elements.Count;
-                    IList listObj = (Array)Activator.CreateInstance(type, new object[] { listCount });
+                    IList listObj = (IList)Activator.CreateInstance(type, new object[0]);
                     for (int index = 0; index < listCount; index++)
                     {
                         listObj.Add(Load(type.GetElementType(), elements[index], null));
@@ -511,11 +507,11 @@ namespace UnityEditor.VFX
                     EditorJsonUtility.FromJsonOverwrite(text, obj);
                     return obj;
                 }
-                catch (MissingMethodException e)
+                catch (MissingMethodException)
                 {
                     Debug.LogError(type.Name + " Doesn't seem to have a default constructor");
 
-                    throw e;
+                    throw;
                 }
             }
         }

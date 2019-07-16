@@ -12,7 +12,7 @@
 #define GPULIGHTTYPE_SPOT (2)
 #define GPULIGHTTYPE_PROJECTOR_PYRAMID (3)
 #define GPULIGHTTYPE_PROJECTOR_BOX (4)
-#define GPULIGHTTYPE_LINE (5)
+#define GPULIGHTTYPE_TUBE (5)
 #define GPULIGHTTYPE_RECTANGLE (6)
 
 //
@@ -55,16 +55,16 @@ struct DirectionalLightData
     uint lightLayers;
     float lightDimmer;
     float volumetricLightDimmer;
-    float angleScale;
-    float angleOffset;
     float3 forward;
     int cookieIndex;
     float3 right;
     int tileCookie;
     float3 up;
     int shadowIndex;
+    int screenSpaceShadowIndex;
     float3 color;
-    int contactShadowIndex;
+    int contactShadowMask;
+    float3 shadowTint;
     float shadowDimmer;
     float volumetricShadowDimmer;
     int nonLightMappedOnly;
@@ -72,6 +72,7 @@ struct DirectionalLightData
     float4 shadowMaskSelector;
     float diffuseDimmer;
     float specularDimmer;
+    int interactsWithSky;
 };
 
 // Generated from UnityEngine.Experimental.Rendering.HDPipeline.LightData
@@ -95,7 +96,9 @@ struct LightData
     int cookieIndex;
     int tileCookie;
     int shadowIndex;
-    int contactShadowIndex;
+    int contactShadowMask;
+    int screenSpaceShadowIndex;
+    float3 shadowTint;
     float shadowDimmer;
     float volumetricShadowDimmer;
     int nonLightMappedOnly;

@@ -1,11 +1,20 @@
 ${VFXPerPassInclude}
 ${VFXGeneratedBlockFunction}
 
-#pragma vertex vert
-VFX_VARYING_PS_INPUTS vert(uint id : SV_VertexID, uint instanceID : SV_InstanceID)
+struct vs_input
 {
-	uint index = (id >> 2) + instanceID * 2048;
+	VFX_DECLARE_INSTANCE_ID
+};
+
+#pragma vertex vert
+VFX_VARYING_PS_INPUTS vert(uint id : SV_VertexID, vs_input i)
+{
 	VFX_VARYING_PS_INPUTS o = (VFX_VARYING_PS_INPUTS)0;
+
+	UNITY_SETUP_INSTANCE_ID(i);
+	UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
+
+	uint index = (id >> 2) + VFX_GET_INSTANCE_ID(i) * 2048;
 	
 	${VFXLoadAttributesOrCull}
 	${VFXProcessBlocks}
@@ -17,7 +26,7 @@ VFX_VARYING_PS_INPUTS vert(uint id : SV_VertexID, uint instanceID : SV_InstanceI
 	o.VFX_VARYING_UV.y = float(id & 2) - 1.0f; 
 	
 	${VFXLoadSize}
-	float uSize = size.x * 0.5f;
+	float uSize = size3.x * 0.5f;
 	
 	float camDist = length(GetViewVFXPosition() - position);
 	float scale = 1.0f - (1.0f - unity_OrthoParams.w) * uSize / camDist;

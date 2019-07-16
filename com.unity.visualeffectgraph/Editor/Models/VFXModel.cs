@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using UnityEngine;
-using UnityEditor.Experimental.VFX;
-using UnityEngine.Experimental.VFX;
+using UnityEditor.VFX;
+using UnityEngine.VFX;
 using UnityEngine.Profiling;
 
 namespace UnityEditor.VFX
@@ -31,7 +31,6 @@ namespace UnityEditor.VFX
         {
             kStructureChanged,      // Model structure (hierarchy) has changed
             kParamChanged,          // Some parameter values have changed
-            kParamPropagated,       // Some parameter values have change and was propagated from the parents
             kSettingChanged,        // A setting value has changed
             kSpaceChanged,          // Space has been changed
             kConnectionChanged,     // Connection have changed
@@ -60,22 +59,22 @@ namespace UnityEditor.VFX
             {
                 int nbRemoved = m_Children.RemoveAll(c => c == null);// Remove bad references if any
                 if (nbRemoved > 0)
-                    Debug.Log(String.Format("Remove {0} child(ren) that couldnt be deserialized from {1} of type {2}", nbRemoved, name, GetType()));
+                    Debug.LogWarning(String.Format("Remove {0} child(ren) that couldnt be deserialized from {1} of type {2}", nbRemoved, name, GetType()));
             }
         }
 
-        public virtual void Sanitize() {}
+        public virtual void Sanitize(int version) {}
 
         public virtual void OnUnknownChange()
         {
         }
 
-        public virtual void CollectDependencies(HashSet<ScriptableObject> objs)
+        public virtual void CollectDependencies(HashSet<ScriptableObject> objs, bool ownedOnly = true)
         {
             foreach (var child in children)
             {
                 objs.Add(child);
-                child.CollectDependencies(objs);
+                child.CollectDependencies(objs, ownedOnly);
             }
         }
 
@@ -232,6 +231,16 @@ namespace UnityEditor.VFX
             return m_Children.IndexOf(child);
         }
 
+        public object GetSettingValue(string name)
+        {
+            var setting = GetSetting(name);
+            if (setting.field == null)
+            {
+                throw new ArgumentException(string.Format("Unable to find field {0} in {1}", name, GetType().ToString()));
+            }
+            return setting.value;
+        }
+
         public void SetSettingValue(string name, object value)
         {
             SetSettingValue(name, value, true);
@@ -239,21 +248,26 @@ namespace UnityEditor.VFX
 
         protected void SetSettingValue(string name, object value, bool notify)
         {
-            var field = GetType().GetField(name, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
-            if (field == null)
+            var setting = GetSetting(name);
+            if (setting.field == null)
             {
                 throw new ArgumentException(string.Format("Unable to find field {0} in {1}", name, GetType().ToString()));
             }
 
-            var currentValue = field.GetValue(this);
+            var currentValue = setting.value;
             if (currentValue != value)
             {
-                field.SetValue(this, value);
+                setting.field.SetValue(setting.instance, value);
                 if (notify)
                 {
                     Invalidate(InvalidationCause.kSettingChanged);
                 }
             }
+        }
+
+        public virtual VFXSetting GetSetting(string  name)
+        {
+            return new VFXSetting(GetType().GetField(name, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance), this);
         }
 
         public void Invalidate(InvalidationCause cause)
@@ -278,7 +292,7 @@ namespace UnityEditor.VFX
                 m_Parent.Invalidate(model, cause);
         }
 
-        public IEnumerable<FieldInfo> GetSettings(bool listHidden, VFXSettingAttribute.VisibleFlags flags = VFXSettingAttribute.VisibleFlags.All)
+        public virtual IEnumerable<VFXSetting> GetSettings(bool listHidden, VFXSettingAttribute.VisibleFlags flags = VFXSettingAttribute.VisibleFlags.All)
         {
             return GetType().GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance).Where(f =>
             {
@@ -292,7 +306,7 @@ namespace UnityEditor.VFX
                     return (attr.visibleFlags & flags) != 0 && !filteredOutSettings.Contains(f.Name);
                 }
                 return false;
-            });
+            }).Select(field => new VFXSetting(field,this));
         }
 
         static public VFXExpression ConvertSpace(VFXExpression input, VFXSlot targetSlot, VFXCoordinateSpace space)
@@ -374,6 +388,31 @@ namespace UnityEditor.VFX
             return null;
         }
 
+        public static void UnlinkModel(VFXModel model, bool notify = true)
+        {
+            if (model is IVFXSlotContainer)
+            {
+                var slotContainer = (IVFXSlotContainer)model;
+                VFXSlot slotToClean = null;
+                do
+                {
+                    slotToClean = slotContainer.inputSlots.Concat(slotContainer.outputSlots).FirstOrDefault(o => o.HasLink(true));
+                    if (slotToClean)
+                        slotToClean.UnlinkAll(true, notify);
+                }
+                while (slotToClean != null);
+            }
+        }
+
+        public static void RemoveModel(VFXModel model, bool notify = true)
+        {
+            VFXGraph graph = model.GetGraph();
+            if (graph != null)        
+                graph.UIInfos.Sanitize(graph); // Remove reference from groupInfos
+            UnlinkModel(model);
+            model.Detach(notify);
+        }
+
         public static void ReplaceModel(VFXModel dst, VFXModel src, bool notify = true)
         {
             // UI
@@ -401,20 +440,7 @@ namespace UnityEditor.VFX
             }
 
             // Unlink everything
-            if (src is IVFXSlotContainer)
-            {
-                var slotContainer = src as IVFXSlotContainer;
-                VFXSlot slotToClean = null;
-                do
-                {
-                    slotToClean = slotContainer.inputSlots.Concat(slotContainer.outputSlots).FirstOrDefault(o => o.HasLink(true));
-                    if (slotToClean)
-                    {
-                        slotToClean.UnlinkAll(true, true);
-                    }
-                }
-                while (slotToClean != null);
-            }
+            UnlinkModel(src);
 
             // Replace model
             var parent = src.GetParent();

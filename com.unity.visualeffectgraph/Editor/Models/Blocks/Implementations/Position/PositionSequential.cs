@@ -2,13 +2,13 @@ using System;
 using System.Linq;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Experimental.VFX;
+using UnityEngine.VFX;
 
 namespace UnityEditor.VFX.Block
 {
-    class PositionSequentialVariantProvider : IVariantProvider
+    class PositionSequentialVariantProvider : VariantProvider
     {
-        public Dictionary<string, object[]> variants
+        protected override sealed Dictionary<string, object[]> variants
         {
             get
             {
@@ -55,9 +55,12 @@ namespace UnityEditor.VFX.Block
         [Tooltip("Write target position")]
         private bool writeTargetPosition = false;
 
+        [SerializeField, VFXSetting]
+        private VFXOperatorUtility.SequentialAddressingMode mode = VFXOperatorUtility.SequentialAddressingMode.Wrap;
+
         public override string name { get { return string.Format("Position : Sequential ({0})", shape); } }
-        public override VFXContextType compatibleContexts { get { return VFXContextType.kInitAndUpdateAndOutput; } }
-        public override VFXDataType compatibleData { get { return VFXDataType.kParticle; } }
+        public override VFXContextType compatibleContexts { get { return VFXContextType.InitAndUpdateAndOutput; } }
+        public override VFXDataType compatibleData { get { return VFXDataType.Particle; } }
 
         public class InputProperties
         {
@@ -107,18 +110,18 @@ namespace UnityEditor.VFX.Block
 
         public class InputPropertiesThreeDimensional
         {
-            public Position Origin = Position.defaultValue;
-
-            public Vector3 AxisX = Vector3.right;
-            public Vector3 AxisY = Vector3.up;
-            public Vector3 AxisZ = Vector3.forward;
-
             [Tooltip("Element X count used to loop over the sequence")]
             public uint CountX = 8;
             [Tooltip("Element Y count used to loop over the sequence")]
             public uint CountY = 8;
             [Tooltip("Element Z count used to loop over the sequence")]
             public uint CountZ = 8;
+
+            public Position Origin = Position.defaultValue;
+
+            public Vector AxisX = Vector3.right;
+            public Vector AxisY = Vector3.up;
+            public Vector AxisZ = Vector3.forward;
         }
 
         protected override IEnumerable<VFXPropertyWithValue> inputProperties
@@ -169,7 +172,7 @@ namespace UnityEditor.VFX.Block
                 var start = expressions.First(o => o.name == "Start").exp;
                 var end = expressions.First(o => o.name == "End").exp;
                 var count = expressions.First(o => o.name == "Count").exp;
-                return VFXOperatorUtility.SequentialLine(start, end, indexExpr, count);
+                return VFXOperatorUtility.SequentialLine(start, end, indexExpr, count, mode);
             }
             else if (shape == SequentialShape.Circle)
             {
@@ -178,7 +181,7 @@ namespace UnityEditor.VFX.Block
                 var up = expressions.First(o => o.name == "Up").exp;
                 var radius = expressions.First(o => o.name == "Radius").exp;
                 var count = expressions.First(o => o.name == "Count").exp;
-                return VFXOperatorUtility.SequentialCircle(center, radius, normal, up, indexExpr, count);
+                return VFXOperatorUtility.SequentialCircle(center, radius, normal, up, indexExpr, count, mode);
             }
             else if (shape == SequentialShape.ThreeDimensional)
             {
@@ -189,7 +192,7 @@ namespace UnityEditor.VFX.Block
                 var countX = expressions.First(o => o.name == "CountX").exp;
                 var countY = expressions.First(o => o.name == "CountY").exp;
                 var countZ = expressions.First(o => o.name == "CountZ").exp;
-                return VFXOperatorUtility.Sequential3D(origin, axisX, axisY, axisZ, indexExpr, countX, countY, countZ);
+                return VFXOperatorUtility.Sequential3D(origin, axisX, axisY, axisZ, indexExpr, countX, countY, countZ, mode);
             }
             throw new NotImplementedException();
         }
