@@ -67,15 +67,15 @@ pack_{{ package.id }}:
 {% for editor in editors %}
 {% for platform in platforms %}
 {% for package in packages %}
-test_{{ package.id}}_{{ platform.name }}_{{ editor.version }}:
-  name: z_(do not use) Test core {{ platform.name }} {{ editor.version }}
+test_{{ package.id }}_{{ platform.name }}_{{ editor.version }}:
+  name: z_(do not use) Test {{ package.name }} {{ platform.name }} {{ editor.version }}
   agent:
     type: {{ platform.agent.type }}
     image: {{ platform.agent.image }}
     flavor: {{ platform.agent.flavor }}
   commands:
     - npm install upm-ci-utils@stable -g --registry https://api.bintray.com/npm/unity/unity-npm
-    - upm-ci package test -u {{ editor.version }} --package-path com.unity.render-pipelines.core
+    - upm-ci package test -u {{ editor.version }} --package-path {{ package.packagename }}
   artifacts:
     logs:
       paths:
