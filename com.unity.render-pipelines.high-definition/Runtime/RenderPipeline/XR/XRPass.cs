@@ -44,13 +44,19 @@ namespace UnityEngine.Rendering.HighDefinition
         }
 
 #if USE_XR_SDK
-        internal XRView(XRDisplaySubsystem.XRRenderParameter renderParameter)
+        internal XRView(XRDisplaySubsystem.XRRenderPass renderPass, XRDisplaySubsystem.XRRenderParameter renderParameter)
         {
             projMatrix = renderParameter.projection;
             viewMatrix = renderParameter.view;
             viewport = renderParameter.viewport;
             occlusionMesh = renderParameter.occlusionMesh;
             legacyStereoEye = (Camera.StereoscopicEye)(-1);
+
+            // Convert viewport from normalized to screen space
+            viewport.x      *= renderPass.renderTargetDesc.width;
+            viewport.width  *= renderPass.renderTargetDesc.width;
+            viewport.y      *= renderPass.renderTargetDesc.height;
+            viewport.height *= renderPass.renderTargetDesc.height;
         }
 #endif
     }
@@ -140,9 +146,9 @@ namespace UnityEngine.Rendering.HighDefinition
             return passInfo;
         }
 
-        internal void AddView(XRDisplaySubsystem.XRRenderParameter xrSdkRenderParameter)
+        internal void AddView(XRDisplaySubsystem.XRRenderPass xrSdkRenderPass, XRDisplaySubsystem.XRRenderParameter xrSdkRenderParameter)
         {
-            AddViewInternal(new XRView(xrSdkRenderParameter));
+            AddViewInternal(new XRView(xrSdkRenderPass, xrSdkRenderParameter));
         }
 #endif
         internal static void Release(XRPass xrPass)
@@ -250,7 +256,7 @@ namespace UnityEngine.Rendering.HighDefinition
             //        {
             //            if (views[viewId].occlusionMesh != null)
             //            {
-            //                HDUtils.SetRenderTarget(cmd, depthBuffer, ClearFlag.None, 0, CubemapFace.Unknown, viewId);
+            //                CoreUtils.SetRenderTarget(cmd, depthBuffer, ClearFlag.None, 0, CubemapFace.Unknown, viewId);
             //                cmd.DrawMesh(views[viewId].occlusionMesh, m, occlusionMeshMaterial);
             //            }
             //        }
