@@ -167,7 +167,7 @@ test_hdrp_package_{{ editor.version }}:
     - npm install upm-ci-utils@stable -g --registry https://api.bintray.com/npm/unity/unity-npm
     - pip install unity-downloader-cli --extra-index-url https://artifactory.eu-cph-1.unityops.net/api/pypi/common-python/simple
     - unity-downloader-cli -u {{ editor.version }} -c editor --wait
-    - cp ~/upm-ci~/packages/*.tgz ~/.Editor/Data/Resources/PackageManager/Editor
+    - cp ~/com.unity.render-pipelines.high-definition/upm-ci~/packages/*.tgz ~/com.unity.render-pipelines.high-definition/.Editor/Data/Resources/PackageManager/Editor
     - upm-ci package test -u ./.Editor --package-path com.unity.render-pipelines.high-definition
   dependencies:
     - .yamato/upm-ci-packages.yml#pack_core_package
