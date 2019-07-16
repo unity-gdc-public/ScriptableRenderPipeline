@@ -248,7 +248,7 @@ publish_all:
   - .yamato/upm-ci-packages.yml#all_package_ci
   
 publish_no_test:
-  name: Publish all packages
+  name: z_(Do not use) Publish all packages
   agent:
     type: Unity::VM
     image: package-ci/win10:stable
