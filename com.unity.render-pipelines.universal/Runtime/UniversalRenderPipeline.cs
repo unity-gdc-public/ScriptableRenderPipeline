@@ -140,8 +140,8 @@ namespace UnityEngine.Rendering.Universal
             foreach (Camera camera in cameras)
             {
                 BeginCameraRendering(renderContext, camera);
-
-                VFX.VFXManager.ProcessCamera(camera); //Visual Effect Graph is not yet a required package but calling this method when there isn't any VisualEffect component has no effect (but needed for Camera sorting in Visual Effect Graph context)
+                //Visual Effect Graph is not yet a required package but calling this method when there isn't any VisualEffect component has no effect (SA : VFXManager.ProcessCameraCommand)
+                VFX.VFXManager.PrepareCamera(camera); //It should be called before culling to prepare materials
                 RenderSingleCamera(renderContext, camera);
 
                 EndCameraRendering(renderContext, camera);
@@ -184,7 +184,6 @@ namespace UnityEngine.Rendering.Universal
             {
                 renderer.Clear();
                 renderer.SetupCullingParameters(ref cullingParameters, ref cameraData);
-
                 context.ExecuteCommandBuffer(cmd);
                 cmd.Clear();
 
@@ -197,8 +196,8 @@ namespace UnityEngine.Rendering.Universal
 
                 var cullResults = context.Cull(ref cullingParameters);
                 InitializeRenderingData(settings, ref cameraData, ref cullResults, out var renderingData);
-
                 renderer.Setup(context, ref renderingData);
+                VFX.VFXManager.ProcessCameraCommand(camera, cmd); //Triggers dispatch per camera, all global parameters should have been setup at this stage.
                 renderer.Execute(context, ref renderingData);
             }
 
