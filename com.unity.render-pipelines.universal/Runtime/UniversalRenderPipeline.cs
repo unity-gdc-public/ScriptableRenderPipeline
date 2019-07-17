@@ -75,7 +75,7 @@ namespace UnityEngine.Rendering.Universal
                 if (RenderingUtils.useStructuredBuffer)
                     return 1024;
 
-                return 64;
+                return 32;
             }
         }
 
