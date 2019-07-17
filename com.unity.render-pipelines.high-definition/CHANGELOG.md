@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Fixed
 - Fixed material albedo affecting the lux meter
+- Fixed culling for volumetrics with XR single-pass rendering
 
 ## [7.0.0] - 2019-07-10
 

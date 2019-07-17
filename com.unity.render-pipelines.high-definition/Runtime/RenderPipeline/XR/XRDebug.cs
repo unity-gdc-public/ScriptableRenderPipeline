@@ -9,9 +9,20 @@ namespace UnityEngine.Rendering.HighDefinition
             if (layoutOverride == XRLayoutOverride.None || camera.cameraType != CameraType.Game || xrEnabled)
                 return false;
 
+            if (camera.TryGetCullingParameters(false, out var cullingParams))
+            {
+                cullingParams.stereoProjectionMatrix = GL.GetGPUProjectionMatrix(camera.projectionMatrix, true);
+                cullingParams.stereoViewMatrix = camera.worldToCameraMatrix;
+            }
+            else
+            {
+                Debug.LogError("Unable to get Culling Parameters from camera!");
+                return false;
+            }
+
             if (layoutOverride == XRLayoutOverride.TestSinglePassOneEye)
             {
-                var xrPass = XRPass.Create(framePasses.Count, camera.targetTexture);
+                var xrPass = XRPass.Create(framePasses.Count, cullingParams, camera.targetTexture);
 
                 // 2x single-pass instancing
                 for (int i = 0; i < 2; ++i)
@@ -35,7 +46,7 @@ namespace UnityEngine.Rendering.HighDefinition
                 {
                     for (int tileX = 0; tileX < tileCountX; ++tileX)
                     {
-                        var xrPass = XRPass.Create(framePasses.Count, camera.targetTexture);
+                        var xrPass = XRPass.Create(framePasses.Count, cullingParams, camera.targetTexture);
 
                         float spliRatioX1 = Mathf.Pow((tileX + 0.0f) / tileCountX, splitRatio);
                         float spliRatioX2 = Mathf.Pow((tileX + 1.0f) / tileCountX, splitRatio);

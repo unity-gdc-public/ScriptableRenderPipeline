@@ -153,11 +153,17 @@ namespace UnityEngine.Rendering.HighDefinition
 
         void CreateLayoutLegacyStereo(Camera camera)
         {
+            if (!camera.TryGetCullingParameters(true, out var cullingParams))
+            {
+                Debug.LogError("Unable to get Culling Parameters from camera!");
+                return;
+            }
+
             if (XRGraphics.stereoRenderingMode == XRGraphics.StereoRenderingMode.MultiPass)
             {
                 for (int passIndex = 0; passIndex < 2; ++passIndex)
                 {
-                    var xrPass = XRPass.Create(passIndex);
+                    var xrPass = XRPass.Create(passIndex, cullingParams);
                     xrPass.AddView(camera, (Camera.StereoscopicEye)passIndex);
 
                     AddPassToFrame(camera, xrPass);
@@ -165,7 +171,7 @@ namespace UnityEngine.Rendering.HighDefinition
             }
             else
             {
-                var xrPass = XRPass.Create(multipassId: 0);
+                var xrPass = XRPass.Create(multipassId: 0, cullingParams);
 
                 for (int viewIndex = 0; viewIndex < 2; ++viewIndex)
                 {
@@ -182,10 +188,11 @@ namespace UnityEngine.Rendering.HighDefinition
             for (int renderPassIndex = 0; renderPassIndex < display.GetRenderPassCount(); ++renderPassIndex)
             {
                 display.GetRenderPass(renderPassIndex, out var renderPass);
+                display.GetCullingParameters(camera, renderPass.cullingPassIndex, out var cullingParams);
 
                 if (CanUseInstancing(camera, renderPass))
                 {
-                    var xrPass = XRPass.Create(renderPass, multipassId: framePasses.Count, occlusionMeshMaterial);
+                    var xrPass = XRPass.Create(renderPass, multipassId: framePasses.Count, cullingParams, occlusionMeshMaterial);
 
                     for (int renderParamIndex = 0; renderParamIndex < renderPass.GetRenderParameterCount(); ++renderParamIndex)
                     {
@@ -201,7 +208,7 @@ namespace UnityEngine.Rendering.HighDefinition
                     {
                         renderPass.GetRenderParameter(camera, renderParamIndex, out var renderParam);
 
-                        var xrPass = XRPass.Create(renderPass, multipassId: framePasses.Count, occlusionMeshMaterial);
+                        var xrPass = XRPass.Create(renderPass, multipassId: framePasses.Count, cullingParams, occlusionMeshMaterial);
                         xrPass.AddView(renderParam);
 
                         AddPassToFrame(camera, xrPass);
@@ -209,23 +216,6 @@ namespace UnityEngine.Rendering.HighDefinition
                 }
             }
 #endif
-        }
-
-        internal bool GetCullingParameters(Camera camera, XRPass xrPass, out ScriptableCullingParameters cullingParams)
-        {
-#if USE_XR_SDK
-            if (display != null)
-            {
-                display.GetCullingParameters(camera, xrPass.cullingPassId, out cullingParams);
-            }
-            else
-#endif
-            {
-                if (!camera.TryGetCullingParameters(camera.stereoEnabled, out cullingParams))
-                    return false;
-            }
-
-            return true;
         }
 
         internal void ClearAll()
