@@ -38,7 +38,7 @@ packages:
       - .yamato/upm-ci-packages.yml#pack_vfx
   - name: Config
     id: config
-    packagename: com.unity.render-pipelines.hd-config
+    packagename: com.unity.render-pipelines.high-definition-config
     dependencies:
       - .yamato/upm-ci-packages.yml#pack_config
 platforms:
