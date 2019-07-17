@@ -6,7 +6,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [7.1.0] - 2019-XX-XX
 ### Changed
-- Increased lights limits for the forward renderer. Now it supports 8 per-object lights. It supports 64 visible lights in mobile and 1024 in all other platforms.
+- Increased lights limits for the forward renderer. Now it supports 8 per-object lights. It supports 32 visible lights in mobile and 1024 in all other platforms.
+
+### Fixed
+- Fixed shader compilation errors for Android XR projects.
+- Updated the pipeline Asset UI to cap the render scale at 2x so that it matches the render pipeline implementation limit.
 
 ## [7.0.0] - 2019-07-10
 ### Universal Render Pipeline
