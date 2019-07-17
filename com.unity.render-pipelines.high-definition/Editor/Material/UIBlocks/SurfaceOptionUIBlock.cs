@@ -476,11 +476,16 @@ namespace UnityEditor.Rendering.HighDefinition
                 if (transparentBackfaceEnable != null)
                     materialEditor.ShaderProperty(transparentBackfaceEnable, Styles.transparentBackfaceEnableText);
 
-                if (transparentDepthPrepassEnable != null)
-                    materialEditor.ShaderProperty(transparentDepthPrepassEnable, Styles.transparentDepthPrepassEnableText);
+                // Depth pre/post pass is only available when alpha cutoff is enabled
+                EditorGUI.BeginDisabledGroup(alphaCutoffEnable.floatValue == 0.0f);
+                {
+                    if (transparentDepthPrepassEnable != null)
+                        materialEditor.ShaderProperty(transparentDepthPrepassEnable, Styles.transparentDepthPrepassEnableText);
 
-                if (transparentDepthPostpassEnable != null)
-                    materialEditor.ShaderProperty(transparentDepthPostpassEnable, Styles.transparentDepthPostpassEnableText);
+                    if (transparentDepthPostpassEnable != null)
+                        materialEditor.ShaderProperty(transparentDepthPostpassEnable, Styles.transparentDepthPostpassEnableText);
+                }
+                EditorGUI.EndDisabledGroup();
 
                 if (transparentWritingMotionVec != null)
                     materialEditor.ShaderProperty(transparentWritingMotionVec, Styles.transparentWritingMotionVecText);

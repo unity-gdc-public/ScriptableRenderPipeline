@@ -141,23 +141,27 @@ namespace UnityEditor.Rendering.HighDefinition.Drawing
                     });
                 });
 
-                ps.Add(new PropertyRow(CreateLabel("Transparent Depth Prepass", indentLevel)), (row) =>
+                // Transparent depth pre/post pass are available only when the alphaCutoff is enabled
+                if (m_Node.alphaTest.isOn)
                 {
-                    row.Add(new Toggle(), (toggle) =>
+                    ps.Add(new PropertyRow(CreateLabel("Transparent Depth Prepass", indentLevel)), (row) =>
                     {
-                        toggle.value = m_Node.alphaTestDepthPrepass.isOn;
-                        toggle.OnToggleChanged(ChangeAlphaTestPrepass);
+                        row.Add(new Toggle(), (toggle) =>
+                        {
+                            toggle.value = m_Node.alphaTestDepthPrepass.isOn;
+                            toggle.OnToggleChanged(ChangeAlphaTestPrepass);
+                        });
                     });
-                });
 
-                ps.Add(new PropertyRow(CreateLabel("Transparent Depth Postpass", indentLevel)), (row) =>
-                {
-                    row.Add(new Toggle(), (toggle) =>
+                    ps.Add(new PropertyRow(CreateLabel("Transparent Depth Postpass", indentLevel)), (row) =>
                     {
-                        toggle.value = m_Node.alphaTestDepthPostpass.isOn;
-                        toggle.OnToggleChanged(ChangeAlphaTestPostpass);
+                        row.Add(new Toggle(), (toggle) =>
+                        {
+                            toggle.value = m_Node.alphaTestDepthPostpass.isOn;
+                            toggle.OnToggleChanged(ChangeAlphaTestPostpass);
+                        });
                     });
-                });
+                }
 
                 ps.Add(new PropertyRow(CreateLabel("Transparent Writes Motion Vector", indentLevel)), (row) =>
                 {

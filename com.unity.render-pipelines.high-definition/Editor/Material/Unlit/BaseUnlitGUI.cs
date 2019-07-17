@@ -296,12 +296,17 @@ namespace UnityEditor.Rendering.HighDefinition
             if (material.HasProperty(kTransparentDepthPrepassEnable))
             {
                 bool depthWriteEnable = (material.GetFloat(kTransparentDepthPrepassEnable) > 0.0f) && ((SurfaceType)material.GetFloat(kSurfaceType) == SurfaceType.Transparent);
+                // The transparent prepass and postpass must be only enabled when the cutoff is enabled
+                depthWriteEnable &= material.GetFloat(kAlphaCutoffEnabled) > 0.0f;
                 material.SetShaderPassEnabled(HDShaderPassNames.s_TransparentDepthPrepassStr, depthWriteEnable);
+                Debug.Log("Enable depth prepass !");
             }
 
             if (material.HasProperty(kTransparentDepthPostpassEnable))
             {
                 bool depthWriteEnable = (material.GetFloat(kTransparentDepthPostpassEnable) > 0.0f) && ((SurfaceType)material.GetFloat(kSurfaceType) == SurfaceType.Transparent);
+                // The transparent prepass and postpass must be only enabled when the cutoff is enabled
+                depthWriteEnable &= material.GetFloat(kAlphaCutoffEnabled) > 0.0f;
                 material.SetShaderPassEnabled(HDShaderPassNames.s_TransparentDepthPostpassStr, depthWriteEnable);
             }
 
