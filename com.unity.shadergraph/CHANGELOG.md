@@ -4,11 +4,11 @@ All notable changes to this package are documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [7.1.0] - 2019-XX-XX
+## [7.1.1] - 2019-XX-XX
 ### Changed
 - New Shader Graph windows are now docked to either existing Shader Graph windows, or to the Scene View.
 
-## [7.0.0] - 2019-07-10
+## [7.0.0] - 2019-07-17
 ### Added
 - You can now use the `SHADERGRAPH_PREVIEW` keyword in `Custom Function Node` to generate different code for preview Shaders.
 - Color Mode improves node visibility by coloring the title bar by Category, Precision, or custom colors.
