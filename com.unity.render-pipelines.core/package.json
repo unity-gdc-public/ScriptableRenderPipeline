@@ -6,6 +6,6 @@
     "unityRelease": "0a10",
     "displayName": "Core RP Library",
 	"dependencies": {
-	"com.unity.ugui" : "1.0.0"
+	    "com.unity.ugui" : "1.0.0"
     }
 }
