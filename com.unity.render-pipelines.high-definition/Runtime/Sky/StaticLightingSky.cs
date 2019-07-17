@@ -111,14 +111,21 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 var newSkyParameters = m_SkySettings.parameters;
                 var profileSkyParameters = m_SkySettingsFromProfile.parameters;
                 int parameterCount = m_SkySettings.parameters.Count;
+
+                // Seems to inexplicably happen sometimes on domain reload.
+                if (profileSkyParameters == null)
+                {
+                    return;
+                }
+
                 // Copy overridden parameters.
-                for (int i  = 0; i < parameterCount; ++i)
+                for (int i = 0; i < parameterCount; ++i)
                 {
                     if (profileSkyParameters[i].overrideState == true)
                     {
                         newSkyParameters[i].SetValue(profileSkyParameters[i]);
                     }
-        }
+                }
 
                 m_LastComputedHash = m_SkySettingsFromProfile.GetHashCode();
             }
@@ -152,13 +159,12 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         void OnEnable()
         {
             UpdateCurrentStaticLightingSky();
-                SkyManager.RegisterStaticLightingSky(this);
+            SkyManager.RegisterStaticLightingSky(this);
         }
 
         void OnDisable()
         {
-                SkyManager.UnRegisterStaticLightingSky(this);
-
+            SkyManager.UnRegisterStaticLightingSky(this);
             Reset();
         }
 
