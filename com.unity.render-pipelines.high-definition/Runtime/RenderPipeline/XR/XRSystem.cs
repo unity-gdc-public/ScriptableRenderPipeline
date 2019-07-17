@@ -46,6 +46,7 @@ namespace UnityEngine.Rendering.HighDefinition
         internal XRSystem(RenderPipelineResources.ShaderResources shaders)
         {
             RefreshXrSdk();
+            // XRTODO: replace by dynamic render graph
             TextureXR.maxViews = GetMaxViews();
 
             if (shaders != null)

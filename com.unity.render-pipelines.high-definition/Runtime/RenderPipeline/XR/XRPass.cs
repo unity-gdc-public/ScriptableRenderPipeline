@@ -235,7 +235,7 @@ namespace UnityEngine.Rendering.HighDefinition
 
             // Legacy VR - push to XR headset and/or display mirror
             if (hdCamera.camera.stereoEnabled)
-                        {
+            {
                 if (legacyMultipassEnabled)
                     renderContext.StereoEndRender(hdCamera.camera, legacyMultipassEye, legacyMultipassEye == 1);
                 else
