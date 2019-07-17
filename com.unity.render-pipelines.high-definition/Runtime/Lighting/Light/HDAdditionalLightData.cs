@@ -7,6 +7,11 @@ using UnityEditor.Experimental.Rendering.HDPipeline;
 #endif
 using UnityEngine.Serialization;
 
+// custom-begin:
+using System.Collections.Generic;
+using UnityEngine;
+// custom-end
+
 namespace UnityEngine.Experimental.Rendering.HDPipeline
 {
     // This enum extent the original LightType enum with new light type from HD
@@ -990,10 +995,32 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             }
         }
 
+        // custom-begin:
+        public static List<HDAdditionalLightData> s_InstancesHDAdditionalLightData = new List<HDAdditionalLightData>();
+        public static List<Light> s_InstancesLight = new List<Light>();
+        // custom-end
+
         private void OnEnable()
         {
             UpgradeLight();
+
+            // custom-begin:
+            s_InstancesHDAdditionalLightData.Add(this);
+            s_InstancesLight.Add(this.GetComponent<Light>());
+            // custom-end
         }
+
+        // custom-begin:
+        private void OnDisable()
+        {
+            int index = s_InstancesHDAdditionalLightData.IndexOf(this);
+            if (index != -1)
+            {
+                s_InstancesHDAdditionalLightData.RemoveAt(index);
+                s_InstancesLight.RemoveAt(index);
+            }
+        }
+        // custom-end
 
         public void UpgradeLight()
         {
