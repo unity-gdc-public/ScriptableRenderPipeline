@@ -321,24 +321,127 @@ publish_no_test:
     type: Unity::VM
     image: package-ci/win10:stable
     flavor: b1.large
+  artifacts:
+    artifacts:
+      paths:
+        - "upm-ci~/packages/*.tgz"
+  dependencies:
+  - .yamato/upm-ci-packages.yml#publish_core
+  - .yamato/upm-ci-packages.yml#publish_universal
+  - .yamato/upm-ci-packages.yml#publish_lightweight
+  - .yamato/upm-ci-packages.yml#publish_shadergraph
+  - .yamato/upm-ci-packages.yml#publish_hdrp
+  - .yamato/upm-ci-packages.yml#publish_hd_config
+  - .yamato/upm-ci-packages.yml#publish_vfx
+  
+publish_core:
+  name: z_(Do not use) Publish core
+  agent:
+    type: Unity::VM
+    image: package-ci/win10:stable
+    flavor: b1.large
   commands:
   - npm install upm-ci-utils@stable -g --registry https://api.bintray.com/npm/unity/unity-npm
   - upm-ci package publish --package-path com.unity.render-pipelines.core
-  - upm-ci package publish --package-path com.unity.render-pipelines.universal
-  - upm-ci package publish --package-path com.unity.render-pipelines.lightweight
-  - upm-ci package publish --package-path com.unity.shadergraph
-  - upm-ci package publish --package-path com.unity.render-pipelines.high-definition
-  - upm-ci package publish --package-path com.unity.render-pipelines.high-definition-config
-  - upm-ci package publish --package-path com.unity.visualeffectgraph
   artifacts:
     artifacts:
       paths:
         - "upm-ci~/packages/*.tgz"
   dependencies:
   - .yamato/upm-ci-packages.yml#pack_core_package
-  - .yamato/upm-ci-packages.yml#pack_shadergraph_package
+  
+publish_universal:
+  name: z_(Do not use) Publish universal
+  agent:
+    type: Unity::VM
+    image: package-ci/win10:stable
+    flavor: b1.large
+  commands:
+  - npm install upm-ci-utils@stable -g --registry https://api.bintray.com/npm/unity/unity-npm
+  - upm-ci package publish --package-path com.unity.render-pipelines.universal
+  artifacts:
+    artifacts:
+      paths:
+        - "upm-ci~/packages/*.tgz"
+  dependencies:
   - .yamato/upm-ci-packages.yml#pack_universal_package
+  
+publish_lightweight:
+  name: z_(Do not use) Publish lightweight
+  agent:
+    type: Unity::VM
+    image: package-ci/win10:stable
+    flavor: b1.large
+  commands:
+  - npm install upm-ci-utils@stable -g --registry https://api.bintray.com/npm/unity/unity-npm
+  - upm-ci package publish --package-path com.unity.render-pipelines.lightweight
+  artifacts:
+    artifacts:
+      paths:
+        - "upm-ci~/packages/*.tgz"
+  dependencies:
   - .yamato/upm-ci-packages.yml#pack_lightweight_package
+  
+publish_shadergraph:
+  name: z_(Do not use) Publish shadergraph
+  agent:
+    type: Unity::VM
+    image: package-ci/win10:stable
+    flavor: b1.large
+  commands:
+  - npm install upm-ci-utils@stable -g --registry https://api.bintray.com/npm/unity/unity-npm
+  - upm-ci package publish --package-path com.unity.shadergraph
+  artifacts:
+    artifacts:
+      paths:
+        - "upm-ci~/packages/*.tgz"
+  dependencies:
+  - .yamato/upm-ci-packages.yml#pack_shadergraph_package
+  
+publish_hdrp:
+  name: z_(Do not use) Publish hdrp
+  agent:
+    type: Unity::VM
+    image: package-ci/win10:stable
+    flavor: b1.large
+  commands:
+  - npm install upm-ci-utils@stable -g --registry https://api.bintray.com/npm/unity/unity-npm
+  - upm-ci package publish --package-path com.unity.render-pipelines.high-definition
+  artifacts:
+    artifacts:
+      paths:
+        - "upm-ci~/packages/*.tgz"
+  dependencies:
   - .yamato/upm-ci-packages.yml#pack_hdrp_package
-  - .yamato/upm-ci-packages.yml#pack_vfx_package
+  
+publish_hd_config:
+  name: z_(Do not use) Publish hd_config
+  agent:
+    type: Unity::VM
+    image: package-ci/win10:stable
+    flavor: b1.large
+  commands:
+  - npm install upm-ci-utils@stable -g --registry https://api.bintray.com/npm/unity/unity-npm
+  - upm-ci package publish --package-path com.unity.render-pipelines.high-definition-config
+  artifacts:
+    artifacts:
+      paths:
+        - "upm-ci~/packages/*.tgz"
+  dependencies:
   - .yamato/upm-ci-packages.yml#pack_hdconfig_package
+  
+publish_vfx:
+  name: z_(Do not use) Publish vfx
+  agent:
+    type: Unity::VM
+    image: package-ci/win10:stable
+    flavor: b1.large
+  commands:
+  - npm install upm-ci-utils@stable -g --registry https://api.bintray.com/npm/unity/unity-npm
+  - upm-ci package publish --package-path com.unity.visualeffectgraph
+  artifacts:
+    artifacts:
+      paths:
+        - "upm-ci~/packages/*.tgz"
+  dependencies:
+  - .yamato/upm-ci-packages.yml#pack_vfx_package
