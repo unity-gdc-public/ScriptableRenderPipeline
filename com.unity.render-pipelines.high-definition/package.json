@@ -9,7 +9,7 @@
         "com.unity.render-pipelines.core": "7.0.0-preview",
         "com.unity.shadergraph": "7.0.0-preview",
 		"com.unity.visualeffectgraph": "7.0.0-preview",
-		"com.unity.render-pipelines.high-definition-config": "7.0.0-preview"
+		"com.unity.render-pipelines.hd-config": "7.0.0-preview"
     },
     "keywords":[
         "graphics",
