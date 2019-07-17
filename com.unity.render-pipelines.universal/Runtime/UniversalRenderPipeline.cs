@@ -141,7 +141,7 @@ namespace UnityEngine.Rendering.Universal
             {
                 BeginCameraRendering(renderContext, camera);
                 //Visual Effect Graph is not yet a required package but calling this method when there isn't any VisualEffect component has no effect (SA : VFXManager.ProcessCameraCommand)
-                VFX.VFXManager.PrepareCamera(camera); //It should be called before culling to prepare materials
+                VFX.VFXManager.PrepareCamera(camera); //It should be called before culling to prepare material
                 RenderSingleCamera(renderContext, camera);
 
                 EndCameraRendering(renderContext, camera);
