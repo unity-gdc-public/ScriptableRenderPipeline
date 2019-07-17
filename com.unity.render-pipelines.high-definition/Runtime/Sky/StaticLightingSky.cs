@@ -5,7 +5,7 @@ using UnityEngine.Serialization;
 namespace UnityEngine.Experimental.Rendering.HDPipeline
 {
     [ExecuteAlways]
-    class StaticLightingSky : MonoBehaviour
+    public class StaticLightingSky : MonoBehaviour
     {
         [SerializeField]
         VolumeProfile m_Profile;
