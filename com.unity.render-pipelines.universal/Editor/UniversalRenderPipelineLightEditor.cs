@@ -297,5 +297,25 @@ namespace UnityEditor.Rendering.Universal
 
             EditorGUILayout.Space();
         }
+
+        protected override void OnSceneGUI()
+        {
+            Light light = target as Light;
+
+            if (!(GraphicsSettings.renderPipelineAsset is UniversalRenderPipelineAsset))
+                return;
+
+            if( light.type == LightType.Spot )
+            {
+                using (new Handles.DrawingScope(Matrix4x4.TRS(light.transform.position, light.transform.rotation, Vector3.one)))
+                {
+                    CoreLightEditorUtilities.DrawSpotlightWireFrameWithZTest(light);
+                }
+            }
+            else
+            {
+                base.OnSceneGUI();
+            }
+        }
     }
 }
