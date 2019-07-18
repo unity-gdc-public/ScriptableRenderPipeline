@@ -31,6 +31,13 @@ packages:
       - .yamato/upm-ci-packages.yml#pack_config
       - .yamato/upm-ci-packages.yml#pack_hdrp
     hascodependencies: 1
+  - name: Universal
+    id: universal
+    packagename: com.unity.render-pipelines.universal
+    dependencies:
+      - .yamato/upm-ci-packages.yml#pack_core
+      - .yamato/upm-ci-packages.yml#pack_shadergraph
+      - .yamato/upm-ci-packages.yml#pack_universal
   - name: VFXMain
     id: vfx
     packagename: com.unity.visualeffectgraph
