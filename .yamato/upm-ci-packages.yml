@@ -1,5 +1,5 @@
 editors:
-  - version: trunk
+  #- version: trunk
   - version: 2d/staging/tilemap/tooling/tilepreset
 projects:
   - name: Core
