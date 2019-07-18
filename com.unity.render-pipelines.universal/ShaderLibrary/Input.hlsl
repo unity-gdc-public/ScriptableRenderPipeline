@@ -6,7 +6,8 @@
 
 #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/ShaderTypes.cs.hlsl"
 
-// Currently we have some performance issues with StructuredBuffers in mobile.
+// There are some performance issues by using SSBO in mobile. Also some GPUs don't
+// supports SSBO in vertex shader.
 // For now only support storing lights in StructuredBuffer on non-mobile platforms.
 #if defined(SHADER_API_MOBILE)
 #define USE_STRUCTURED_BUFFER_FOR_LIGHT_DATA 0

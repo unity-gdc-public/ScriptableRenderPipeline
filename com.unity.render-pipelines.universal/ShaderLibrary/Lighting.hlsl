@@ -165,7 +165,7 @@ Light GetAdditionalPerObjectLight(int perObjectLightIndex, float3 positionWS)
     return light;
 }
 
-int GetPerObjectLightIndexOffset()
+uint GetPerObjectLightIndexOffset()
 {
 #if USE_STRUCTURED_BUFFER_FOR_LIGHT_DATA
     return unity_LightData.x;
@@ -174,24 +174,54 @@ int GetPerObjectLightIndexOffset()
 #endif
 }
 
-int GetPerObjectLightIndex(int index)
+// Returns a per-object index given a loop index.
+// This abstract the underlying data implementation for storing lights/light indices
+int GetPerObjectLightIndex(uint index)
 {
+/////////////////////////////////////////////////////////////////////////////////////////////
+// Structured Buffer Path                                                                   /
+//                                                                                          /
+// Lights and light indices are stored in StructuredBuffer. We can just index them.         /
+// Currently all non-mobile platforms take this path :(                                     /
+// The are limits in mobile GPUs to use SSBO (performance or no support in vertex shader)   /
+/////////////////////////////////////////////////////////////////////////////////////////////
 #if USE_STRUCTURED_BUFFER_FOR_LIGHT_DATA
-    int offset = unity_LightData.x;
+    uint offset = unity_LightData.x;
     return _AdditionalLightsIndices[offset + index];
+
+/////////////////////////////////////////////////////////////////////////////////////////////
+// UBO path                                                                                 /
+//                                                                                          /
+// We store 8 light indices in float4 unity_LightIndices[2];                                /
+// Due to memory alignment unity doesn't support int[] or float[]                           /
+// Even trying to reinterpret cast the unity_LightIndices to float[] won't work             /
+// it will cast to float4[] and create extra register pressure. :(                          /
+/////////////////////////////////////////////////////////////////////////////////////////////
+#elif !defined(SHADER_API_GLES)
+    // since index is uint shader compiler will implement
+    // div & mod as bitfield mask & shift ops.
+    // u_xlati1 = int(uint(u_xlatu_loop_1 & 3u));
+    // u_xlatu13 = uint(u_xlatu_loop_1 >> 2u);
+
+    // TODO: Can we index a float4? Currently compiler is
+    // replacing unity_LightIndicesX[i] with a dp4 with identity matrix.
+    // u_xlat16_40 = dot(unity_LightIndices[int(u_xlatu13)], ImmCB_0_0_0[u_xlati1]);
+    // This increases both arithmetic and register pressure.
+    return unity_LightIndices[index / 4][index % 4];
 #else
-    // Maintaned for compatibility reasons. Use BEGIN_LIGHT_LOOP / END_LIGHT_LOOP instead.
-    // The cast below will be done inside the light loop if this function is called from GetAdditionalLight below.
-    // This is bad for performance.
-    int perObjectIndices[MAX_PEROBJECT_LIGHTS] = (int[MAX_PEROBJECT_LIGHTS])unity_LightIndices;
-    return perObjectIndices[index];
+    // Fallback to GLES2. No bitfield magic here :(.
+    // We limit to 4 indices per object and only sample unity_4LightIndices0.
+    // Conditional moves are branch free even on mali-400
+    // small arithmetic cost but no extra register pressure from ImmCB_0_0_0 matrix.
+    half2 lightIndex2 = (index < 2.0h) ? unity_LightIndices[0].xy : unity_LightIndices[0].zw;
+    half i_rem = (index < 2.0h) ? index : index - 2.0h;
+    return (i_rem < 1.0h) ? lightIndex2.x : lightIndex2.y;
 #endif
 }
 
 // Fills a light struct given a loop i index. This will convert the i
 // index to a perObjectLightIndex
-// Note: Deprecated. Use BEGIN_LIGHT_LOOP / END_LIGHT_LOOP instead.
-Light GetAdditionalLight(int i, float3 positionWS)
+Light GetAdditionalLight(uint i, float3 positionWS)
 {
     int perObjectLightIndex = GetPerObjectLightIndex(i);
     return GetAdditionalPerObjectLight(perObjectLightIndex, positionWS);
@@ -204,15 +234,6 @@ int GetAdditionalLightsCount()
     // This would be helpful to support baking exceeding lights in SH as well
     return min(_AdditionalLightsCount.x, unity_LightData.y);
 }
-
-#define BEGIN_LIGHT_LOOP(light, positionWS) \
-    int pixelLightCount = GetAdditionalLightsCount(); \
-    int perObjectIndices[MAX_PEROBJECT_LIGHTS] = (int[MAX_PEROBJECT_LIGHTS])unity_LightIndices; \
-    for (int lightIndex = 0; lightIndex < pixelLightCount; ++lightIndex) \
-    { \
-        Light light = GetAdditionalPerObjectLight(perObjectIndices[lightIndex], positionWS); \
-
-#define END_LIGHT_LOOP }
 
 ///////////////////////////////////////////////////////////////////////////////
 //                         BRDF Functions                                    //
@@ -525,10 +546,13 @@ half3 VertexLighting(float3 positionWS, half3 normalWS)
     half3 vertexLightColor = half3(0.0, 0.0, 0.0);
 
 #ifdef _ADDITIONAL_LIGHTS_VERTEX
-    BEGIN_LIGHT_LOOP(light, positionWS)
-    half3 lightColor = light.color * light.distanceAttenuation;
-    vertexLightColor += LightingLambert(lightColor, light.direction, normalWS);
-    END_LIGHT_LOOP
+    uint lightsCount = GetAdditionalLightsCount();
+    for (uint lightIndex = 0u; lightIndex < lightsCount; ++lightIndex)
+    {
+        Light light = GetAdditionalLight(lightIndex, positionWS);
+        half3 lightColor = light.color * light.distanceAttenuation;
+        vertexLightColor += LightingLambert(lightColor, light.direction, normalWS);
+    }
 #endif
 
     return vertexLightColor;
@@ -551,9 +575,12 @@ half4 UniversalFragmentPBR(InputData inputData, half3 albedo, half metallic, hal
     color += LightingPhysicallyBased(brdfData, mainLight, inputData.normalWS, inputData.viewDirectionWS);
 
 #ifdef _ADDITIONAL_LIGHTS
-    BEGIN_LIGHT_LOOP(light, inputData.positionWS)
-    color += LightingPhysicallyBased(brdfData, light, inputData.normalWS, inputData.viewDirectionWS);
-    END_LIGHT_LOOP
+    uint pixelLightCount = GetAdditionalLightsCount();
+    for (uint lightIndex = 0u; lightIndex < pixelLightCount; ++lightIndex)
+    {
+        Light light = GetAdditionalLight(lightIndex, inputData.positionWS);
+        color += LightingPhysicallyBased(brdfData, light, inputData.normalWS, inputData.viewDirectionWS);
+    }
 #endif
 
 #ifdef _ADDITIONAL_LIGHTS_VERTEX
@@ -574,11 +601,14 @@ half4 UniversalFragmentBlinnPhong(InputData inputData, half3 diffuse, half4 spec
     half3 specularColor = LightingSpecular(attenuatedLightColor, mainLight.direction, inputData.normalWS, inputData.viewDirectionWS, specularGloss, smoothness);
 
 #ifdef _ADDITIONAL_LIGHTS
-    BEGIN_LIGHT_LOOP(light, inputData.positionWS)
-    half3 attenuatedLightColor = light.color * (light.distanceAttenuation * light.shadowAttenuation);
-    diffuseColor += LightingLambert(attenuatedLightColor, light.direction, inputData.normalWS);
-    specularColor += LightingSpecular(attenuatedLightColor, light.direction, inputData.normalWS, inputData.viewDirectionWS, specularGloss, smoothness);
-    END_LIGHT_LOOP
+    uint pixelLightCount = GetAdditionalLightsCount();
+    for (uint lightIndex = 0u; lightIndex < pixelLightCount; ++lightIndex)
+    {
+        Light light = GetAdditionalLight(lightIndex, inputData.positionWS);
+        half3 attenuatedLightColor = light.color * (light.distanceAttenuation * light.shadowAttenuation);
+        diffuseColor += LightingLambert(attenuatedLightColor, light.direction, inputData.normalWS);
+        specularColor += LightingSpecular(attenuatedLightColor, light.direction, inputData.normalWS, inputData.viewDirectionWS, specularGloss, smoothness);
+    }
 #endif
 
 #ifdef _ADDITIONAL_LIGHTS_VERTEX
