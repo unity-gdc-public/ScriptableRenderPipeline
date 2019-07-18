@@ -6,7 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [7.1.0] - 2019-XX-XX
 ### Changed
-- Increased lights limits for the forward renderer. Now it supports 8 per-object lights. It supports 32 visible lights in mobile and 1024 in all other platforms.
+- Increased visible lights limit for the forward renderer. It now supports 32 visible lights in mobile platforms and 1024 in all other platforms.
+- Increased per-object lights limit for the forward renderer. It now supports 8 per-object lights in all platforms except GLES2. GLES2 supports 4 per-object lights.
 
 ### Fixed
 - Fixed shader compilation errors for Android XR projects.
