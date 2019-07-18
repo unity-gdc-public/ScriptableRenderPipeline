@@ -12,6 +12,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Fixed
 - Fixed material albedo affecting the lux meter
 
+### Changed
+- RenderQueue for Opaque now start at Background instead of Geometry.
+
 ## [7.0.0] - 2019-07-10
 
 ### Added
