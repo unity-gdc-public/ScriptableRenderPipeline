@@ -1,5 +1,6 @@
 editors:
   - version: trunk
+  - version: 2d/staging/tilemap/tooling/tilepreset
 projects:
   - name: Core
     packagename: com.unity.render-pipelines.core
