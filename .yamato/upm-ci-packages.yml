@@ -23,7 +23,7 @@ packages:
     hascodependencies: 1
   - name: HDRP
     id: hdrp
-    packagename: com.unity.render-pipelines.high-definition
+    packagename: ./com.unity.render-pipelines.high-definition/
     dependencies:
       - .yamato/upm-ci-packages.yml#pack_core
       - .yamato/upm-ci-packages.yml#pack_shadergraph
@@ -82,6 +82,9 @@ test_{{ package.id }}_{{ platform.name }}_{{ editor.version }}:
     type: {{ platform.agent.type }}
     image: {{ platform.agent.image }}
     flavor: {{ platform.agent.flavor }}
+  {% if platform.name == "win" %}
+  interpreter: powershell
+  {% endif %}
   commands:
     #- npm install upm-ci-utils@stable -g --registry https://api.bintray.com/npm/unity/unity-npm
     - git clone --single-branch --branch hotfix/v0.13.1 git@github.cds.internal.unity3d.com:unity/upm-ci-utils.git ../upm-ci-utils
