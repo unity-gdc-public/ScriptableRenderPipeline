@@ -349,7 +349,9 @@ publish_core:
       paths:
         - "upm-ci~/packages/*.tgz"
   dependencies:
-  - .yamato/upm-ci-packages.yml#pack_core_package
+{% for editor in editors %}
+  - .yamato/upm-ci-packages.yml#test_core_package_{{ editor.version }}
+{% endfor %}
   
 publish_universal:
   name: z_(Do not use) Publish universal
@@ -365,7 +367,9 @@ publish_universal:
       paths:
         - "upm-ci~/packages/*.tgz"
   dependencies:
-  - .yamato/upm-ci-packages.yml#pack_universal_package
+{% for editor in editors %}
+  - .yamato/upm-ci-packages.yml#test_universal_package_{{ editor.version }}
+{% endfor %}
   
 publish_lightweight:
   name: z_(Do not use) Publish lightweight
@@ -381,7 +385,9 @@ publish_lightweight:
       paths:
         - "upm-ci~/packages/*.tgz"
   dependencies:
-  - .yamato/upm-ci-packages.yml#pack_lightweight_package
+{% for editor in editors %}
+  - .yamato/upm-ci-packages.yml#test_lightweight_package_{{ editor.version }}
+{% endfor %}
   
 publish_shadergraph:
   name: z_(Do not use) Publish shadergraph
@@ -397,7 +403,9 @@ publish_shadergraph:
       paths:
         - "upm-ci~/packages/*.tgz"
   dependencies:
-  - .yamato/upm-ci-packages.yml#pack_shadergraph_package
+{% for editor in editors %}
+  - .yamato/upm-ci-packages.yml#test_shadergraph_package_{{ editor.version }}
+{% endfor %}
   
 publish_hdrp:
   name: z_(Do not use) Publish hdrp
@@ -413,7 +421,9 @@ publish_hdrp:
       paths:
         - "upm-ci~/packages/*.tgz"
   dependencies:
-  - .yamato/upm-ci-packages.yml#pack_hdrp_package
+{% for editor in editors %}
+  - .yamato/upm-ci-packages.yml#test_hdrp_package_{{ editor.version }}
+{% endfor %}
   
 publish_hd_config:
   name: z_(Do not use) Publish hd_config
@@ -429,7 +439,9 @@ publish_hd_config:
       paths:
         - "upm-ci~/packages/*.tgz"
   dependencies:
-  - .yamato/upm-ci-packages.yml#pack_hdconfig_package
+{% for editor in editors %}
+  - .yamato/upm-ci-packages.yml#test_hdconfig_package_{{ editor.version }}
+{% endfor %}
   
 publish_vfx:
   name: z_(Do not use) Publish vfx
@@ -445,4 +457,6 @@ publish_vfx:
       paths:
         - "upm-ci~/packages/*.tgz"
   dependencies:
-  - .yamato/upm-ci-packages.yml#pack_vfx_package
+{% for editor in editors %}
+  - .yamato/upm-ci-packages.yml#test_vfx_package_{{ editor.version }}
+{% endfor %}
