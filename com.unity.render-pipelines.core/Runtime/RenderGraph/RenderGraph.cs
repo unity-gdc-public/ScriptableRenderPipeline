@@ -6,7 +6,7 @@ using UnityEngine.Profiling;
 namespace UnityEngine.Experimental.Rendering.RenderGraphModule
 {
     /// <summary>
-    /// Specify read and write access to a depth buffer
+    /// Sets the read and write access for the depth buffer.
     /// </summary>
     [Flags]
     public enum DepthAccess
@@ -17,7 +17,7 @@ namespace UnityEngine.Experimental.Rendering.RenderGraphModule
     }
 
     /// <summary>
-    /// Context passed to every render pass.
+    /// Use this struct to specify the context given to every render pass.
     /// </summary>
     public ref struct RenderGraphContext
     {
@@ -28,7 +28,7 @@ namespace UnityEngine.Experimental.Rendering.RenderGraphModule
     }
 
     /// <summary>
-    /// Parameters controlling execution of Render Graph
+    /// This struct contains properties which control the execution of the Render Graph.
     /// </summary>
     public struct RenderGraphExecuteParams
     {
@@ -69,15 +69,15 @@ namespace UnityEngine.Experimental.Rendering.RenderGraphModule
     }
 
     /// <summary>
-    /// Render Pass rendering delegate
+    /// The Render Pass rendering delegate
     /// </summary>
-    /// <typeparam name="PassData">Type of the class used to provide data to the Render Pass</typeparam>
-    /// <param name="data">Render Pass specific data</param>
-    /// <param name="renderGraphContext">Global Render Graph context</param>
+    /// <typeparam name="PassData">The type of the class used to provide data to the Render Pass.</typeparam>
+    /// <param name="data">Render Pass specific data.</param>
+    /// <param name="renderGraphContext">Global Render Graph context.</param>
     public delegate void RenderFunc<PassData>(PassData data, RenderGraphContext renderGraphContext) where PassData : class, new();
 
     /// <summary>
-    /// Main entry point of the Render Graph system
+    /// This class is the main entry point of the Render Graph system
     /// </summary>
     public class RenderGraph
     {
@@ -184,22 +184,22 @@ namespace UnityEngine.Experimental.Rendering.RenderGraphModule
 
         // TODO: Currently only needed by SSAO to sample correctly depth texture mips. Need to figure out a way to hide this behind a proper formalization.
         /// <summary>
-        /// Returns the RTHandleProperties structure associated with the Render Graph's RTHandle System
+        /// Gets the RTHandleProperties structure associated with the Render Graph's RTHandle System.
         /// </summary>
         public RTHandleProperties rtHandleProperties { get { return m_Resources.GetRTHandleProperties(); } }
 
         /// <summary>
-        /// Render Graph constructor
+        /// Render Graph constructor.
         /// </summary>
-        /// <param name="supportMSAA">Specify if this Render Graph should support MSAA</param>
-        /// <param name="initialSampleCount">Specify the initial sample count of MSAA render textures</param>
+        /// <param name="supportMSAA">Specify if this Render Graph should support MSAA.</param>
+        /// <param name="initialSampleCount">Specify the initial sample count of MSAA render textures.</param>
         public RenderGraph(bool supportMSAA, MSAASamples initialSampleCount)
         {
             m_Resources = new RenderGraphResourceRegistry(supportMSAA, initialSampleCount, m_DebugParameters, m_Logger);
         }
 
         /// <summary>
-        /// Cleanup the Render Graph
+        /// Cleanup the Render Graph.
         /// </summary>
         public void Cleanup()
         {
@@ -207,7 +207,7 @@ namespace UnityEngine.Experimental.Rendering.RenderGraphModule
         }
 
         /// <summary>
-        /// Register this Render Graph to the debug window
+        /// Register this Render Graph to the debug window.
         /// </summary>
         public void RegisterDebug()
         {
@@ -215,7 +215,7 @@ namespace UnityEngine.Experimental.Rendering.RenderGraphModule
         }
 
         /// <summary>
-        /// Unregister this Render Graph from the debug window
+        /// Unregister this Render Graph from the debug window.
         /// </summary>
         public void UnRegisterDebug()
         {
@@ -223,21 +223,21 @@ namespace UnityEngine.Experimental.Rendering.RenderGraphModule
         }
 
         /// <summary>
-        /// Import an external texture to the Render Graph
+        /// Import an external texture to the Render Graph.
         /// </summary>
-        /// <param name="rt">External RTHandle that needs to be imported</param>
-        /// <param name="shaderProperty">Optional parameter specifying shader parameter name for automatic resource binding</param>
-        /// <returns>A new RenderGraphMutableResource</returns>
+        /// <param name="rt">External RTHandle that needs to be imported.</param>
+        /// <param name="shaderProperty">Optional property that allows you to specify a Shader property name to use for automatic resource binding.</param>
+        /// <returns>A new RenderGraphMutableResource.</returns>
         public RenderGraphMutableResource ImportTexture(RTHandle rt, int shaderProperty = 0)
         {
             return m_Resources.ImportTexture(rt, shaderProperty);
         }
 
         /// <summary>
-        /// Create a new Render Graph texture resource
+        /// Create a new Render Graph Texture resource.
         /// </summary>
-        /// <param name="desc">Texture descriptor</param>
-        /// <param name="shaderProperty">Optional parameter specifying shader parameter name for automatic resource binding</param>
+        /// <param name="desc">Texture descriptor.</param>
+        /// <param name="shaderProperty">Optional property that allows you to specify a Shader property name to use for automatic resource binding.</param>
         /// <returns>A new RenderGraphMutableResource</returns>
         public RenderGraphMutableResource CreateTexture(TextureDesc desc, int shaderProperty = 0)
         {
@@ -247,10 +247,10 @@ namespace UnityEngine.Experimental.Rendering.RenderGraphModule
         }
 
         /// <summary>
-        /// Create a new Render Graph texture resource using the descriptor from another texture
+        /// Create a new Render Graph Texture resource using the descriptor from another texture
         /// </summary>
         /// <param name="texture">Texture from which the descriptor should be used</param>
-        /// <param name="shaderProperty">Optional parameter specifying shader parameter name for automatic resource binding</param>
+        /// <param name="shaderProperty">Optional property that allows you to specify a Shader property name to use for automatic resource binding.</param>
         /// <returns>A new RenderGraphMutableResource</returns>
         public RenderGraphMutableResource CreateTexture(in RenderGraphResource texture, int shaderProperty = 0)
         {
@@ -261,7 +261,7 @@ namespace UnityEngine.Experimental.Rendering.RenderGraphModule
         }
 
         /// <summary>
-        /// Returns the descriptor of the specified texture resource
+        /// Gets the descriptor of the specified Texture resource.
         /// </summary>
         /// <param name="texture"></param>
         /// <returns>The input texture descriptor</returns>
@@ -276,23 +276,23 @@ namespace UnityEngine.Experimental.Rendering.RenderGraphModule
         }
 
         /// <summary>
-        /// Creates a new Renderer List Render Graph resource
+        /// Creates a new Renderer List Render Graph resource.
         /// </summary>
-        /// <param name="desc">Renderer List descriptor</param>
-        /// <returns>A new RenderGraphResource</returns>
+        /// <param name="desc">Renderer List descriptor.</param>
+        /// <returns>A new RenderGraphResource.</returns>
         public RenderGraphResource CreateRendererList(in RendererListDesc desc)
         {
             return m_Resources.CreateRendererList(desc);
         }
 
         /// <summary>
-        /// Add a new Render Pass to the current Render Graph
+        /// Add a new Render Pass to the current Render Graph.
         /// </summary>
-        /// <typeparam name="PassData">Type of the class used to provide data to the Render Pass</typeparam>
-        /// <param name="passName">Name of the new Render Pass (this will also be used to generate a GPU profiling marker)</param>
-        /// <param name="passData">Instance of PassData that needs to be filled and that will be passed to the render function</param>
-        /// <param name="customSampler">Optional C# profiling object</param>
-        /// <returns>A new instance of a RenderGraphBuilder used to setup the new Render Pass</returns>
+        /// <typeparam name="PassData">Type of the class to use to provide data to the Render Pass.</typeparam>
+        /// <param name="passName">Name of the new Render Pass (this is also be used to generate a GPU profiling marker).</param>
+        /// <param name="passData">Instance of PassData that is passed to the render function and you must fill.</param>
+        /// <param name="customSampler">Optional C# profiling object.</param>
+        /// <returns>A new instance of a RenderGraphBuilder used to setup the new Render Pass.</returns>
         public RenderGraphBuilder AddRenderPass<PassData>(string passName, out PassData passData, CustomSampler customSampler = null) where PassData : class, new()
         {
             var renderPass = m_RenderGraphPool.Get<RenderPass<PassData>>();
@@ -310,11 +310,11 @@ namespace UnityEngine.Experimental.Rendering.RenderGraphModule
         }
 
         /// <summary>
-        /// Execute the Render Graph in its current state
+        /// Execute the Render Graph in its current state.
         /// </summary>
-        /// <param name="renderContext">ScriptableRenderContext used to execute Scriptable Render Pipeline</param>
-        /// <param name="cmd">Command Buffer used for Render Passes rendering</param>
-        /// <param name="parameters">Render Graph execution parameters</param>
+        /// <param name="renderContext">ScriptableRenderContext used to execute Scriptable Render Pipeline.</param>
+        /// <param name="cmd">Command Buffer used for Render Passes rendering.</param>
+        /// <param name="parameters">Render Graph execution parameters.</param>
         public void Execute(ScriptableRenderContext renderContext, CommandBuffer cmd, in RenderGraphExecuteParams parameters)
         {
             m_Logger.Initialize();
