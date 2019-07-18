@@ -2,6 +2,7 @@ using System.Collections.Generic;
 
 namespace UnityEngine.Rendering
 {
+    [HelpURL(Documentation.baseURL + Documentation.version + Documentation.subURL + "Volumes" + Documentation.endURL)]
     [ExecuteAlways]
     public class Volume : MonoBehaviour
     {
