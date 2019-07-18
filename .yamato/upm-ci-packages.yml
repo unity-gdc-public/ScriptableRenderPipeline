@@ -38,6 +38,7 @@ packages:
       - .yamato/upm-ci-packages.yml#pack_core
       - .yamato/upm-ci-packages.yml#pack_shadergraph
       - .yamato/upm-ci-packages.yml#pack_universal
+    hascodependencies: 1
   - name: VFXMain
     id: vfx
     packagename: com.unity.visualeffectgraph
