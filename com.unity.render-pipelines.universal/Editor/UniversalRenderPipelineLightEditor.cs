@@ -320,6 +320,13 @@ namespace UnityEditor.Rendering.Universal
                     CoreLightEditorUtilities.DrawPointLightWireFrameWithLabels(light);
                     break;
 
+                case LightType.Rectangle:
+                    using (new Handles.DrawingScope(Matrix4x4.TRS(light.transform.position, light.transform.rotation, Vector3.one)))
+                    {
+                        CoreLightEditorUtilities.DrawAreaLightWireFrameWithLabels(light);
+                    }
+                    break;
+
                 default:
                     base.OnSceneGUI();
                     break;

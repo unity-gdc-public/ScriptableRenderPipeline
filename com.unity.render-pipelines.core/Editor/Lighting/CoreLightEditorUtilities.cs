@@ -1,6 +1,7 @@
 using System;
 using UnityEngine;
 using UnityEngine.Rendering;
+using UnityEngine.Rendering.UI;
 
 namespace UnityEditor.Rendering
 {
@@ -16,35 +17,183 @@ namespace UnityEditor.Rendering
             All = Left | Up | Right | Down
         }
 
-        public static void DrawPointLightWireFrameWithLabels(Light pointlight)
+        public static void DrawPointLightWireFrameWithLabels(Light light)
         {
-            float range = pointlight.range;
+            float range = light.range;
             // Default Color for outer cone will be Yellow if nothing has been provided.
-            Color outerColor = GetLightAboveObjectWireframeColor(pointlight.color);
+            Color outerColor = GetLightAboveObjectWireframeColor(light.color);
             using (new Handles.DrawingScope(outerColor))
             {
                 EditorGUI.BeginChangeCheck();
-                range = Handles.RadiusHandle(Quaternion.identity, pointlight.transform.position, range);
+                range = Handles.RadiusHandle(Quaternion.identity, light.transform.position, range);
                 if (EditorGUI.EndChangeCheck())
                 {
-                    Undo.RecordObject(pointlight, "Adjust Point Light");
+                    Undo.RecordObject(light, "Adjust Point Light");
                     m_HandleHotControl = GUIUtility.hotControl;
-                    pointlight.range = range;
+                    light.range = range;
                 }
             }
 
             // Adding label /////////////////////////////////////
-            Vector3 labelPosition = pointlight.transform.position;
+            Vector3 labelPosition = light.transform.position;
 
             if (GUIUtility.hotControl != 0 && GUIUtility.hotControl == m_HandleHotControl)
             {
-                string labelText = (pointlight.range).ToString("0.00");
+                string labelText = (light.range).ToString("0.00");
                 var style = new GUIStyle(GUI.skin.label);
                 var offsetFromHandle = 20;
                 style.contentOffset = new Vector2(0, -(HandleUtility.GetHandleSize(labelPosition) * 0.03f - offsetFromHandle));
                 Handles.Label(labelPosition, labelText, style);
             }
             /////////////////////////////////////////////////////
+        }
+
+        static bool m_ShowAreaRange = false;
+        static bool m_ShowAreaWidthHeight = false;
+        public static void DrawAreaLightWireFrameWithLabels(Light light)
+        {
+            Vector2 size = light.areaSize;
+            // Default Color for outer cone will be Yellow if nothing has been provided.
+            Color outerColor = GetLightAboveObjectWireframeColor(light.color);
+            using (new Handles.DrawingScope(outerColor))
+            {
+                EditorGUI.BeginChangeCheck();
+                size = DoRectHandles(Quaternion.identity, Vector3.zero, size);
+                if (EditorGUI.EndChangeCheck())
+                {
+                    Undo.RecordObject(light, "Adjust Area Light");
+                    m_HandleHotControl = GUIUtility.hotControl;
+                    m_ShowAreaRange = true;
+                    m_ShowAreaWidthHeight = true;
+                    light.areaSize = size;
+                }
+            }
+
+
+
+            // Adding label /////////////////////////////////////
+            Vector3 rangePosition = (Vector3.forward * light.range);
+            Vector3 labelPosition = Vector3.zero;
+
+            // Draw Center Handle and Line
+            //float range = light.range;
+            //EditorGUI.BeginChangeCheck();
+
+            // Draw line for the range and draw the end of the range with a disc
+            using (new Handles.DrawingScope(outerColor))
+            {
+                Handles.DrawLine(Vector3.zero, rangePosition);
+                Handles.DrawWireDisc(rangePosition, Vector3.forward, 0.25f);
+            }
+
+            //range = SliderLineHandle(Vector3.zero, Vector3.forward, range);
+//            if (EditorGUI.EndChangeCheck())
+//            {
+//                Undo.RecordObjects(new[] { light }, "Undo range change.");
+//                m_HandleHotControl = GUIUtility.hotControl;
+//                m_ShowAreaRange = true;
+//            }
+
+
+
+
+            if (GUIUtility.hotControl != 0 && GUIUtility.hotControl == m_HandleHotControl)
+            {
+                var style = new GUIStyle(GUI.skin.label);
+
+
+
+                string labelText = "";
+                if (m_ShowAreaRange)
+                {
+                    labelText = (light.range).ToString("0.00");
+                    var offsetFromHandle = 18;
+                    style.contentOffset = new Vector2(0, -(HandleUtility.GetHandleSize(labelPosition) * 0.03f + offsetFromHandle));
+                    Handles.Label(rangePosition, labelText, style);
+                }
+                if (m_ShowAreaWidthHeight)
+                {
+                    labelText = $"{light.areaSize.x:0.##} x {light.areaSize.y:0.##}";
+                    var offsetFromHandle = 30;
+                    style.contentOffset = new Vector2(0, -(HandleUtility.GetHandleSize(labelPosition) * 0.03f + offsetFromHandle));
+                    Handles.Label(labelPosition, labelText, style);
+                    //labelPosition =
+                }
+
+//                else if (m_ShowNearPlaneRange)
+//                    labelText = (spotlight.shadowNearPlane).ToString("0.00");
+//                else if (m_ShowOuterLabel)
+//                    labelText = (spotlight.spotAngle).ToString("0.00");
+//                else
+//                    labelText = (spotlight.innerSpotAngle).ToString("0.00");
+
+
+
+            }
+
+            // Resets the member variables
+            if (EditorGUIUtility.hotControl == 0 && EditorGUIUtility.hotControl != m_HandleHotControl)
+            {
+                m_ShowAreaRange = false;
+            }
+
+//            if (GUIUtility.hotControl != 0 && GUIUtility.hotControl == m_HandleHotControl)
+//            {
+//                string labelText = (light.range).ToString("0.00");
+//                var style = new GUIStyle(GUI.skin.label);
+//                var offsetFromHandle = 20;
+//                style.contentOffset = new Vector2(0, -(HandleUtility.GetHandleSize(labelPosition) * 0.03f - offsetFromHandle));
+//                Handles.Label(labelPosition, labelText, style);
+//            }
+            /////////////////////////////////////////////////////
+        }
+
+        static Vector2 DoRectHandles(Quaternion rotation, Vector3 position, Vector2 size)
+        {
+            Vector3 up = rotation * Vector3.up;
+            Vector3 right = rotation * Vector3.right;
+
+            float halfWidth = 0.5f * size.x;
+            float halfHeight = 0.5f * size.y;
+
+
+                Vector3 topRight = position + up * halfHeight + right * halfWidth;
+                Vector3 bottomRight = position - up * halfHeight + right * halfWidth;
+                Vector3 bottomLeft = position - up * halfHeight - right * halfWidth;
+                Vector3 topLeft = position + up * halfHeight - right * halfWidth;
+
+                // Draw rectangle
+                Handles.DrawLine(topRight, bottomRight);
+                Handles.DrawLine(bottomRight, bottomLeft);
+                Handles.DrawLine(bottomLeft, topLeft);
+                Handles.DrawLine(topLeft, topRight);
+
+
+            // Give handles twice the alpha of the lines
+            Color origCol = Handles.color;
+            Handles.color = HandleColor();
+
+            // Draw handles
+            halfHeight = SliderLineHandle(position, up, halfHeight);
+            halfHeight = SliderLineHandle(position, -up, halfHeight);
+            halfWidth = SliderLineHandle(position, right, halfWidth);
+            halfWidth = SliderLineHandle(position, -right, halfWidth);
+
+            size.x = Mathf.Max(0f, 2.0f * halfWidth);
+            size.y = Mathf.Max(0f, 2.0f * halfHeight);
+
+            Handles.color = origCol;
+
+            return size;
+        }
+
+        static Color HandleColor()
+        {
+            // Give handles twice the alpha of the lines
+            Color color = Handles.color;
+            color.a = Mathf.Clamp01(Handles.color.a * 2);
+            color = RemapLightColor(CoreUtils.ConvertSRGBToActiveColorSpace(color));
+            return color;
         }
 
         static bool drawInnerConeAngle = true;
@@ -407,6 +556,7 @@ namespace UnityEditor.Rendering
         }
 
         static int s_SliderSpotAngleId;
+
 
         static float SizeSliderSpotAngle(Vector3 position, Vector3 forward, Vector3 axis, float range, float spotAngle)
         {
