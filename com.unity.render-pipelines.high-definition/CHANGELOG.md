@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Fixed
 - Fixed material albedo affecting the lux meter
+- Fixed documentation links in component's Inspector header bar
 
 ## [7.0.0] - 2019-07-10
 
