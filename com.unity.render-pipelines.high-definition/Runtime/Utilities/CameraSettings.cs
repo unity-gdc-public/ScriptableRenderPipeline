@@ -185,8 +185,8 @@ namespace UnityEngine.Rendering.HighDefinition
             settings.frustum.projectionMatrix = hdCamera.camera.projectionMatrix;
             settings.invertFaceCulling = false;
 
-            var add = hdCamera.camera.GetComponent<HDAdditionalCameraData>();
-            if (add != null && !add.Equals(null))
+            HDAdditionalCameraData   add;
+            if (hdCamera.camera.TryGetComponent<HDAdditionalCameraData>(out add))
             {
                 settings.customRenderingSettings = add.customRenderingSettings;
                 settings.bufferClearing.backgroundColorHDR = add.backgroundColorHDR;
