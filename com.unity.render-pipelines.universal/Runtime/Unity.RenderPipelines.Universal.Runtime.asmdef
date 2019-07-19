@@ -19,8 +19,8 @@
         },
         {
             "name": "com.unity.visualeffectgraph",
-            "expression": "1.0.0",
-            "define": "VISUAL_EFFECT_GRAPH_1_0_0_OR_NEWER"
+            "expression": "0.0.1",
+            "define": "VISUAL_EFFECT_GRAPH_0_0_1_OR_NEWER"
         }
     ]
 }
