@@ -140,8 +140,10 @@ namespace UnityEngine.Rendering.Universal
             foreach (Camera camera in cameras)
             {
                 BeginCameraRendering(renderContext, camera);
-                //Visual Effect Graph is not yet a required package but calling this method when there isn't any VisualEffect component has no effect (SA : VFXManager.ProcessCameraCommand)
-                VFX.VFXManager.PrepareCamera(camera); //It should be called before culling to prepare material
+#if VISUAL_EFFECT_GRAPH_1_0_0_OR_NEWER
+                //It should be called before culling to prepare material. When there isn't any VisualEffect component, this method has no effect.
+                VFX.VFXManager.PrepareCamera(camera);
+#endif
                 RenderSingleCamera(renderContext, camera);
 
                 EndCameraRendering(renderContext, camera);
@@ -197,7 +199,7 @@ namespace UnityEngine.Rendering.Universal
                 var cullResults = context.Cull(ref cullingParameters);
                 InitializeRenderingData(settings, ref cameraData, ref cullResults, out var renderingData);
                 renderer.Setup(context, ref renderingData);
-                VFX.VFXManager.ProcessCameraCommand(camera, cmd); //Triggers dispatch per camera, all global parameters should have been setup at this stage.
+                ProcessPerCameraAfterCulling(cameraData, cmd);
                 renderer.Execute(context, ref renderingData);
             }
 
@@ -530,6 +532,14 @@ namespace UnityEngine.Rendering.Universal
             Matrix4x4 viewProjMatrix = projMatrix * viewMatrix;
             Matrix4x4 invViewProjMatrix = Matrix4x4.Inverse(viewProjMatrix);
             Shader.SetGlobalMatrix(PerCameraBuffer._InvCameraViewProj, invViewProjMatrix);
+        }
+
+        static void ProcessPerCameraAfterCulling(CameraData cameraData, CommandBuffer cmd)
+        {
+#if VISUAL_EFFECT_GRAPH_1_0_0_OR_NEWER
+            //Triggers dispatch per camera, all global parameters should have been setup at this stage.
+            VFX.VFXManager.ProcessCameraCommand(cameraData.camera, cmd);
+#endif
         }
 
         static Lightmapping.RequestLightsDelegate lightsDelegate = (Light[] requests, NativeArray<LightDataGI> lightsOutput) =>
