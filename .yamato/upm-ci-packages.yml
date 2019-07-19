@@ -63,7 +63,7 @@ platforms:
         image: buildfarm/mac:stable
         flavor: m1.mac
       copycmd: cp ./upm-ci~/packages/*.tgz ./.Editor/Unity.app/Contents/Resources/PackageManager/Editor
-      editorpath: $HOME/.Editor/Unity.app/Contents/MacOS/Unity
+      editorpath: $(pwd)/.Editor/Unity.app/Contents/MacOS/Unity
 ---
 {% for package in packages %}
 pack_{{ package.id }}:
