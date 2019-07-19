@@ -16,6 +16,38 @@ namespace UnityEditor.Rendering
             All = Left | Up | Right | Down
         }
 
+        public static void DrawPointLightWireFrameWithLabels(Light pointlight)
+        {
+            float range = pointlight.range;
+            // Default Color for outer cone will be Yellow if nothing has been provided.
+            Color outerColor = GetLightAboveObjectWireframeColor(pointlight.color);
+            using (new Handles.DrawingScope(outerColor))
+            {
+                EditorGUI.BeginChangeCheck();
+                range = Handles.RadiusHandle(Quaternion.identity, pointlight.transform.position, range);
+                if (EditorGUI.EndChangeCheck())
+                {
+                    Undo.RecordObject(pointlight, "Adjust Point Light");
+                    m_HandleHotControl = GUIUtility.hotControl;
+                    pointlight.range = range;
+                }
+            }
+
+            // Adding label /////////////////////////////////////
+            Vector3 labelPosition = pointlight.transform.position;
+
+            if (GUIUtility.hotControl != 0 && GUIUtility.hotControl == m_HandleHotControl)
+            {
+                string labelText = (pointlight.range).ToString("0.00");
+                var style = new GUIStyle(GUI.skin.label);
+                var offsetFromHandle = 20;
+                style.contentOffset = new Vector2(0, -(HandleUtility.GetHandleSize(labelPosition) * 0.03f - offsetFromHandle));
+                Handles.Label(labelPosition, labelText, style);
+            }
+            /////////////////////////////////////////////////////
+        }
+
+        static bool drawInnerConeAngle = true;
         public static void DrawSpotlightWireFrameWithZTest(Light spotlight, Color? drawColorOuter = null, Color? drawColorInner = null, bool drawHandlesAndLabels = true)
         {
             // Saving the default colors
@@ -64,11 +96,11 @@ namespace UnityEditor.Rendering
             // Zero position vector3
             Vector3 zeroPos = Vector3.zero;
 
-             // Variable for which direction to draw the handles
+            // Variable for which direction to draw the handles
             HandleDirections DrawHandleDirections;
 
             // Draw the handles ///////////////////////////////
-            Handles.color = spotlight.color;
+            Handles.color = RemapLightColor(CoreUtils.ConvertSRGBToActiveColorSpace(spotlight.color));
 
             // Draw Center Handle
             float range = spotlight.range;
@@ -94,8 +126,9 @@ namespace UnityEditor.Rendering
             }
 
             // Draw inner handles
+            // Commented until inner angle will bake
             float innerAngle = 0;
-            if (spotlight.innerSpotAngle > 0f)
+            if (spotlight.innerSpotAngle > 0f && drawInnerConeAngle)
             {
                 DrawHandleDirections = HandleDirections.Left | HandleDirections.Right;
                 EditorGUI.BeginChangeCheck();
@@ -170,12 +203,40 @@ namespace UnityEditor.Rendering
         {
             Color color = wireframeColor;
             color.a = 0.4f;
-            return (QualitySettings.activeColorSpace == ColorSpace.Linear) ? color.linear : color;
+            return RemapLightColor(CoreUtils.ConvertSRGBToActiveColorSpace(color));
         }
 
         static Color GetLightAboveObjectWireframeColor(Color wireframeColor)
         {
-            return (QualitySettings.activeColorSpace == ColorSpace.Linear) ? wireframeColor.linear : wireframeColor;
+            Color color = wireframeColor;
+            color.a = 1f;
+            return RemapLightColor(CoreUtils.ConvertSRGBToActiveColorSpace(color));
+        }
+
+        public static Color GetLightBehindObjectWireframeColor(Color wireframeColor)
+        {
+            Color color = wireframeColor;
+            color.a = 0.2f;
+            return RemapLightColor(CoreUtils.ConvertSRGBToActiveColorSpace(color));
+        }
+
+        static Color RemapLightColor(Color src)
+        {
+            Color color = src;
+            float max = Mathf.Max(color.r, color.g);
+            if (max > 0f)
+            {
+                float mult = 1f / max;
+                color.r *= mult;
+                color.g *= mult;
+                color.b *= mult;
+            }
+            else
+            {
+                color = Color.white;
+            }
+
+            return color;
         }
 
         static void DrawSpotlightWireframe(Light spotlight, Color outerColor, Color innerColor)
@@ -193,7 +254,8 @@ namespace UnityEditor.Rendering
             var vectorLineLeft = Vector3.Normalize(Vector3.forward * outerDiscDistance + Vector3.left * outerDiscRadius);
 
             // Need to check if we need to draw inner angle
-            if(innerAngle>0f)
+            // Need to disable this for now until we get all the inner angle baking working.
+            if(innerAngle > 0f && drawInnerConeAngle)
             {
                 DrawHandleDirections = HandleDirections.Up | HandleDirections.Down;
                 var innerDiscRadius = range * Mathf.Sin(innerAngle * Mathf.Deg2Rad * 0.5f);
@@ -375,12 +437,7 @@ namespace UnityEditor.Rendering
             return (QualitySettings.activeColorSpace == ColorSpace.Linear) ? color.linear : color;
         }
 
-        public static Color GetLightBehindObjectWireframeColor(Color wireframeColor)
-        {
-            Color color = wireframeColor;
-            color.a = 0.2f;
-            return (QualitySettings.activeColorSpace == ColorSpace.Linear) ? color.linear : color;
-        }
+
 
         // Don't use Handles.Disc as it break the highlight of the gizmo axis, use our own draw disc function instead for gizmo
         public static void DrawWireDisc(Quaternion q, Vector3 position, Vector3 axis, float radius)

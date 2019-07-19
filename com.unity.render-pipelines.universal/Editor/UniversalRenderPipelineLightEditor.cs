@@ -190,6 +190,8 @@ namespace UnityEditor.Rendering.Universal
         void DrawSpotAngle()
         {
             EditorGUILayout.Slider(settings.spotAngle, 1f, 179f, s_Styles.SpotAngle);
+            // Disable until baking of inner angle works
+            //settings.DrawInnerAndOuterSpotAngle();
         }
 
         void DrawAdditionalShadowData()
@@ -305,16 +307,22 @@ namespace UnityEditor.Rendering.Universal
             if (!(GraphicsSettings.renderPipelineAsset is UniversalRenderPipelineAsset))
                 return;
 
-            if( light.type == LightType.Spot )
+            switch (light.type)
             {
-                using (new Handles.DrawingScope(Matrix4x4.TRS(light.transform.position, light.transform.rotation, Vector3.one)))
-                {
-                    CoreLightEditorUtilities.DrawSpotlightWireFrameWithZTest(light);
-                }
-            }
-            else
-            {
-                base.OnSceneGUI();
+                case LightType.Spot:
+                    using (new Handles.DrawingScope(Matrix4x4.TRS(light.transform.position, light.transform.rotation, Vector3.one)))
+                    {
+                        CoreLightEditorUtilities.DrawSpotlightWireFrameWithZTest(light, default, default);
+                    }
+                    break;
+
+                case LightType.Point:
+                    CoreLightEditorUtilities.DrawPointLightWireFrameWithLabels(light);
+                    break;
+
+                default:
+                    base.OnSceneGUI();
+                    break;
             }
         }
     }
