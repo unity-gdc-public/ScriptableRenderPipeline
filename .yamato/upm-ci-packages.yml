@@ -63,7 +63,7 @@ platforms:
         image: buildfarm/mac:stable
         flavor: m1.mac
       copycmd: cp ./upm-ci~/packages/*.tgz ./.Editor/Unity.app/Contents/Resources/PackageManager/Editor
-      editorpath: $(pwd)/.Editor/Unity.app/Contents/MacOS/Unity
+      editorpath: "$(pwd)/.Editor/Unity.app/Contents/MacOS/Unity"
 ---
 {% for package in packages %}
 pack_{{ package.id }}:
@@ -98,7 +98,7 @@ test_{{ package.id }}_{{ platform.name }}_{{ editor.version }}:
     - pip install unity-downloader-cli --extra-index-url https://artifactory.eu-cph-1.unityops.net/api/pypi/common-python/simple
     - unity-downloader-cli -u {{ editor.version }} -c editor --wait
     - echo Before copy
-    - $(pwd)
+    - echo $(pwd)
     - ls $(pwd)
     - ls .Editor
     - echo End Debug
