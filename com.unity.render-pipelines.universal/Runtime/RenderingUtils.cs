@@ -60,7 +60,7 @@ namespace UnityEngine.Rendering.Universal
         {
             // Currently we have some performance issues with StructuredBuffers in mobile.
             // For now only support storing lights in StructuredBuffer on non-mobile platforms.
-            get => !Application.isMobilePlatform;
+            get => !Application.isMobilePlatform && SystemInfo.graphicsDeviceType != GraphicsDeviceType.OpenGLCore;
         }
 
         static Material s_ErrorMaterial;

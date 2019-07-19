@@ -9,7 +9,7 @@
 // There are some performance issues by using SSBO in mobile. Also some GPUs don't
 // supports SSBO in vertex shader.
 // For now only support storing lights in StructuredBuffer on non-mobile platforms.
-#if defined(SHADER_API_MOBILE)
+#if defined(SHADER_API_MOBILE) || defined(SHADER_API_GLCORE)
 #define USE_STRUCTURED_BUFFER_FOR_LIGHT_DATA 0
 #else
 #define USE_STRUCTURED_BUFFER_FOR_LIGHT_DATA 1
