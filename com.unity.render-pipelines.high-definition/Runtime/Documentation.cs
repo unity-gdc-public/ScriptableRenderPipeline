@@ -1,3 +1,7 @@
+using System.Runtime.CompilerServices;
+
+[assembly: InternalsVisibleTo("Unity.RenderPipelines.HighDefinition.Editor.Tests")]
+
 namespace UnityEngine.Rendering.HighDefinition
 {
     //Need to live in Runtime as Attribute of documentation is on Runtime classes \o/
