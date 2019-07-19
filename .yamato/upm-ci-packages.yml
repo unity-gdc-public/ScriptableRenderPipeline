@@ -57,13 +57,13 @@ platforms:
         flavor: b1.large
       copycmd: copy upm-ci~\packages\*.tgz .Editor\Data\Resources\PackageManager\Editor
       editorpath: .\.Editor
-    - name: mac
-      agent:
-        type: Unity::VM::osx
-        image: buildfarm/mac:stable
-        flavor: m1.mac
-      copycmd: cp ./upm-ci~/packages/*.tgz ./.Editor/Unity.app/Contents/Resources/PackageManager/Editor
-      editorpath: $HOME/.Editor
+#    - name: mac
+#      agent:
+#        type: Unity::VM::osx
+#        image: buildfarm/mac:stable
+#        flavor: m1.mac
+#      copycmd: cp ./upm-ci~/packages/*.tgz ./.Editor/Unity.app/Contents/Resources/PackageManager/Editor
+#      editorpath: $HOME/.Editor
 ---
 {% for package in packages %}
 pack_{{ package.id }}:
