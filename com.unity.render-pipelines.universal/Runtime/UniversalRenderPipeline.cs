@@ -186,6 +186,7 @@ namespace UnityEngine.Rendering.Universal
             {
                 renderer.Clear();
                 renderer.SetupCullingParameters(ref cullingParameters, ref cameraData);
+
                 context.ExecuteCommandBuffer(cmd);
                 cmd.Clear();
 
@@ -198,6 +199,7 @@ namespace UnityEngine.Rendering.Universal
 
                 var cullResults = context.Cull(ref cullingParameters);
                 InitializeRenderingData(settings, ref cameraData, ref cullResults, out var renderingData);
+
                 renderer.Setup(context, ref renderingData);
                 ProcessPerCameraAfterCulling(cameraData, cmd);
                 renderer.Execute(context, ref renderingData);
