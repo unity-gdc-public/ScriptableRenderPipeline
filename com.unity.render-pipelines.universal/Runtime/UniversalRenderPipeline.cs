@@ -140,7 +140,7 @@ namespace UnityEngine.Rendering.Universal
             foreach (Camera camera in cameras)
             {
                 BeginCameraRendering(renderContext, camera);
-#if VISUAL_EFFECT_GRAPH_1_0_0_OR_NEWER
+#if VISUAL_EFFECT_GRAPH_0_0_1_OR_NEWER
                 //It should be called before culling to prepare material. When there isn't any VisualEffect component, this method has no effect.
                 VFX.VFXManager.PrepareCamera(camera);
 #endif
@@ -538,7 +538,7 @@ namespace UnityEngine.Rendering.Universal
 
         static void ProcessPerCameraAfterCulling(CameraData cameraData, CommandBuffer cmd)
         {
-#if VISUAL_EFFECT_GRAPH_1_0_0_OR_NEWER
+#if VISUAL_EFFECT_GRAPH_0_0_1_OR_NEWER
             //Triggers dispatch per camera, all global parameters should have been setup at this stage.
             VFX.VFXManager.ProcessCameraCommand(cameraData.camera, cmd);
 #endif
