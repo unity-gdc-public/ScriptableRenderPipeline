@@ -85,10 +85,11 @@ namespace UnityEditor.ShaderGraph.Drawing
             if (evt.target is GraphView || evt.target is Node)
             {
                 InitializeViewSubMenu(evt);
+                InitializePrecisionSubMenu(evt);
 
-                evt.menu.AppendAction("Convert To Sub-graph", ConvertToSubgraph, ConvertToSubgraphStatus);
-                evt.menu.AppendAction("Convert To Inline Node", ConvertToInlineNode, ConvertToInlineNodeStatus);
-                evt.menu.AppendAction("Convert To Property", ConvertToProperty, ConvertToPropertyStatus);
+                evt.menu.AppendAction("Convert To/Sub-graph", ConvertToSubgraph, ConvertToSubgraphStatus);
+                evt.menu.AppendAction("Convert To/Inline Node", ConvertToInlineNode, ConvertToInlineNodeStatus);
+                evt.menu.AppendAction("Convert To/Property", ConvertToProperty, ConvertToPropertyStatus);
 
                 evt.menu.AppendAction("Group Selection", _ => GroupSelection(), (a) =>
                 {
@@ -189,6 +190,32 @@ namespace UnityEditor.ShaderGraph.Drawing
                 }
                 evt.menu.AppendSeparator();
             }
+        }
+
+        private void InitializePrecisionSubMenu(ContextualMenuPopulateEvent evt)
+        {
+            // Default the menu buttons to disabled
+            DropdownMenuAction.Status inheritPrecisionAction = DropdownMenuAction.Status.Disabled;
+            DropdownMenuAction.Status floatPrecisionAction = DropdownMenuAction.Status.Disabled;
+            DropdownMenuAction.Status halfPrecisionAction = DropdownMenuAction.Status.Disabled;
+
+            // Check which precisions are available to switch to
+            foreach (MaterialNodeView selectedNode in selection.Where(x => x is MaterialNodeView).Select(x => x as MaterialNodeView))
+            {
+                if (selectedNode.node.precision != Precision.Inherit)
+                    inheritPrecisionAction = DropdownMenuAction.Status.Normal;
+                if (selectedNode.node.precision != Precision.Float)
+                    floatPrecisionAction = DropdownMenuAction.Status.Normal;
+                if (selectedNode.node.precision != Precision.Half)
+                    halfPrecisionAction = DropdownMenuAction.Status.Normal;
+            }
+
+            // Create the menu options
+            evt.menu.AppendAction("Precision/Inherit", _ => SetNodePrecisionOnSelection(Precision.Inherit), (a) => inheritPrecisionAction);
+            evt.menu.AppendAction("Precision/Float", _ => SetNodePrecisionOnSelection(Precision.Float), (a) => floatPrecisionAction);
+            evt.menu.AppendAction("Precision/Half", _ => SetNodePrecisionOnSelection(Precision.Half), (a) => halfPrecisionAction);
+
+            //evt.menu.AppendSeparator();
         }
 
         private void InitializeViewSubMenu(ContextualMenuPopulateEvent evt)
@@ -343,6 +370,27 @@ namespace UnityEditor.ShaderGraph.Drawing
             {
                 selectedNode.node.previewExpanded = state;
             }
+        }
+
+        public void SetNodePrecisionOnSelection(Precision inPrecision)
+        {
+            var editorView = GetFirstAncestorOfType<GraphEditorView>();
+            IEnumerable<MaterialNodeView> nodes = selection.Where(x => x is MaterialNodeView).Select(x => x as MaterialNodeView);
+
+            graph.owner.RegisterCompleteObjectUndo("Set Precisions");
+            editorView.colorManager.SetNodesDirty(nodes);
+
+            foreach (MaterialNodeView selectedNode in nodes)
+            {
+                if (selectedNode.node.canSetPrecision)
+                {
+                    string err = "";
+                    selectedNode.node.precision = inPrecision;
+                    selectedNode.node.ValidateConcretePrecision(ref err);
+                }
+            }
+
+            editorView.colorManager.UpdateNodeViews(nodes);
         }
 
         void CollapsePreviews(DropdownMenuAction action)
