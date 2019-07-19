@@ -597,6 +597,7 @@ namespace UnityEditor.Rendering.HighDefinition
                 "#pragma multi_compile _ DIFFUSE_LIGHTING_ONLY",
                 "#define SHADOW_LOW",
                 "#define SKIP_RASTERIZED_SHADOWS",
+                "#define RAYTRACING_SHADER_GRAPH",
             },
             Includes = new List<string>()
             {
@@ -643,6 +644,10 @@ namespace UnityEditor.Rendering.HighDefinition
             TemplateName = "HDLitRaytracingPass.template",
             MaterialName = "Lit",
             ShaderPassName = "SHADERPASS_RAYTRACING_VISIBILITY",
+            ExtraDefines = new List<string>()
+            {
+                "#define RAYTRACING_SHADER_GRAPH",
+            },
             Includes = new List<string>()
             {
                 "#include \"Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipeline/ShaderPass/ShaderPassRaytracingVisibility.hlsl\"",
@@ -695,6 +700,7 @@ namespace UnityEditor.Rendering.HighDefinition
                 "#pragma multi_compile _ DYNAMICLIGHTMAP_ON",
                 "#define SHADOW_LOW",
                 "#define SKIP_RASTERIZED_SHADOWS",
+                "#define RAYTRACING_SHADER_GRAPH",
             },
             Includes = new List<string>()
             {
@@ -747,6 +753,7 @@ namespace UnityEditor.Rendering.HighDefinition
                 "#pragma multi_compile _ DIRLIGHTMAP_COMBINED",
                 "#pragma multi_compile _ DYNAMICLIGHTMAP_ON",
                 "#define SHADOW_LOW",
+                "#define RAYTRACING_SHADER_GRAPH",
             },
             Includes = new List<string>()
             {
