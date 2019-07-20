@@ -378,19 +378,22 @@ namespace UnityEditor.ShaderGraph.Drawing
             IEnumerable<MaterialNodeView> nodes = selection.Where(x => x is MaterialNodeView).Select(x => x as MaterialNodeView);
 
             graph.owner.RegisterCompleteObjectUndo("Set Precisions");
+            var nodeList = this.Query<MaterialNodeView>().ToList();
             editorView.colorManager.SetNodesDirty(nodes);
 
             foreach (MaterialNodeView selectedNode in nodes)
             {
                 if (selectedNode.node.canSetPrecision)
-                {
-                    string err = "";
                     selectedNode.node.precision = inPrecision;
-                    selectedNode.node.ValidateConcretePrecision(ref err);
-                }
             }
 
+            // Reflect the data down
+            graph.ValidateGraph();
             editorView.colorManager.UpdateNodeViews(nodes);
+
+            // Update the views
+            foreach (MaterialNodeView selectedNode in nodes)
+                selectedNode.node.Dirty(ModificationScope.Graph);
         }
 
         void CollapsePreviews(DropdownMenuAction action)
