@@ -292,7 +292,7 @@ namespace UnityEngine.Rendering.Universal
             int additionalLightsCount = 0;
 
             // Disable all directional lights from the perobject light indices
-            // Pipeline handles them globally.
+            // Pipeline handles main light globally and there's no support for additional directional lights atm.
             for (int i = 0; i < visibleLights.Length; ++i)
             {
                 if (additionalLightsCount >= UniversalRenderPipeline.maxVisibleAdditionalLights)
@@ -320,7 +320,8 @@ namespace UnityEngine.Rendering.Universal
             if (m_UseStructuredBuffer)
             {
                 int lightIndices = cullResults.lightAndReflectionProbeIndexCount;
-                cullResults.FillLightAndReflectionProbeIndices(ShaderData.instance.GetLightIndicesBuffer(lightIndices));
+                if (lightIndices > 0)
+                    cullResults.FillLightAndReflectionProbeIndices(ShaderData.instance.GetLightIndicesBuffer(lightIndices));
             }
             
             perObjectLightIndexMap.Dispose();

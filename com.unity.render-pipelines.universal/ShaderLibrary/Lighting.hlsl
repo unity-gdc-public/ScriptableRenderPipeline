@@ -183,7 +183,7 @@ int GetPerObjectLightIndex(uint index)
 //                                                                                          /
 // Lights and light indices are stored in StructuredBuffer. We can just index them.         /
 // Currently all non-mobile platforms take this path :(                                     /
-// The are limits in mobile GPUs to use SSBO (performance or no support in vertex shader)   /
+// There are limitation in mobile GPUs to use SSBO (performance / no vertex shader support) /
 /////////////////////////////////////////////////////////////////////////////////////////////
 #if USE_STRUCTURED_BUFFER_FOR_LIGHT_DATA
     uint offset = unity_LightData.x;
@@ -199,10 +199,8 @@ int GetPerObjectLightIndex(uint index)
 /////////////////////////////////////////////////////////////////////////////////////////////
 #elif !defined(SHADER_API_GLES)
     // since index is uint shader compiler will implement
-    // div & mod as bitfield mask & shift ops.
-    // u_xlati1 = int(uint(u_xlatu_loop_1 & 3u));
-    // u_xlatu13 = uint(u_xlatu_loop_1 >> 2u);
-
+    // div & mod as bitfield ops (shift and mask).
+    
     // TODO: Can we index a float4? Currently compiler is
     // replacing unity_LightIndicesX[i] with a dp4 with identity matrix.
     // u_xlat16_40 = dot(unity_LightIndices[int(u_xlatu13)], ImmCB_0_0_0[u_xlati1]);
