@@ -96,6 +96,7 @@ LightmapSettings:
     m_PVRFilteringAtrousPositionSigmaAO: 1
     m_ExportTrainingData: 0
     m_TrainingDataDestination: TrainingData
+    m_LightProbeSampleCountMultiplier: 4
   m_LightingDataAsset: {fileID: 0}
   m_UseShadowmask: 1
 --- !u!196 &4
@@ -605,7 +606,6 @@ GameObject:
   - component: {fileID: 115701101}
   - component: {fileID: 115701100}
   - component: {fileID: 115701099}
-  - component: {fileID: 115701102}
   m_Layer: 0
   m_Name: Scene Settings
   m_TagString: Untagged
@@ -658,28 +658,6 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &115701102
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 115701098}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5bb1f05c4fd1818478320398f67d2206, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_material:
-  - {fileID: 2100000, guid: 69acf54975e65d94f94ee7013fc7ee5e, type: 2}
-  - {fileID: 2100000, guid: 01acdaaa338154c499bbef9bf46780df, type: 2}
-  - {fileID: 2100000, guid: 08b94f4b00793224bbb859d06ec4a41a, type: 2}
-  - {fileID: 2100000, guid: c9758893d63c0364688dab0a0412f6df, type: 2}
-  m_w: 20
-  m_h: 20
-  m_sameMaterial: 0
-  m_castShadows: 1
-  m_receiveShadows: 1
 --- !u!1 &127095557
 GameObject:
   m_ObjectHideFlags: 0
@@ -7703,7 +7681,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 1094080312}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 76da7560f02c20a4d837d4a940cb3224, type: 3}
+  m_Script: {fileID: 11500000, guid: 4052b8ab7c135164ea80c4abc15ceddc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!4 &1094080314
@@ -11620,8 +11598,9 @@ Light:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1481024262}
   m_Enabled: 1
-  serializedVersion: 9
+  serializedVersion: 10
   m_Type: 1
+  m_Shape: 0
   m_Color: {r: 1, g: 0.9865705, b: 0.8443396, a: 1}
   m_Intensity: 3.1415927
   m_Range: 10
@@ -14991,8 +14970,9 @@ Light:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1893468813}
   m_Enabled: 1
-  serializedVersion: 9
+  serializedVersion: 10
   m_Type: 2
+  m_Shape: 0
   m_Color: {r: 0.042452812, g: 0.82033664, b: 1, a: 1}
   m_Intensity: 47.746483
   m_Range: 10
@@ -15955,8 +15935,9 @@ Light:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2000975649}
   m_Enabled: 1
-  serializedVersion: 9
+  serializedVersion: 10
   m_Type: 2
+  m_Shape: 0
   m_Color: {r: 1, g: 0.8941071, b: 0.043137252, a: 1}
   m_Intensity: 47.746483
   m_Range: 10
