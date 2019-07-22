@@ -24,7 +24,7 @@ This table provides an overview of the current features supported in the Univers
 | Inner Spot Angle                                             | Not supported                                                | In research                                                  |
 | Shading                                                      | Multiple Passes                                              | Single Pass                                                  |
 | *Culling*<br/>Per-Object<br/>Per-Layer                       | <br/>Yes<br/>Yes                                             | <br/>Yes<br/>Yes                                             |
-| *Light Limits*<br/>Directional Lights<br/>Per-Object<br/>Per-Camera<br/>Visible lights in the Scene | <br/>Unlimited<br/>Unlimited<br/>Unlimited<br/>Unlimited     | <br/>1<br/>8 (4 for GLES2)<br/>16<br/>1024 (32 on mobile platforms) |
+| *Light Limits*<br/>Directional Lights<br/>Per Object<br/>Per Camera | <br/>Unlimited<br/>Unlimited<br/>Unlimited                   | <br/>1<br/>8 (4 for GLES2)<br/>1024 (32 on mobile platforms) |
 | Attenuation                                                  | Legacy                                                       | InverseSquared                                               |
 | Vertex LIghts                                                | Yes                                                          | Yes                                                          |
 | SH Lights                                                    | Yes                                                          | In research                                                  |
